@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tocando Agora</title>
+    <style>
+        /* Um visual moderno e escuro básico */
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background-color: #121212; 
+            color: #fff; 
+            margin: 0;
+        }
+        #music-widget { 
+            background: #1e1e1e; 
+            padding: 25px; 
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+            min-width: 250px;
+        }
+        img { 
+            width: 150px; 
+            height: 150px; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            object-fit: cover;
+        }
+        .title { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        .artist { color: #b3b3b3; font-size: 16px; }
+        .status { margin-top: 15px; font-size: 12px; color: #1db954; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;}
+    </style>
+</head>
+<body>
+
+    <div id="music-widget">
+        <p>Buscando música...</p>
+    </div>
+
+    <script>
+        // === COLOQUE SEUS DADOS AQUI ===
+        const USERNAME = 'athusluz'; 
+        const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b'; 
+        // ===============================
+
+        async function getNowPlaying() {
+            // URL da API do Last.fm pedindo apenas a última música ouvida
+            const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // Entra no JSON para pegar os dados da música
+                const track = data.recenttracks.track[0];
+                
+                // Verifica se existe a tag especial que diz que está tocando AGORA
+                const isPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
+
+                const widget = document.getElementById('music-widget');
+
+                if (isPlaying) {
+                    const songName = track.name;
+                    const artistName = track.artist['#text'];
+                    // Pega a imagem da capa do álbum (índice 3 é a imagem grande)
+                    const coverUrl = track.image[3]['#text'] || 'https://via.placeholder.com/150?text=Sem+Capa'; 
+
+                    widget.innerHTML = `
+                        <img src="${coverUrl}" alt="Capa do Álbum">
+                        <div class="title">${songName}</div>
+                        <div class="artist">${artistName}</div>
+                        <div class="status">▶ Tocando agora</div>
+                    `;
+                } else {
+                    // Se não estiver ouvindo nada no momento
+                    widget.innerHTML = `
+                        <div class="title">Nenhuma música tocando agora</div>
+                        <div class="artist">Em silêncio...</div>
+                    `;
+                }
+            } catch (error) {
+                console.error("Erro ao buscar a música:", error);
+                document.getElementById('music-widget').innerHTML = "<p>Erro ao conectar com o Last.fm.</p>";
+            }
+        }
+
+        // Executa a função assim que você abre a página
+        getNowPlaying();
+
+        // Atualiza a música automaticamente a cada 10 segundos (10000 milissegundos)
+        setInterval(getNowPlaying, 10000);
+    </script>
+</body>
+</html>

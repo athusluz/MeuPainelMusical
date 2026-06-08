@@ -3,43 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora</title>
+    <title>Tocando Agora - Kraken Display</title>
     <style>
-        /* Um visual moderno e escuro básico */
+        /* Reset básico e preparação para o display de 640x640 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body { 
-            font-family: Arial, sans-serif; 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            width: 100vw;
+            height: 100vh;
+            background-color: #000; 
+            color: #fff; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            height: 100vh; 
-            background-color: #121212; 
-            color: #fff; 
-            margin: 0;
+            overflow: hidden; /* Evita barras de rolagem */
+            position: relative;
         }
+
+        /* Fundo com a capa do álbum desfocada (Estilo Spotify) */
+        #bg-blur {
+            position: absolute;
+            top: -10%; 
+            left: -10%;
+            width: 120%; 
+            height: 120%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(35px) brightness(0.35); /* Desfoque escurecido para a fonte brilhar */
+            z-index: 1;
+            transition: background-image 1s ease-in-out;
+        }
+
+        /* Container principal centralizado */
         #music-widget { 
-            background: #1e1e1e; 
-            padding: 25px; 
-            border-radius: 12px; 
-            text-align: center; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
-            min-width: 250px;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 85%; /* Deixa uma margem segura para as bordas circulares */
         }
-        img { 
-            width: 150px; 
-            height: 150px; 
-            border-radius: 8px; 
-            margin-bottom: 15px; 
+
+        /* Capa do Álbum */
+        .cover { 
+            width: 320px; /* Tamanho robusto para a resolução do Elite */
+            height: 320px; 
+            border-radius: 16px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6); 
+            margin-bottom: 25px; 
             object-fit: cover;
+            transition: opacity 0.5s ease;
         }
-        .title { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
-        .artist { color: #b3b3b3; font-size: 16px; }
-        .status { margin-top: 15px; font-size: 12px; color: #1db954; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;}
+
+        /* Textos */
+        .title { 
+            font-size: 42px; 
+            font-weight: bold; 
+            margin-bottom: 8px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            width: 100%;
+        }
+
+        .artist { 
+            color: #b3b3b3; 
+            font-size: 28px; 
+            font-weight: 500;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            width: 100%;
+        }
+
+        .status { 
+            margin-top: 20px; 
+            font-size: 18px; 
+            color: #1db954; /* Verde Spotify */
+            font-weight: bold; 
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Ícone simulando algo tocando */
+        .status::before {
+            content: '▶';
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
 
+    <div id="bg-blur"></div>
+
     <div id="music-widget">
-        <p>Buscando música...</p>
+        <p style="font-size: 24px; color: #b3b3b3;">Conectando ao Last.fm...</p>
     </div>
 
     <script>
@@ -49,50 +116,51 @@
         // ===============================
 
         async function getNowPlaying() {
-            // URL da API do Last.fm pedindo apenas a última música ouvida
             const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                // Entra no JSON para pegar os dados da música
                 const track = data.recenttracks.track[0];
-                
-                // Verifica se existe a tag especial que diz que está tocando AGORA
                 const isPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
 
                 const widget = document.getElementById('music-widget');
+                const bgBlur = document.getElementById('bg-blur');
 
                 if (isPlaying) {
                     const songName = track.name;
                     const artistName = track.artist['#text'];
-                    // Pega a imagem da capa do álbum (índice 3 é a imagem grande)
-                    const coverUrl = track.image[3]['#text'] || 'https://via.placeholder.com/150?text=Sem+Capa'; 
+                    // O índice 3 costuma ser a imagem extralarge (300x300) do Last.fm
+                    const coverUrl = track.image[3]['#text'] || 'https://via.placeholder.com/320?text=Sem+Capa'; 
 
+                    // Atualiza o fundo desfocado
+                    bgBlur.style.backgroundImage = `url('${coverUrl}')`;
+
+                    // Atualiza o widget central
                     widget.innerHTML = `
-                        <img src="${coverUrl}" alt="Capa do Álbum">
+                        <img class="cover" src="${coverUrl}" alt="Capa do Álbum">
                         <div class="title">${songName}</div>
                         <div class="artist">${artistName}</div>
-                        <div class="status">▶ Tocando agora</div>
+                        <div class="status">Tocando agora</div>
                     `;
                 } else {
-                    // Se não estiver ouvindo nada no momento
+                    bgBlur.style.backgroundImage = 'none';
                     widget.innerHTML = `
-                        <div class="title">Nenhuma música tocando agora</div>
-                        <div class="artist">Em silêncio...</div>
+                        <div class="title" style="color: #b3b3b3;">Nenhuma música</div>
+                        <div class="artist" style="font-size: 20px;">O silêncio também é música...</div>
                     `;
                 }
             } catch (error) {
                 console.error("Erro ao buscar a música:", error);
-                document.getElementById('music-widget').innerHTML = "<p>Erro ao conectar com o Last.fm.</p>";
+                document.getElementById('music-widget').innerHTML = "<p style='font-size: 24px; color: #ff4a4a;'>Erro de conexão</p>";
             }
         }
 
-        // Executa a função assim que você abre a página
+        // Chama inicialmente
         getNowPlaying();
 
-        // Atualiza a música automaticamente a cada 10 segundos (10000 milissegundos)
+        // Atualiza a cada 10 segundos
         setInterval(getNowPlaying, 10000);
     </script>
 </body>

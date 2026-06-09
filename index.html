@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tocando Agora - Kraken Display</title>
     <style>
-        /* Reset básico e preparação para o display de 640x640 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -25,7 +24,6 @@
             position: relative;
         }
 
-        /* Fundo com a capa do álbum desfocada (Estilo Spotify) */
         #bg-blur {
             position: absolute;
             top: -10%; 
@@ -39,7 +37,6 @@
             transition: background-image 1s ease-in-out;
         }
 
-        /* Container principal centralizado */
         #music-widget { 
             position: relative;
             z-index: 2;
@@ -50,7 +47,6 @@
             width: 85%;
         }
 
-        /* Capa do Álbum */
         .cover { 
             width: 320px; 
             height: 320px; 
@@ -61,7 +57,6 @@
             transition: opacity 0.5s ease;
         }
 
-        /* Textos */
         .title { 
             font-size: 42px; 
             font-weight: bold; 
@@ -85,7 +80,7 @@
         .status { 
             margin-top: 20px; 
             font-size: 18px; 
-            color: #1db954; 
+            color: #ffffff; 
             font-weight: bold; 
             text-transform: uppercase; 
             letter-spacing: 2px;
@@ -94,7 +89,11 @@
             gap: 8px;
         }
 
-        .status::before {
+        .status-playing {
+            color: #1db954;
+        }
+
+        .status-playing::before {
             content: '▶';
             font-size: 14px;
         }
@@ -114,6 +113,9 @@
         const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b'; 
         // =======================
 
+        // Placeholder premium em SVG (Disco de Vinil Minimalista)
+        const fallbackCover = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640"><rect width="640" height="640" fill="%23121212"/><circle cx="320" cy="320" r="220" fill="%231e1e1e"/><circle cx="320" cy="320" r="210" fill="none" stroke="%232a2a2a" stroke-width="2"/><circle cx="320" cy="320" r="150" fill="none" stroke="%232a2a2a" stroke-width="2"/><circle cx="320" cy="320" r="80" fill="%23e0e0e0"/><circle cx="320" cy="320" r="25" fill="%23121212"/></svg>`;
+
         async function getNowPlaying() {
             const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`;
 
@@ -131,15 +133,12 @@
                     const songName = track.name;
                     const artistName = track.artist['#text'];
                     
-                    // Extração segura usando optional chaining, previne quebra do JS se o Last.fm mudar a estrutura
                     let coverUrl = track.image?.[3]?.['#text'] || '';
 
-                    // O NZXT CAM bloqueia requisições mistas. Forçamos o uso de HTTPS.
                     if (coverUrl.startsWith('http://')) {
                         coverUrl = coverUrl.replace('http://', 'https://');
                     }
 
-                    // Se o Last.fm não tem a capa ou retornou a estrela cinza padrão (2a96cbd...), fazemos um fallback pro iTunes
                     if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
                         try {
                             const query = encodeURIComponent(`${artistName} ${songName}`);
@@ -147,13 +146,12 @@
                             const itunesData = await itunesRes.json();
                             
                             if (itunesData.results && itunesData.results.length > 0) {
-                                // O iTunes retorna capas 100x100 por padrão. Substituímos na URL para renderizar a versão 600x600.
                                 coverUrl = itunesData.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
                             } else {
-                                coverUrl = 'https://placehold.co/320x320/1db954/white?text=Sem+Capa'; 
+                                coverUrl = fallbackCover; 
                             }
                         } catch (e) {
-                            coverUrl = 'https://placehold.co/320x320/1db954/white?text=Sem+Capa';
+                            coverUrl = fallbackCover;
                         }
                     }
 
@@ -162,11 +160,12 @@
                         <img class="cover" src="${coverUrl}" alt="Capa do Álbum">
                         <div class="title">${songName}</div>
                         <div class="artist">${artistName}</div>
-                        <div class="status">Tocando agora</div>
+                        <div class="status status-playing">Tocando agora</div>
                     `;
                 } else {
                     bgBlur.style.backgroundImage = 'none';
                     widget.innerHTML = `
+                        <img class="cover" src="${fallbackCover}" alt="Vinil">
                         <div class="title" style="color: #b3b3b3;">Nenhuma música</div>
                         <div class="artist" style="font-size: 20px;">O silêncio também é música...</div>
                     `;

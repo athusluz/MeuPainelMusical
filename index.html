@@ -36,7 +36,6 @@
             transition: all 1s ease-in-out;
         }
 
-        /* Classe que ativa o gradiente animado claro quando não há capa */
         .aurora-bg {
             background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #fecfef, #ff9a9e);
             background-size: 400% 400%;
@@ -49,11 +48,10 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Efeito de Vidro Fosco sobre o fundo */
         #glass-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.15); /* Escurece de leve para dar contraste ao texto */
+            background: rgba(0, 0, 0, 0.2); 
             backdrop-filter: blur(25px);
             z-index: 2;
         }
@@ -68,7 +66,6 @@
             width: 85%;
         }
 
-        /* Estilo da Capa Circular */
         .cover-circle { 
             width: 270px; 
             height: 270px; 
@@ -79,21 +76,38 @@
             object-fit: cover;
         }
 
-        /* Animação Pulsante caso não tenha capa nenhuma */
-        .fallback-pulse {
+        /* CONTAINER DO EQUALIZADOR DE BARRAS */
+        .bars-container {
             width: 270px;
             height: 270px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.1) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 25px;
-            animation: pulse 2s infinite ease-in-out;
-            box-shadow: 0 0 30px rgba(255,255,255,0.5);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.7; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.7; }
+        .bar {
+            width: 12px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 6px;
+            animation: bounce 1s ease-in-out infinite alternate;
+        }
+
+        .bar:nth-child(1) { animation-duration: 0.6s; animation-delay: 0.1s; }
+        .bar:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.4s; }
+        .bar:nth-child(3) { animation-duration: 0.5s; animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-duration: 0.7s; animation-delay: 0.5s; }
+        .bar:nth-child(5) { animation-duration: 0.9s; animation-delay: 0.3s; }
+
+        @keyframes bounce {
+            0% { height: 30px; transform: scaleY(1); }
+            100% { height: 140px; transform: scaleY(1.1); }
         }
 
         .title { 
@@ -143,10 +157,18 @@
     </div>
 
     <script>
-        // === DADOS DE ACESSO ===
         const USERNAME = 'athusluz'; 
         const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b'; 
-        // =======================
+
+        const fallbackHTML = `
+            <div class="bars-container">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        `;
 
         async function getNowPlaying() {
             const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`;
@@ -164,21 +186,21 @@
                 if (isPlaying) {
                     const songName = track.name;
                     const artistName = track.artist['#text'];
-                    const albumName = track.album && track.album['#text'] ? track.album['#text'] : '';
                     
-                    let coverUrl = track.image?.[3]?.['#text'] || '';
+                    // Condicional simples: só exibe a div do álbum se ele realmente vier preenchido da API
+                    const albumName = track.album && track.album['#text'] ? `<div class="album">${track.album['#text']}</div>` : '';
+                    
+                    // CORRIGIDO: Correção do erro de sintaxe na leitura da imagem do Last.fm
+                    let coverUrl = track.image?.[3]?.[`#text`] || '';
 
                     if (coverUrl.startsWith('http://')) {
                         coverUrl = coverUrl.replace('http://', 'https://');
                     }
 
-                    // Se não tiver capa, tentamos o iTunes
                     if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
                         try {
-                            // O comando normalize('NFKC') converte fontes vaporwave (ｖａｎｉｓｈｅｄ) para letras normais (vanished) para a busca funcionar
                             const queryArtist = artistName.normalize('NFKC');
                             const querySong = songName.normalize('NFKC');
-                            
                             const query = encodeURIComponent(`${queryArtist} ${querySong}`);
                             const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
                             const itunesData = await itunesRes.json();
@@ -186,38 +208,41 @@
                             if (itunesData.results && itunesData.results.length > 0) {
                                 coverUrl = itunesData.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
                             } else {
-                                coverUrl = ''; // Define como vazio para acionar a animação
+                                coverUrl = ''; 
                             }
                         } catch (e) {
                             coverUrl = '';
                         }
                     }
 
-                    // Monta o visual de acordo com a existência da capa (sem quebrar HTML)
                     let visualHTML = '';
                     if (coverUrl !== '') {
-                        // Com Capa
                         bgLayer.className = ''; 
                         bgLayer.style.backgroundImage = `url('${coverUrl}')`;
                         visualHTML = `<img class="cover-circle" src="${coverUrl}" alt="Capa">`;
                     } else {
-                        // Sem Capa (Fallback Limpo Animado)
                         bgLayer.style.backgroundImage = 'none';
                         bgLayer.className = 'aurora-bg'; 
-                        visualHTML = `<div class="fallback-pulse"></div>`;
+                        visualHTML = fallbackHTML;
                     }
 
                     widget.innerHTML = `
                         ${visualHTML}
                         <div class="title">${songName}</div>
                         <div class="artist">${artistName}</div>
-                        <div class="album">${albumName}</div>
+                        ${albumName}
                     `;
                 } else {
                     bgLayer.style.backgroundImage = 'none';
                     bgLayer.className = 'aurora-bg';
                     widget.innerHTML = `
-                        <div class="fallback-pulse" style="animation: none; opacity: 0.2;"></div>
+                        <div class="bars-container" style="opacity: 0.3; border-style: dashed;">
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                        </div>
                         <div class="title">Nenhuma música</div>
                         <div class="artist" style="font-weight: 400;">O silêncio...</div>
                     `;

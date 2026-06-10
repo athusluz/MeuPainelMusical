@@ -160,6 +160,10 @@
         const USERNAME = 'athusluz'; 
         const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b'; 
 
+        // Variáveis de estado para impedir o reset da animação
+        let currentTrackUrl = '';
+        let currentStatus = ''; 
+
         const fallbackHTML = `
             <div class="bars-container">
                 <div class="bar"></div>
@@ -187,69 +191,84 @@
                     const songName = track.name;
                     const artistName = track.artist['#text'];
                     
-                    // Condicional simples: só exibe a div do álbum se ele realmente vier preenchido da API
-                    const albumName = track.album && track.album['#text'] ? `<div class="album">${track.album['#text']}</div>` : '';
-                    
-                    // CORRIGIDO: Correção do erro de sintaxe na leitura da imagem do Last.fm
-                    let coverUrl = track.image?.[3]?.[`#text`] || '';
+                    // Identificador único da música tocando agora
+                    const trackIdentifier = `${songName}-${artistName}`;
 
-                    if (coverUrl.startsWith('http://')) {
-                        coverUrl = coverUrl.replace('http://', 'https://');
-                    }
+                    // Só processa o visual se a música mudou ou se estava pausado antes
+                    if (currentTrackUrl !== trackIdentifier || currentStatus !== 'playing') {
+                        currentTrackUrl = trackIdentifier;
+                        currentStatus = 'playing';
 
-                    if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
-                        try {
-                            const queryArtist = artistName.normalize('NFKC');
-                            const querySong = songName.normalize('NFKC');
-                            const query = encodeURIComponent(`${queryArtist} ${querySong}`);
-                            const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
-                            const itunesData = await itunesRes.json();
-                            
-                            if (itunesData.results && itunesData.results.length > 0) {
-                                coverUrl = itunesData.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-                            } else {
-                                coverUrl = ''; 
-                            }
-                        } catch (e) {
-                            coverUrl = '';
+                        const albumName = track.album && track.album['#text'] ? `<div class="album">${track.album['#text']}</div>` : '';
+                        let coverUrl = track.image?.[3]?.[`#text`] || '';
+
+                        if (coverUrl.startsWith('http://')) {
+                            coverUrl = coverUrl.replace('http://', 'https://');
                         }
-                    }
 
-                    let visualHTML = '';
-                    if (coverUrl !== '') {
-                        bgLayer.className = ''; 
-                        bgLayer.style.backgroundImage = `url('${coverUrl}')`;
-                        visualHTML = `<img class="cover-circle" src="${coverUrl}" alt="Capa">`;
-                    } else {
-                        bgLayer.style.backgroundImage = 'none';
-                        bgLayer.className = 'aurora-bg'; 
-                        visualHTML = fallbackHTML;
-                    }
+                        if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
+                            try {
+                                const queryArtist = artistName.normalize('NFKC');
+                                const querySong = songName.normalize('NFKC');
+                                const query = encodeURIComponent(`${queryArtist} ${querySong}`);
+                                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
+                                const itunesData = await itunesRes.json();
+                                
+                                if (itunesData.results && itunesData.results.length > 0) {
+                                    coverUrl = itunesData.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+                                } else {
+                                    coverUrl = ''; 
+                                }
+                            } catch (e) {
+                                coverUrl = '';
+                            }
+                        }
 
-                    widget.innerHTML = `
-                        ${visualHTML}
-                        <div class="title">${songName}</div>
-                        <div class="artist">${artistName}</div>
-                        ${albumName}
-                    `;
+                        let visualHTML = '';
+                        if (coverUrl !== '') {
+                            bgLayer.className = ''; 
+                            bgLayer.style.backgroundImage = `url('${coverUrl}')`;
+                            visualHTML = `<img class="cover-circle" src="${coverUrl}" alt="Capa">`;
+                        } else {
+                            bgLayer.style.backgroundImage = 'none';
+                            bgLayer.className = 'aurora-bg'; 
+                            visualHTML = fallbackHTML;
+                        }
+
+                        widget.innerHTML = `
+                            ${visualHTML}
+                            <div class="title">${songName}</div>
+                            <div class="artist">${artistName}</div>
+                            ${albumName}
+                        `;
+                    }
                 } else {
-                    bgLayer.style.backgroundImage = 'none';
-                    bgLayer.className = 'aurora-bg';
-                    widget.innerHTML = `
-                        <div class="bars-container" style="opacity: 0.3; border-style: dashed;">
-                            <div class="bar" style="animation: none; height: 20px;"></div>
-                            <div class="bar" style="animation: none; height: 20px;"></div>
-                            <div class="bar" style="animation: none; height: 20px;"></div>
-                            <div class="bar" style="animation: none; height: 20px;"></div>
-                            <div class="bar" style="animation: none; height: 20px;"></div>
-                        </div>
-                        <div class="title">Nenhuma música</div>
-                        <div class="artist" style="font-weight: 400;">O silêncio...</div>
-                    `;
+                    // Só atualiza para a tela de pausa se o status anterior não for "paused"
+                    if (currentStatus !== 'paused') {
+                        currentStatus = 'paused';
+                        currentTrackUrl = '';
+
+                        bgLayer.style.backgroundImage = 'none';
+                        bgLayer.className = 'aurora-bg';
+                        widget.innerHTML = `
+                            <div class="bars-container" style="opacity: 0.3; border-style: dashed;">
+                                <div class="bar" style="animation: none; height: 20px;"></div>
+                                <div class="bar" style="animation: none; height: 20px;"></div>
+                                <div class="bar" style="animation: none; height: 20px;"></div>
+                                <div class="bar" style="animation: none; height: 20px;"></div>
+                                <div class="bar" style="animation: none; height: 20px;"></div>
+                            </div>
+                            <div class="title">Nenhuma música</div>
+                            <div class="artist" style="font-weight: 400;">O silêncio...</div>
+                        `;
+                    }
                 }
             } catch (error) {
                 console.error("Erro ao buscar a música:", error);
-                document.getElementById('music-widget').innerHTML = "<p style='font-size: 24px; color: #ff4a4a;'>Erro de conexão</p>";
+                if (currentStatus !== 'error') {
+                    currentStatus = 'error';
+                    document.getElementById('music-widget').innerHTML = "<p style='font-size: 24px; color: #ff4a4a;'>Erro de conexão</p>";
+                }
             }
         }
 

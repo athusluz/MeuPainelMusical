@@ -180,14 +180,16 @@
             </div>
         `;
 
-        // Função para faxina no texto antes de buscar (remove parênteses, colchetes e caracteres estranhos)
+        // Função para faxina agressiva e corrigida no texto
         function cleanStringForSearch(str) {
+            if (!str) return '';
             return str
-                .replace(/\\(.*?\\)/g, '')  // Remove tudo entre parênteses
-                .replace(/\\[.*?\\]/g, '')  // Remove tudo entre colchetes
-                .replace(/(ft\\.|feat\\.|prod\\.).*$/i, '') // Remove feats do final
-                .replace(/[^a-zA-Z0-9À-ÿ\\s]/g, ' ') // Remove caracteres especiais mantendo acentos
-                .replace(/\\s+/g, ' ') // Limpa espaços duplos
+                .replace(/\(.*?\)/g, ' ')  // Remove tudo entre parênteses
+                .replace(/\[.*?\]/g, ' ')  // Remove tudo entre colchetes
+                .replace(/[-_]/g, ' ')     // Troca hífens e underlines por espaços
+                .replace(/(ft\.|feat\.|prod\.|remix|official|video|audio|lyrics).*$/i, ' ') // Remove feats e sufixos inúteis
+                .replace(/[^a-zA-Z0-9À-ÿ\s]/g, ' ') // Remove caracteres especiais mantendo acentos
+                .replace(/\s+/g, ' ') // Limpa espaços duplos
                 .trim();
         }
 
@@ -206,7 +208,7 @@
                     return itunesData.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
                 }
 
-                // PLANO B: Se falhou (nome errado no PC), tenta buscar APENAS o nome da música
+                // PLANO B: Se falhou (nome muito específico ou erro no artista), busca APENAS o nome da música limpo
                 if (cleanSong.length > 0) {
                     query = encodeURIComponent(cleanSong);
                     itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
@@ -244,7 +246,7 @@
                     activeSource = 'MPC-HC';
                     
                     const rawFile = doc.getElementById('file')?.innerText || '';
-                    let cleanName = rawFile.replace(/\\.[^/.]+$/, ""); 
+                    let cleanName = rawFile.replace(/\.[^/.]+$/, ""); 
                     
                     artistName = "Desconhecido";
                     songName = cleanName;
@@ -258,7 +260,7 @@
                     coverUrl = await fetchItunesCover(artistName, songName);
                 }
             } catch (e) {
-                // MPC fechado, segue o jogo
+                // MPC fechado, segue o jogo silenciosamente
             }
 
             // TENTATIVA 2: Last.fm (Navegador)

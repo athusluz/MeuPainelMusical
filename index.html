@@ -164,11 +164,9 @@
     </div>
 
     <script>
-        // CONFIGURAÇÕES LAST.FM
         const USERNAME = 'athusluz'; 
         const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b'; 
 
-        // VARIÁVEIS DE CONTROLE
         let currentTrackUrl = '';
         let currentStatus = ''; 
 
@@ -182,18 +180,43 @@
             </div>
         `;
 
-        // Função reutilizável para buscar capas no iTunes
+        // Função para faxina no texto antes de buscar (remove parênteses, colchetes e caracteres estranhos)
+        function cleanStringForSearch(str) {
+            return str
+                .replace(/\\(.*?\\)/g, '')  // Remove tudo entre parênteses
+                .replace(/\\[.*?\\]/g, '')  // Remove tudo entre colchetes
+                .replace(/(ft\\.|feat\\.|prod\\.).*$/i, '') // Remove feats do final
+                .replace(/[^a-zA-Z0-9À-ÿ\\s]/g, ' ') // Remove caracteres especiais mantendo acentos
+                .replace(/\\s+/g, ' ') // Limpa espaços duplos
+                .trim();
+        }
+
+        // Função de busca tolerante a erros
         async function fetchItunesCover(artist, song) {
             try {
-                const queryArtist = artist.normalize('NFKC');
-                const querySong = song.normalize('NFKC');
-                const query = encodeURIComponent(`${queryArtist} ${querySong}`);
-                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
-                const itunesData = await itunesRes.json();
+                const cleanArtist = cleanStringForSearch(artist).normalize('NFKC');
+                const cleanSong = cleanStringForSearch(song).normalize('NFKC');
+
+                // PLANO A: Tenta buscar Artista + Música
+                let query = encodeURIComponent(`${cleanArtist} ${cleanSong}`);
+                let itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
+                let itunesData = await itunesRes.json();
                 
                 if (itunesData.results && itunesData.results.length > 0) {
                     return itunesData.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
                 }
+
+                // PLANO B: Se falhou (nome errado no PC), tenta buscar APENAS o nome da música
+                if (cleanSong.length > 0) {
+                    query = encodeURIComponent(cleanSong);
+                    itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
+                    itunesData = await itunesRes.json();
+
+                    if (itunesData.results && itunesData.results.length > 0) {
+                        return itunesData.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+                    }
+                }
+
             } catch (e) {
                 console.error("Erro no iTunes:", e);
             }
@@ -216,14 +239,14 @@
                 const doc = parser.parseFromString(text, "text/html");
                 const state = doc.getElementById('state')?.innerText || '0';
                 
-                if (state === '2') { // 2 = Tocando no MPC
+                if (state === '2') { 
                     isPlaying = true;
                     activeSource = 'MPC-HC';
                     
                     const rawFile = doc.getElementById('file')?.innerText || '';
-                    let cleanName = rawFile.replace(/\\.[^/.]+$/, ""); // Tira a extensão
+                    let cleanName = rawFile.replace(/\\.[^/.]+$/, ""); 
                     
-                    artistName = "Arquivo Local";
+                    artistName = "Desconhecido";
                     songName = cleanName;
 
                     if (cleanName.includes(" - ")) {
@@ -232,14 +255,13 @@
                         songName = parts.slice(1).join(" - ").trim();
                     }
                     
-                    // Busca capa no iTunes pro arquivo local
                     coverUrl = await fetchItunesCover(artistName, songName);
                 }
             } catch (e) {
-                // MPC fechado ou sem resposta, segue para o Last.fm silenciosamente
+                // MPC fechado, segue o jogo
             }
 
-            // TENTATIVA 2: Se o MPC não estiver tocando, checa o Last.fm (Navegador)
+            // TENTATIVA 2: Last.fm (Navegador)
             if (!isPlaying) {
                 try {
                     const lfmUrl = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`;
@@ -266,7 +288,6 @@
                 }
             }
 
-            // ATUALIZAÇÃO DA TELA (Com lógica anti-reset)
             const widget = document.getElementById('music-widget');
             const bgLayer = document.getElementById('bg-layer');
 
@@ -288,7 +309,6 @@
                         visualHTML = fallbackHTML;
                     }
 
-                    // Exibe a música e uma pequena tag cinza mostrando se veio do MPC ou do Navegador
                     widget.innerHTML = `
                         ${visualHTML}
                         <div class="title">${songName}</div>
@@ -319,8 +339,6 @@
             }
         }
 
-        // Como o Last.fm prefere intervalos maiores e o MPC aguenta intervalos curtos,
-        // 5 segundos é um meio-termo perfeito e seguro para buscar nos dois sistemas.
         getNowPlaying();
         setInterval(getNowPlaying, 5000); 
     </script>

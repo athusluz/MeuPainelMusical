@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Kraken Display</title>
+    <title>Tocando Agora - Híbrido Kraken Display</title>
     <style>
         * {
             box-sizing: border-box;
@@ -23,7 +23,6 @@
             position: relative;
         }
 
-        /* Fundo Dinâmico Holográfico/Aurora */
         #bg-layer {
             position: absolute;
             top: -10%; 
@@ -76,7 +75,6 @@
             object-fit: cover;
         }
 
-        /* CONTAINER DO EQUALIZADOR DE BARRAS */
         .bars-container {
             width: 270px;
             height: 270px;
@@ -145,6 +143,15 @@
             width: 100%;
             text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
+        
+        .source-badge {
+            font-size: 14px;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin-top: 10px;
+            color: #aaa;
+        }
     </style>
 </head>
 <body>
@@ -153,14 +160,15 @@
     <div id="glass-overlay"></div>
 
     <div id="music-widget">
-        <p style="font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Conectando ao Last.fm...</p>
+        <p style="font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Inicializando Sistema Híbrido...</p>
     </div>
 
     <script>
+        // CONFIGURAÇÕES LAST.FM
         const USERNAME = 'athusluz'; 
         const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b'; 
 
-        // Variáveis de estado para impedir o reset da animação
+        // VARIÁVEIS DE CONTROLE
         let currentTrackUrl = '';
         let currentStatus = ''; 
 
@@ -174,106 +182,147 @@
             </div>
         `;
 
-        async function getNowPlaying() {
-            const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`;
-
+        // Função reutilizável para buscar capas no iTunes
+        async function fetchItunesCover(artist, song) {
             try {
-                const response = await fetch(url);
-                const data = await response.json();
+                const queryArtist = artist.normalize('NFKC');
+                const querySong = song.normalize('NFKC');
+                const query = encodeURIComponent(`${queryArtist} ${querySong}`);
+                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
+                const itunesData = await itunesRes.json();
                 
-                const track = data.recenttracks.track[0];
-                const isPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
+                if (itunesData.results && itunesData.results.length > 0) {
+                    return itunesData.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+                }
+            } catch (e) {
+                console.error("Erro no iTunes:", e);
+            }
+            return '';
+        }
 
-                const widget = document.getElementById('music-widget');
-                const bgLayer = document.getElementById('bg-layer');
+        async function getNowPlaying() {
+            let isPlaying = false;
+            let songName = '';
+            let artistName = '';
+            let albumName = '';
+            let coverUrl = '';
+            let activeSource = '';
 
-                if (isPlaying) {
-                    const songName = track.name;
-                    const artistName = track.artist['#text'];
+            // TENTATIVA 1: Bater no Media Player Classic (Local)
+            try {
+                const mpcRes = await fetch('http://localhost:13579/variables.html');
+                const text = await mpcRes.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, "text/html");
+                const state = doc.getElementById('state')?.innerText || '0';
+                
+                if (state === '2') { // 2 = Tocando no MPC
+                    isPlaying = true;
+                    activeSource = 'MPC-HC';
                     
-                    // Identificador único da música tocando agora
-                    const trackIdentifier = `${songName}-${artistName}`;
+                    const rawFile = doc.getElementById('file')?.innerText || '';
+                    let cleanName = rawFile.replace(/\\.[^/.]+$/, ""); // Tira a extensão
+                    
+                    artistName = "Arquivo Local";
+                    songName = cleanName;
 
-                    // Só processa o visual se a música mudou ou se estava pausado antes
-                    if (currentTrackUrl !== trackIdentifier || currentStatus !== 'playing') {
-                        currentTrackUrl = trackIdentifier;
-                        currentStatus = 'playing';
+                    if (cleanName.includes(" - ")) {
+                        const parts = cleanName.split(" - ");
+                        artistName = parts[0].trim();
+                        songName = parts.slice(1).join(" - ").trim();
+                    }
+                    
+                    // Busca capa no iTunes pro arquivo local
+                    coverUrl = await fetchItunesCover(artistName, songName);
+                }
+            } catch (e) {
+                // MPC fechado ou sem resposta, segue para o Last.fm silenciosamente
+            }
 
-                        const albumName = track.album && track.album['#text'] ? `<div class="album">${track.album['#text']}</div>` : '';
-                        let coverUrl = track.image?.[3]?.[`#text`] || '';
-
-                        if (coverUrl.startsWith('http://')) {
-                            coverUrl = coverUrl.replace('http://', 'https://');
-                        }
+            // TENTATIVA 2: Se o MPC não estiver tocando, checa o Last.fm (Navegador)
+            if (!isPlaying) {
+                try {
+                    const lfmUrl = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`;
+                    const lfmRes = await fetch(lfmUrl);
+                    const lfmData = await lfmRes.json();
+                    const track = lfmData.recenttracks.track[0];
+                    
+                    if (track['@attr'] && track['@attr'].nowplaying === 'true') {
+                        isPlaying = true;
+                        activeSource = 'Navegador';
+                        songName = track.name;
+                        artistName = track.artist['#text'];
+                        albumName = track.album && track.album['#text'] ? `<div class="album">${track.album['#text']}</div>` : '';
+                        
+                        coverUrl = track.image?.[3]?.[`#text`] || '';
+                        if (coverUrl.startsWith('http://')) coverUrl = coverUrl.replace('http://', 'https://');
 
                         if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
-                            try {
-                                const queryArtist = artistName.normalize('NFKC');
-                                const querySong = songName.normalize('NFKC');
-                                const query = encodeURIComponent(`${queryArtist} ${querySong}`);
-                                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
-                                const itunesData = await itunesRes.json();
-                                
-                                if (itunesData.results && itunesData.results.length > 0) {
-                                    coverUrl = itunesData.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-                                } else {
-                                    coverUrl = ''; 
-                                }
-                            } catch (e) {
-                                coverUrl = '';
-                            }
+                            coverUrl = await fetchItunesCover(artistName, songName);
                         }
-
-                        let visualHTML = '';
-                        if (coverUrl !== '') {
-                            bgLayer.className = ''; 
-                            bgLayer.style.backgroundImage = `url('${coverUrl}')`;
-                            visualHTML = `<img class="cover-circle" src="${coverUrl}" alt="Capa">`;
-                        } else {
-                            bgLayer.style.backgroundImage = 'none';
-                            bgLayer.className = 'aurora-bg'; 
-                            visualHTML = fallbackHTML;
-                        }
-
-                        widget.innerHTML = `
-                            ${visualHTML}
-                            <div class="title">${songName}</div>
-                            <div class="artist">${artistName}</div>
-                            ${albumName}
-                        `;
                     }
-                } else {
-                    // Só atualiza para a tela de pausa se o status anterior não for "paused"
-                    if (currentStatus !== 'paused') {
-                        currentStatus = 'paused';
-                        currentTrackUrl = '';
-
-                        bgLayer.style.backgroundImage = 'none';
-                        bgLayer.className = 'aurora-bg';
-                        widget.innerHTML = `
-                            <div class="bars-container" style="opacity: 0.3; border-style: dashed;">
-                                <div class="bar" style="animation: none; height: 20px;"></div>
-                                <div class="bar" style="animation: none; height: 20px;"></div>
-                                <div class="bar" style="animation: none; height: 20px;"></div>
-                                <div class="bar" style="animation: none; height: 20px;"></div>
-                                <div class="bar" style="animation: none; height: 20px;"></div>
-                            </div>
-                            <div class="title">Nenhuma música</div>
-                            <div class="artist" style="font-weight: 400;">O silêncio...</div>
-                        `;
-                    }
+                } catch (error) {
+                    console.error("Erro no Last.fm:", error);
                 }
-            } catch (error) {
-                console.error("Erro ao buscar a música:", error);
-                if (currentStatus !== 'error') {
-                    currentStatus = 'error';
-                    document.getElementById('music-widget').innerHTML = "<p style='font-size: 24px; color: #ff4a4a;'>Erro de conexão</p>";
+            }
+
+            // ATUALIZAÇÃO DA TELA (Com lógica anti-reset)
+            const widget = document.getElementById('music-widget');
+            const bgLayer = document.getElementById('bg-layer');
+
+            if (isPlaying) {
+                const trackIdentifier = `${activeSource}-${songName}-${artistName}`;
+
+                if (currentTrackUrl !== trackIdentifier || currentStatus !== 'playing') {
+                    currentTrackUrl = trackIdentifier;
+                    currentStatus = 'playing';
+
+                    let visualHTML = '';
+                    if (coverUrl !== '') {
+                        bgLayer.className = ''; 
+                        bgLayer.style.backgroundImage = `url('${coverUrl}')`;
+                        visualHTML = `<img class="cover-circle" src="${coverUrl}" alt="Capa">`;
+                    } else {
+                        bgLayer.style.backgroundImage = 'none';
+                        bgLayer.className = 'aurora-bg'; 
+                        visualHTML = fallbackHTML;
+                    }
+
+                    // Exibe a música e uma pequena tag cinza mostrando se veio do MPC ou do Navegador
+                    widget.innerHTML = `
+                        ${visualHTML}
+                        <div class="title">${songName}</div>
+                        <div class="artist">${artistName}</div>
+                        ${albumName}
+                        <div class="source-badge">Via ${activeSource}</div>
+                    `;
+                }
+            } else {
+                if (currentStatus !== 'paused') {
+                    currentStatus = 'paused';
+                    currentTrackUrl = '';
+
+                    bgLayer.style.backgroundImage = 'none';
+                    bgLayer.className = 'aurora-bg';
+                    widget.innerHTML = `
+                        <div class="bars-container" style="opacity: 0.3; border-style: dashed;">
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                            <div class="bar" style="animation: none; height: 20px;"></div>
+                        </div>
+                        <div class="title">Nenhuma música</div>
+                        <div class="artist" style="font-weight: 400;">O silêncio...</div>
+                    `;
                 }
             }
         }
 
+        // Como o Last.fm prefere intervalos maiores e o MPC aguenta intervalos curtos,
+        // 5 segundos é um meio-termo perfeito e seguro para buscar nos dois sistemas.
         getNowPlaying();
-        setInterval(getNowPlaying, 10000);
+        setInterval(getNowPlaying, 5000); 
     </script>
 </body>
 </html>

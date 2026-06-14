@@ -160,30 +160,34 @@
             color: #aaa;
         }
 
-        /* --- ESTILOS DOS CARDS DE HARDWARE --- */
+        /* --- ESTILOS DOS CARDS DE HARDWARE (ATUALIZADO) --- */
         .hw-card {
             background: rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
-            padding: 15px 10px;
+            padding: 20px 15px; /* Mais espaçamento interno */
             text-align: center;
             color: #fff;
             backdrop-filter: blur(10px);
-            min-width: 80px;
+            min-width: 95px; /* Um pouco mais largo */
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .hw-title-card {
-            font-size: 14px;
+            font-size: 16px; /* Aumentado */
             font-weight: bold;
             color: #c2e9fb;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
         .hw-val-card {
-            font-size: 18px;
+            font-size: 24px; /* Bem mais visível */
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         /* --- ESTILOS DO MENU DE CONTEXTO --- */
@@ -267,37 +271,17 @@
         <p style="font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Inicializando Sistema Híbrido...</p>
     </div>
 
-    <!-- MENU DE CONTEXTO -->
     <div id="context-menu">
         <h3>Fontes de Notícias</h3>
-        <label class="menu-option">
-            <input type="checkbox" value="g1" class="news-source-cb"> G1 (Geral)
-        </label>
-        <label class="menu-option">
-            <input type="checkbox" value="copa" class="news-source-cb"> Copa do Mundo
-        </label>
-        <label class="menu-option">
-            <input type="checkbox" value="ge" class="news-source-cb"> Esportes (GE)
-        </label>
-        <label class="menu-option">
-            <input type="checkbox" value="esports" class="news-source-cb"> e-Sports & Games
-        </label>
-        <label class="menu-option">
-            <input type="checkbox" value="pop" class="news-source-cb"> Pop & Arte (Filmes/Séries)
-        </label>
-        <label class="menu-option">
-            <input type="checkbox" value="tecnologia" class="news-source-cb"> Tecnologia
-        </label>
-        <label class="menu-option">
-            <input type="checkbox" value="carros" class="news-source-cb"> Carros & Auto
-        </label>
-        <label class="menu-option">
-            <input type="checkbox" value="economia" class="news-source-cb"> Economia
-        </label>
-        <label class="menu-option">
-            <input type="checkbox" value="politica" class="news-source-cb"> Política
-        </label>
-        
+        <label class="menu-option"><input type="checkbox" value="g1" class="news-source-cb"> G1 (Geral)</label>
+        <label class="menu-option"><input type="checkbox" value="copa" class="news-source-cb"> Copa do Mundo</label>
+        <label class="menu-option"><input type="checkbox" value="ge" class="news-source-cb"> Esportes (GE)</label>
+        <label class="menu-option"><input type="checkbox" value="esports" class="news-source-cb"> e-Sports & Games</label>
+        <label class="menu-option"><input type="checkbox" value="pop" class="news-source-cb"> Pop & Arte (Filmes/Séries)</label>
+        <label class="menu-option"><input type="checkbox" value="tecnologia" class="news-source-cb"> Tecnologia</label>
+        <label class="menu-option"><input type="checkbox" value="carros" class="news-source-cb"> Carros & Auto</label>
+        <label class="menu-option"><input type="checkbox" value="economia" class="news-source-cb"> Economia</label>
+        <label class="menu-option"><input type="checkbox" value="politica" class="news-source-cb"> Política</label>
         <button id="save-menu-btn">Salvar & Atualizar</button>
     </div>
 
@@ -324,16 +308,22 @@
         
         let newsInterval = null; 
         let newsList = [];
-        let currentNewsIndex = -1; // -1 inicia o ciclo exibindo o clima
+        let currentNewsIndex = -1; 
         let goianiaWeather = null;
 
-        // Variaveis de Hardware
         let cpuTemp = '--';
         let cpuLoad = '--';
         let gpuTemp = '--';
         let gpuLoad = '--';
 
-        // API Interna do NZXT CAM
+        // Lógica dos Ícones de Hardware (ATUALIZADA)
+        function getStatusIcon(temp, load) {
+            if (temp === '--' || load === '--') return '';
+            if (temp > 60 || load > 90) return '🔥';
+            if (temp < 40) return '❄️';
+            return '';
+        }
+
         window.nzxt = {
             v1: {
                 onMonitoringDataUpdate: (data) => {
@@ -353,10 +343,15 @@
                     if (elCpuT) elCpuT.innerText = cpuTemp;
                     const elCpuL = document.getElementById('cpu-l');
                     if (elCpuL) elCpuL.innerText = cpuLoad;
+                    const elCpuI = document.getElementById('cpu-icon');
+                    if (elCpuI) elCpuI.innerText = getStatusIcon(cpuTemp, cpuLoad);
+
                     const elGpuT = document.getElementById('gpu-t');
                     if (elGpuT) elGpuT.innerText = gpuTemp;
                     const elGpuL = document.getElementById('gpu-l');
                     if (elGpuL) elGpuL.innerText = gpuLoad;
+                    const elGpuI = document.getElementById('gpu-icon');
+                    if (elGpuI) elGpuI.innerText = getStatusIcon(gpuTemp, gpuLoad);
                 }
             }
         };
@@ -373,9 +368,7 @@
 
         function getBackgroundClass() {
             const hour = new Date().getHours();
-            if (hour >= 18 || hour < 6) {
-                return 'dark-bg';
-            }
+            if (hour >= 18 || hour < 6) return 'dark-bg';
             return 'aurora-bg';
         }
 
@@ -383,57 +376,41 @@
         const checkboxes = document.querySelectorAll('.news-source-cb');
 
         function syncCheckboxes() {
-            checkboxes.forEach(cb => {
-                cb.checked = activeSources.includes(cb.value);
-            });
+            checkboxes.forEach(cb => { cb.checked = activeSources.includes(cb.value); });
         }
         syncCheckboxes();
 
         window.addEventListener('contextmenu', (e) => {
             e.preventDefault(); 
             contextMenu.style.display = 'block';
-            
-            let x = e.pageX;
-            let y = e.pageY;
+            let x = e.pageX; let y = e.pageY;
             if (x + contextMenu.offsetWidth > window.innerWidth) x = window.innerWidth - contextMenu.offsetWidth - 10;
             if (y + contextMenu.offsetHeight > window.innerHeight) y = window.innerHeight - contextMenu.offsetHeight - 10;
-            
-            contextMenu.style.left = `${x}px`;
-            contextMenu.style.top = `${y}px`;
+            contextMenu.style.left = `${x}px`; contextMenu.style.top = `${y}px`;
         });
 
         window.addEventListener('click', (e) => {
-            if (!contextMenu.contains(e.target)) {
-                contextMenu.style.display = 'none';
-            }
+            if (!contextMenu.contains(e.target)) contextMenu.style.display = 'none';
         });
 
         document.getElementById('save-menu-btn').addEventListener('click', () => {
             const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-            
             if (selected.length === 0) {
                 alert("Selecione pelo menos uma fonte de notícias!");
                 return;
             }
-
             activeSources = selected;
             localStorage.setItem('kraken_news_all_v2', JSON.stringify(activeSources));
             contextMenu.style.display = 'none';
-            
             fetchNews(); 
         });
 
         async function fetchWeather() {
             try {
-                // Coordenadas de Goiânia
                 const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-16.6799&longitude=-49.2562&current_weather=true');
                 const data = await res.json();
-                if (data.current_weather) {
-                    goianiaWeather = data.current_weather;
-                }
-            } catch (e) {
-                console.error("Erro ao buscar clima", e);
-            }
+                if (data.current_weather) goianiaWeather = data.current_weather;
+            } catch (e) { console.error("Erro ao buscar clima", e); }
         }
 
         async function fetchNews() {
@@ -450,22 +427,15 @@
                     if (data.items && data.items.length > 0) {
                         data.items.forEach(item => {
                             let imgUrl = '';
-                            if (item.enclosure && item.enclosure.link) {
-                                imgUrl = item.enclosure.link;
-                            } else if (item.thumbnail) {
-                                imgUrl = item.thumbnail;
-                            } else {
+                            if (item.enclosure && item.enclosure.link) imgUrl = item.enclosure.link;
+                            else if (item.thumbnail) imgUrl = item.thumbnail;
+                            else {
                                 const match = item.description.match(/<img[^>]+src="([^">]+)"/);
                                 if (match) imgUrl = match[1];
                             }
 
-                            // Filtro cirúrgico: só insere se existir imagem
                             if (imgUrl) {
-                                newsList.push({
-                                    title: item.title,
-                                    source: sourceData.name,
-                                    image: imgUrl
-                                });
+                                newsList.push({ title: item.title, source: sourceData.name, image: imgUrl });
                             }
                         });
                     }
@@ -473,18 +443,15 @@
 
                 await Promise.all(fetchPromises);
                 newsList = newsList.sort(() => Math.random() - 0.5);
-                currentNewsIndex = -1; // Reseta o ciclo para iniciar no Clima
+                currentNewsIndex = -1; 
 
-            } catch (error) {
-                console.error("Erro ao buscar notícias:", error);
-            }
+            } catch (error) { console.error("Erro ao buscar notícias:", error); }
         }
 
         fetchNews();
 
         function startNewsCycle() {
             if (newsInterval) return;
-            
             const widget = document.getElementById('music-widget');
             
             const updateNews = () => {
@@ -496,7 +463,6 @@
                 setTimeout(() => {
                     let visualHTML = '';
                     
-                    // Exibição do Clima
                     if (currentNewsIndex === -1 && goianiaWeather) {
                         bgLayer.style.backgroundImage = 'none';
                         bgLayer.className = getBackgroundClass(); 
@@ -515,11 +481,8 @@
                             <div class="title" style="white-space: normal; font-size: 26px; line-height: 1.3; margin-bottom: 12px; padding: 0 15px;">Clima Atual</div>
                             <div class="artist" style="font-size: 18px; color: #ccc;">Open-Meteo</div>
                         `;
-                        
                         currentNewsIndex = 0;
-                    } 
-                    // Exibição de Notícias
-                    else {
+                    } else {
                         if (newsList.length === 0) {
                              currentNewsIndex = -1;
                              widget.style.opacity = 1;
@@ -546,11 +509,8 @@
                         `;
                         
                         currentNewsIndex++;
-                        if (currentNewsIndex >= newsList.length) {
-                            currentNewsIndex = -1; 
-                        }
+                        if (currentNewsIndex >= newsList.length) currentNewsIndex = -1; 
                     }
-                    
                     widget.style.opacity = 1; 
                 }, 500);
             };
@@ -560,22 +520,14 @@
         }
 
         function stopNewsCycle() {
-            if (newsInterval) {
-                clearInterval(newsInterval);
-                newsInterval = null;
-            }
+            if (newsInterval) { clearInterval(newsInterval); newsInterval = null; }
         }
 
         function cleanStringForSearch(str) {
             if (!str) return '';
-            return str
-                .replace(/\(.*?\)/g, ' ')  
-                .replace(/\[.*?\]/g, ' ')  
-                .replace(/[-_]/g, ' ')     
-                .replace(/(ft\.|feat\.|prod\.|remix|official|video|audio|lyrics).*$/i, ' ') 
-                .replace(/[^a-zA-Z0-9À-ÿ\s]/g, ' ') 
-                .replace(/\s+/g, ' ') 
-                .trim();
+            return str.replace(/\(.*?\)/g, ' ').replace(/\[.*?\]/g, ' ').replace(/[-_]/g, ' ')
+                .replace(/(ft\.|feat\.|prod\.|remix|official|video|audio|lyrics).*$/i, ' ')
+                .replace(/[^a-zA-Z0-9À-ÿ\s]/g, ' ').replace(/\s+/g, ' ').trim();
         }
 
         async function fetchItunesCover(artist, song) {
@@ -622,19 +574,15 @@
                 if (state === '2') { 
                     isPlaying = true;
                     activeSource = 'MPC-HC';
-                    
                     const rawFile = doc.getElementById('file')?.innerText || '';
                     let cleanName = rawFile.replace(/\.[^/.]+$/, ""); 
                     
-                    artistName = "Desconhecido";
-                    songName = cleanName;
+                    artistName = "Desconhecido"; songName = cleanName;
 
                     if (cleanName.includes(" - ")) {
                         const parts = cleanName.split(" - ");
-                        artistName = parts[0].trim();
-                        songName = parts.slice(1).join(" - ").trim();
+                        artistName = parts[0].trim(); songName = parts.slice(1).join(" - ").trim();
                     }
-                    
                     coverUrl = await fetchItunesCover(artistName, songName);
                 }
             } catch (e) {}
@@ -647,10 +595,8 @@
                     const track = lfmData.recenttracks.track[0];
                     
                     if (track['@attr'] && track['@attr'].nowplaying === 'true') {
-                        isPlaying = true;
-                        activeSource = 'Navegador';
-                        songName = track.name;
-                        artistName = track.artist['#text'];
+                        isPlaying = true; activeSource = 'Navegador';
+                        songName = track.name; artistName = track.artist['#text'];
                         albumName = track.album && track.album['#text'] ? `<div class="album">${track.album['#text']}</div>` : '';
                         
                         coverUrl = track.image?.[3]?.[`#text`] || '';
@@ -673,9 +619,7 @@
                     currentTrackUrl = trackIdentifier;
                     currentStatus = 'playing';
                     
-                    stopNewsCycle(); 
-                    fetchNews(); 
-                    widget.style.opacity = 1; 
+                    stopNewsCycle(); fetchNews(); widget.style.opacity = 1; 
 
                     let innerVisual = '';
                     if (coverUrl !== '') {
@@ -688,17 +632,21 @@
                         innerVisual = fallbackHTML;
                     }
 
-                    // Monta o layout com hardware em volta da capa
+                    // Verifica qual ícone inicial mostrar assim que a música troca
+                    let initialCpuIcon = getStatusIcon(cpuTemp, cpuLoad);
+                    let initialGpuIcon = getStatusIcon(gpuTemp, gpuLoad);
+
+                    // Novo Layout (ATUALIZADO COM OS IDs PARA OS ÍCONES)
                     let visualHTML = `
                         <div style="display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; margin-bottom: 25px;">
                             <div class="hw-card">
-                                <div class="hw-title-card">CPU</div>
+                                <div class="hw-title-card">CPU <span id="cpu-icon">${initialCpuIcon}</span></div>
                                 <div class="hw-val-card"><span id="cpu-t">${cpuTemp}</span>°C</div>
                                 <div class="hw-val-card"><span id="cpu-l">${cpuLoad}</span>%</div>
                             </div>
                             ${innerVisual}
                             <div class="hw-card">
-                                <div class="hw-title-card">GPU</div>
+                                <div class="hw-title-card">GPU <span id="gpu-icon">${initialGpuIcon}</span></div>
                                 <div class="hw-val-card"><span id="gpu-t">${gpuTemp}</span>°C</div>
                                 <div class="hw-val-card"><span id="gpu-l">${gpuLoad}</span>%</div>
                             </div>

@@ -74,15 +74,13 @@
             transition: opacity 0.5s ease-in-out;
         }
 
-        /* --- ATUALIZADO: Layout em coluna para colocar o clima acima da capa --- */
         .cover-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px; /* Espaço entre o card de clima e a capa */
+            gap: 12px; 
         }
 
-        /* --- ATUALIZADO: Removido o absolute para não ficar sobre a foto --- */
         .weather-overlay {
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(8px);
@@ -192,29 +190,34 @@
             background: rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
-            padding: 20px 15px; 
+            padding: 15px 15px; 
             text-align: center;
             color: #fff;
             backdrop-filter: blur(10px);
-            min-width: 95px; 
+            min-width: 110px; /* Aumentado para o texto maior não quebrar a linha */
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .hw-top-icon {
+            font-size: 38px; /* Ícone gigante no topo */
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
         .hw-title-card {
             font-size: 16px; 
             font-weight: bold;
             color: #c2e9fb;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
         }
         .hw-val-card {
-            font-size: 24px; 
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-size: 34px; /* Temperaturas e usos bem maiores */
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
         /* --- ESTILOS DO MENU DE CONTEXTO --- */
@@ -298,7 +301,6 @@
         <p style="font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Inicializando Sistema Híbrido...</p>
     </div>
 
-    <!-- MENU DE CONTEXTO -->
     <div id="context-menu">
         <h3>Fontes de Notícias</h3>
         <label class="menu-option"><input type="checkbox" value="g1" class="news-source-cb"> G1 (Geral)</label>
@@ -344,7 +346,6 @@
         let gpuTemp = '--';
         let gpuLoad = '--';
 
-        // Lógica dos Ícones de Hardware
         function getStatusIcon(temp, load) {
             if (temp === '--' || load === '--') return '';
             if (temp > 60 || load > 90) return '🔥';
@@ -352,16 +353,15 @@
             return '⚡';
         }
 
-        // Mapeamento de Códigos Open-Meteo para Emojis
         function getWeatherIcon(code) {
-            if (code === 0) return '☀️'; // Céu limpo
-            if (code === 1 || code === 2) return '⛅'; // Parcialmente nublado
-            if (code === 3) return '☁️'; // Nublado
-            if (code >= 45 && code <= 48) return '🌫️'; // Névoa
-            if (code >= 51 && code <= 67) return '🌧️'; // Chuva leve/garoa
-            if (code >= 71 && code <= 77) return '❄️'; // Neve
-            if (code >= 80 && code <= 82) return '🌦️'; // Pancadas de chuva
-            if (code >= 95) return '⛈️'; // Tempestade
+            if (code === 0) return '☀️'; 
+            if (code === 1 || code === 2) return '⛅'; 
+            if (code === 3) return '☁️'; 
+            if (code >= 45 && code <= 48) return '🌫️'; 
+            if (code >= 51 && code <= 67) return '🌧️'; 
+            if (code >= 71 && code <= 77) return '❄️'; 
+            if (code >= 80 && code <= 82) return '🌦️'; 
+            if (code >= 95) return '⛈️'; 
             return '☀️';
         }
 
@@ -506,7 +506,6 @@
                     let visualHTML = '';
                     let weatherHTML = '';
 
-                    // Cria o card de Clima
                     if (goianiaWeather) {
                         const wIcon = getWeatherIcon(goianiaWeather.weathercode);
                         const wTemp = Math.round(goianiaWeather.temperature);
@@ -528,7 +527,6 @@
                         visualHTML = fallbackHTML;
                     }
 
-                    // A classe cover-wrapper segura o card de clima acima da foto
                     widget.innerHTML = `
                         <div style="margin-bottom: 25px;" class="cover-wrapper">
                             ${weatherHTML}
@@ -654,7 +652,6 @@
                     let innerVisual = '';
                     let weatherHTML = '';
 
-                    // Cria o card de Clima para a tela de música também
                     if (goianiaWeather) {
                         const wIcon = getWeatherIcon(goianiaWeather.weathercode);
                         const wTemp = Math.round(goianiaWeather.temperature);
@@ -678,11 +675,12 @@
                     let initialCpuIcon = getStatusIcon(cpuTemp, cpuLoad);
                     let initialGpuIcon = getStatusIcon(gpuTemp, gpuLoad);
 
-                    // A classe cover-wrapper segura o card de clima acima da foto
+                    // Novo layout: Ícone gigante acima do Titulo
                     let visualHTML = `
                         <div style="display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; margin-bottom: 25px;">
                             <div class="hw-card">
-                                <div class="hw-title-card">CPU <span id="cpu-icon">${initialCpuIcon}</span></div>
+                                <div class="hw-top-icon" id="cpu-icon">${initialCpuIcon}</div>
+                                <div class="hw-title-card">CPU</div>
                                 <div class="hw-val-card"><span id="cpu-t">${cpuTemp}</span>°C</div>
                                 <div class="hw-val-card"><span id="cpu-l">${cpuLoad}</span>%</div>
                             </div>
@@ -691,7 +689,8 @@
                                 ${innerVisual}
                             </div>
                             <div class="hw-card">
-                                <div class="hw-title-card">GPU <span id="gpu-icon">${initialGpuIcon}</span></div>
+                                <div class="hw-top-icon" id="gpu-icon">${initialGpuIcon}</div>
+                                <div class="hw-title-card">GPU</div>
                                 <div class="hw-val-card"><span id="gpu-t">${gpuTemp}</span>°C</div>
                                 <div class="hw-val-card"><span id="gpu-l">${gpuLoad}</span>%</div>
                             </div>

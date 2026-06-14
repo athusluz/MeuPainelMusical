@@ -81,13 +81,14 @@
             gap: 12px; 
         }
 
+        /* --- ATUALIZADO: Card de Clima maior --- */
         .weather-overlay {
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 20px;
-            padding: 6px 16px;
-            font-size: 16px;
+            padding: 8px 24px; /* Aumentado o padding */
+            font-size: 24px; /* Aumentado de 16px para 24px */
             font-weight: bold;
             color: #fff;
             z-index: 10;
@@ -95,7 +96,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px; /* Mais espaço entre o número e o ícone */
         }
 
         .cover-circle { 
@@ -194,11 +195,11 @@
             text-align: center;
             color: #fff;
             backdrop-filter: blur(10px);
-            min-width: 110px; /* Aumentado para o texto maior não quebrar a linha */
+            min-width: 110px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .hw-top-icon {
-            font-size: 38px; /* Ícone gigante no topo */
+            font-size: 38px; 
             min-height: 40px;
             display: flex;
             align-items: center;
@@ -215,7 +216,7 @@
             letter-spacing: 1px;
         }
         .hw-val-card {
-            font-size: 34px; /* Temperaturas e usos bem maiores */
+            font-size: 34px; 
             font-weight: 700;
             margin-bottom: 8px;
         }
@@ -301,6 +302,7 @@
         <p style="font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Inicializando Sistema Híbrido...</p>
     </div>
 
+    <!-- MENU DE CONTEXTO -->
     <div id="context-menu">
         <h3>Fontes de Notícias</h3>
         <label class="menu-option"><input type="checkbox" value="g1" class="news-source-cb"> G1 (Geral)</label>
@@ -346,11 +348,12 @@
         let gpuTemp = '--';
         let gpuLoad = '--';
 
+        // --- ATUALIZADO: Ícone de status normal alterado para ✅ ---
         function getStatusIcon(temp, load) {
             if (temp === '--' || load === '--') return '';
             if (temp > 60 || load > 90) return '🔥';
             if (temp < 40) return '❄️';
-            return '⚡';
+            return '✅'; 
         }
 
         function getWeatherIcon(code) {
@@ -675,7 +678,6 @@
                     let initialCpuIcon = getStatusIcon(cpuTemp, cpuLoad);
                     let initialGpuIcon = getStatusIcon(gpuTemp, gpuLoad);
 
-                    // Novo layout: Ícone gigante acima do Titulo
                     let visualHTML = `
                         <div style="display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; margin-bottom: 25px;">
                             <div class="hw-card">

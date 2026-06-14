@@ -22,7 +22,6 @@
             align-items: center; 
             overflow: hidden;
             position: relative;
-            background-color: #000;
         }
 
         #bg-layer {
@@ -37,10 +36,17 @@
             transition: all 1s ease-in-out;
         }
 
+        /* Fundo Diurno */
         .aurora-bg {
             background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #fecfef, #ff9a9e);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
+        }
+
+        /* Fundo Noturno */
+        .dark-bg {
+            background-color: #050505;
+            background-image: none;
         }
 
         @keyframes gradientBG {
@@ -168,11 +174,10 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             z-index: 9999;
             min-width: 250px;
-            max-height: 80vh; /* Impede que o menu saia da tela */
-            overflow-y: auto; /* Adiciona scroll se necessário */
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
-        /* Estiliza o scrollbar do menu */
         #context-menu::-webkit-scrollbar {
             width: 6px;
         }
@@ -238,6 +243,7 @@
         <p style="font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Inicializando Sistema Híbrido...</p>
     </div>
 
+    <!-- MENU DE CONTEXTO -->
     <div id="context-menu">
         <h3>Fontes de Notícias</h3>
         <label class="menu-option">
@@ -275,7 +281,6 @@
         const USERNAME = 'athusluz'; 
         const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b'; 
 
-        // Adicionadas novas URLs das Fontes RSS
         const RSS_FEEDS = {
             'g1': { url: 'https://g1.globo.com/rss/g1/', name: 'G1' },
             'copa': { url: 'https://ge.globo.com/rss/futebol/copa-do-mundo/', name: 'Copa do Mundo' },
@@ -288,7 +293,7 @@
             'politica': { url: 'https://g1.globo.com/rss/g1/politica/', name: 'Política' }
         };
 
-        let activeSources = JSON.parse(localStorage.getItem('kraken_news_prefs')) || ['g1', 'pop', 'esports'];
+        let activeSources = JSON.parse(localStorage.getItem('kraken_news_all_v2')) || Object.keys(RSS_FEEDS);
 
         let currentTrackUrl = '';
         let currentStatus = ''; 
@@ -306,6 +311,16 @@
                 <div class="bar"></div>
             </div>
         `;
+
+        // Função que decide o modo de cor atual
+        function getBackgroundClass() {
+            const hour = new Date().getHours();
+            // Se for 18h ou mais, OU antes das 6h da manhã, retorna o fundo noturno
+            if (hour >= 18 || hour < 6) {
+                return 'dark-bg';
+            }
+            return 'aurora-bg';
+        }
 
         const contextMenu = document.getElementById('context-menu');
         const checkboxes = document.querySelectorAll('.news-source-cb');
@@ -345,7 +360,7 @@
             }
 
             activeSources = selected;
-            localStorage.setItem('kraken_news_prefs', JSON.stringify(activeSources));
+            localStorage.setItem('kraken_news_all_v2', JSON.stringify(activeSources));
             contextMenu.style.display = 'none';
             
             fetchNews(); 
@@ -415,7 +430,8 @@
                         visualHTML = `<img class="cover-circle" src="${newsItem.image}" alt="Capa Notícia">`;
                     } else {
                         bgLayer.style.backgroundImage = 'none';
-                        bgLayer.className = 'aurora-bg'; 
+                        // Aplica classe baseada no horário
+                        bgLayer.className = getBackgroundClass(); 
                         visualHTML = fallbackHTML;
                     }
 
@@ -559,7 +575,8 @@
                         visualHTML = `<img class="cover-circle" src="${coverUrl}" alt="Capa">`;
                     } else {
                         bgLayer.style.backgroundImage = 'none';
-                        bgLayer.className = 'aurora-bg'; 
+                        // Aplica classe baseada no horário
+                        bgLayer.className = getBackgroundClass(); 
                         visualHTML = fallbackHTML;
                     }
 

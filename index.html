@@ -81,14 +81,13 @@
             gap: 12px; 
         }
 
-        /* --- ATUALIZADO: Card de Clima maior --- */
         .weather-overlay {
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 20px;
-            padding: 8px 24px; /* Aumentado o padding */
-            font-size: 24px; /* Aumentado de 16px para 24px */
+            padding: 8px 24px; 
+            font-size: 24px; 
             font-weight: bold;
             color: #fff;
             z-index: 10;
@@ -96,7 +95,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px; /* Mais espaço entre o número e o ícone */
+            gap: 10px; 
         }
 
         .cover-circle { 
@@ -348,12 +347,18 @@
         let gpuTemp = '--';
         let gpuLoad = '--';
 
-        // --- ATUALIZADO: Ícone de status normal alterado para ✅ ---
+        // --- ATUALIZADO: Lógica de ícones progressivos por temperatura ---
         function getStatusIcon(temp, load) {
-            if (temp === '--' || load === '--') return '';
-            if (temp > 60 || load > 90) return '🔥';
-            if (temp < 40) return '❄️';
-            return '✔️'; 
+            if (temp === '--') return '';
+            
+            if (temp <= 30) return '🧊';
+            if (temp <= 35) return '❄️';
+            if (temp <= 39) return '🥶';
+            if (temp <= 50) return '✔️';
+            if (temp <= 55) return '🥵';
+            if (temp <= 69) return '🔥';
+            if (temp <= 80) return '🌋';
+            return '⚡';
         }
 
         function getWeatherIcon(code) {

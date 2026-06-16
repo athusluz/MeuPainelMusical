@@ -74,58 +74,78 @@
             transition: opacity 0.5s ease-in-out;
         }
 
-        /* --- NOVO LAYOUT DO DASHBOARD (ILHAS FLUTUANTES / PILLS) --- */
+        /* --- NOVO LAYOUT DO DASHBOARD (BARRAS LATERAIS ESTILO NZXT) --- */
         .dashboard-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 25px; /* Espaço limpo e sem sobreposições */
+            gap: 35px; /* Espaço entre a capa e as barras */
             width: 100%;
             margin-bottom: 25px;
         }
 
-        /* Cápsulas modernas */
-        .hw-pill {
-            background: rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 45px; /* Formato de pílula arredondada */
+        .hw-bar-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 230px; /* Um pouco menor que o círculo para emoldurar bem */
-            min-width: 95px; 
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-            color: #fff;
-            padding: 20px 5px;
+            gap: 8px;
             z-index: 5;
+        }
+
+        .hw-bar-label {
+            font-size: 14px;
+            font-weight: 800;
+            color: #c2e9fb;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .hw-bar-icon {
+            font-size: 24px;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .hw-bar-track {
+            width: 18px; /* Espessura da barra */
+            height: 180px; /* Altura acompanhando a proporção da capa */
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            overflow: hidden; /* Garante que o preenchimento não vaze as bordas redondas */
+        }
+
+        .hw-bar-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            border-radius: 20px;
+            transition: height 0.5s ease-in-out, background 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .hw-bar-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            margin-top: 4px;
         }
 
         .cover-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px; 
             z-index: 5; 
             position: relative;
-        }
-
-        .weather-overlay {
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 8px 24px; 
-            font-size: 24px; 
-            font-weight: bold;
-            color: #fff;
-            z-index: 10;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px; 
         }
 
         .cover-circle { 
@@ -213,32 +233,6 @@
             border-radius: 12px;
             margin-top: 10px;
             color: #aaa;
-        }
-
-        /* Textos dentro das cápsulas de Hardware */
-        .hw-top-icon {
-            font-size: 30px; 
-            min-height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 6px;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        }
-        .hw-title-card {
-            font-size: 14px; 
-            font-weight: 800;
-            color: #c2e9fb;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            opacity: 0.9;
-        }
-        .hw-val-card {
-            font-size: 28px; 
-            font-weight: 700;
-            margin-bottom: 6px;
-            letter-spacing: 0.5px;
         }
 
         /* --- ESTILOS DO MENU DE CONTEXTO --- */
@@ -368,9 +362,8 @@
         let gpuTemp = '--';
         let gpuLoad = '--';
 
-        function getStatusIcon(temp, load) {
+        function getStatusIcon(temp) {
             if (temp === '--') return '';
-            
             if (temp <= 30) return '🧊';
             if (temp <= 35) return '❄️';
             if (temp <= 39) return '🥶';
@@ -381,16 +374,14 @@
             return '⚡';
         }
 
-        function getWeatherIcon(code) {
-            if (code === 0) return '☀️'; 
-            if (code === 1 || code === 2) return '⛅'; 
-            if (code === 3) return '☁️'; 
-            if (code >= 45 && code <= 48) return '🌫️'; 
-            if (code >= 51 && code <= 67) return '🌧️'; 
-            if (code >= 71 && code <= 77) return '❄️'; 
-            if (code >= 80 && code <= 82) return '🌦️'; 
-            if (code >= 95) return '⛈️'; 
-            return '☀️';
+        // Função de Cores para a Barra Baseada na Temperatura
+        function getBarColor(temp) {
+            if (temp === '--') return 'transparent';
+            if (temp <= 39) return '#00d2ff'; // Gelo / Azul
+            if (temp <= 50) return '#a8e063'; // Verde Saudável
+            if (temp <= 55) return '#f6d365'; // Amarelo
+            if (temp <= 69) return '#fc4a1a'; // Laranja / Quente
+            return '#ff416c'; // Vermelho / Fogo / Extremo
         }
 
         window.nzxt = {
@@ -409,19 +400,33 @@
                         gpuLoad = Math.round(load <= 1 ? load * 100 : load);
                     }
                     
+                    // Atualiza Textos e Ícones
                     const elCpuT = document.getElementById('cpu-t');
                     if (elCpuT) elCpuT.innerText = cpuTemp;
-                    const elCpuL = document.getElementById('cpu-l');
-                    if (elCpuL) elCpuL.innerText = cpuLoad;
                     const elCpuI = document.getElementById('cpu-icon');
-                    if (elCpuI) elCpuI.innerText = getStatusIcon(cpuTemp, cpuLoad);
+                    if (elCpuI) elCpuI.innerText = getStatusIcon(cpuTemp);
 
                     const elGpuT = document.getElementById('gpu-t');
                     if (elGpuT) elGpuT.innerText = gpuTemp;
-                    const elGpuL = document.getElementById('gpu-l');
-                    if (elGpuL) elGpuL.innerText = gpuLoad;
                     const elGpuI = document.getElementById('gpu-icon');
-                    if (elGpuI) elGpuI.innerText = getStatusIcon(gpuTemp, gpuLoad);
+                    if (elGpuI) elGpuI.innerText = getStatusIcon(gpuTemp);
+
+                    // Atualiza Cores e Altura das Barras
+                    const elCpuBar = document.getElementById('cpu-bar-fill');
+                    if (elCpuBar && cpuTemp !== '--') {
+                        let pct = Math.min(Math.max(cpuTemp, 0), 100); // 100°C seria o máximo da barra
+                        elCpuBar.style.height = pct + '%';
+                        elCpuBar.style.background = getBarColor(cpuTemp);
+                        elCpuBar.style.boxShadow = `0 0 10px ${getBarColor(cpuTemp)}`;
+                    }
+
+                    const elGpuBar = document.getElementById('gpu-bar-fill');
+                    if (elGpuBar && gpuTemp !== '--') {
+                        let pct = Math.min(Math.max(gpuTemp, 0), 100);
+                        elGpuBar.style.height = pct + '%';
+                        elGpuBar.style.background = getBarColor(gpuTemp);
+                        elGpuBar.style.boxShadow = `0 0 10px ${getBarColor(gpuTemp)}`;
+                    }
                 }
             }
         };
@@ -475,6 +480,7 @@
             fetchNews(); 
         });
 
+        // Mantive o fetchWeather caso no futuro você queira adicionar ao descanso de tela
         async function fetchWeather() {
             try {
                 const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-16.6799&longitude=-49.2562&current_weather=true');
@@ -532,17 +538,6 @@
                 
                 setTimeout(() => {
                     let visualHTML = '';
-                    let weatherHTML = '';
-
-                    if (goianiaWeather) {
-                        const wIcon = getWeatherIcon(goianiaWeather.weathercode);
-                        const wTemp = Math.round(goianiaWeather.temperature);
-                        weatherHTML = `
-                            <div class="weather-overlay">
-                                ${wTemp}°C ${wIcon}
-                            </div>
-                        `;
-                    }
                     
                     const newsItem = newsList[currentNewsIndex];
                     if (newsItem.image) {
@@ -555,26 +550,36 @@
                         visualHTML = fallbackHTML;
                     }
 
-                    let initialCpuIcon = getStatusIcon(cpuTemp, cpuLoad);
-                    let initialGpuIcon = getStatusIcon(gpuTemp, gpuLoad);
+                    let initialCpuIcon = getStatusIcon(cpuTemp);
+                    let initialGpuIcon = getStatusIcon(gpuTemp);
+
+                    let cpuColor = getBarColor(cpuTemp);
+                    let gpuColor = getBarColor(gpuTemp);
+                    let initCpuHeight = cpuTemp !== '--' ? Math.min(Math.max(cpuTemp, 0), 100) + '%' : '0%';
+                    let initGpuHeight = gpuTemp !== '--' ? Math.min(Math.max(gpuTemp, 0), 100) + '%' : '0%';
 
                     let dashboardHTML = `
                         <div class="dashboard-container">
-                            <div class="hw-pill">
-                                <div class="hw-top-icon" id="cpu-icon">${initialCpuIcon}</div>
-                                <div class="hw-title-card">CPU</div>
-                                <div class="hw-val-card"><span id="cpu-t">${cpuTemp}</span>°C</div>
-                                <div class="hw-val-card"><span id="cpu-l">${cpuLoad}</span>%</div>
+                            <div class="hw-bar-wrapper">
+                                <div class="hw-bar-label">CPU</div>
+                                <div class="hw-bar-icon" id="cpu-icon">${initialCpuIcon}</div>
+                                <div class="hw-bar-track">
+                                    <div class="hw-bar-fill" id="cpu-bar-fill" style="height: ${initCpuHeight}; background: ${cpuColor}; box-shadow: 0 0 10px ${cpuColor};"></div>
+                                </div>
+                                <div class="hw-bar-value"><span id="cpu-t">${cpuTemp}</span>°</div>
                             </div>
+                            
                             <div class="cover-wrapper">
-                                ${weatherHTML}
                                 ${visualHTML}
                             </div>
-                            <div class="hw-pill">
-                                <div class="hw-top-icon" id="gpu-icon">${initialGpuIcon}</div>
-                                <div class="hw-title-card">GPU</div>
-                                <div class="hw-val-card"><span id="gpu-t">${gpuTemp}</span>°C</div>
-                                <div class="hw-val-card"><span id="gpu-l">${gpuLoad}</span>%</div>
+                            
+                            <div class="hw-bar-wrapper">
+                                <div class="hw-bar-label">GPU</div>
+                                <div class="hw-bar-icon" id="gpu-icon">${initialGpuIcon}</div>
+                                <div class="hw-bar-track">
+                                    <div class="hw-bar-fill" id="gpu-bar-fill" style="height: ${initGpuHeight}; background: ${gpuColor}; box-shadow: 0 0 10px ${gpuColor};"></div>
+                                </div>
+                                <div class="hw-bar-value"><span id="gpu-t">${gpuTemp}</span>°</div>
                             </div>
                         </div>
                     `;
@@ -699,17 +704,6 @@
                     stopNewsCycle(); fetchNews(); widget.style.opacity = 1; 
 
                     let innerVisual = '';
-                    let weatherHTML = '';
-
-                    if (goianiaWeather) {
-                        const wIcon = getWeatherIcon(goianiaWeather.weathercode);
-                        const wTemp = Math.round(goianiaWeather.temperature);
-                        weatherHTML = `
-                            <div class="weather-overlay">
-                                ${wTemp}°C ${wIcon}
-                            </div>
-                        `;
-                    }
 
                     if (coverUrl !== '') {
                         bgLayer.className = ''; 
@@ -721,26 +715,36 @@
                         innerVisual = fallbackHTML;
                     }
 
-                    let initialCpuIcon = getStatusIcon(cpuTemp, cpuLoad);
-                    let initialGpuIcon = getStatusIcon(gpuTemp, gpuLoad);
+                    let initialCpuIcon = getStatusIcon(cpuTemp);
+                    let initialGpuIcon = getStatusIcon(gpuTemp);
+
+                    let cpuColor = getBarColor(cpuTemp);
+                    let gpuColor = getBarColor(gpuTemp);
+                    let initCpuHeight = cpuTemp !== '--' ? Math.min(Math.max(cpuTemp, 0), 100) + '%' : '0%';
+                    let initGpuHeight = gpuTemp !== '--' ? Math.min(Math.max(gpuTemp, 0), 100) + '%' : '0%';
 
                     let dashboardHTML = `
                         <div class="dashboard-container">
-                            <div class="hw-pill">
-                                <div class="hw-top-icon" id="cpu-icon">${initialCpuIcon}</div>
-                                <div class="hw-title-card">CPU</div>
-                                <div class="hw-val-card"><span id="cpu-t">${cpuTemp}</span>°C</div>
-                                <div class="hw-val-card"><span id="cpu-l">${cpuLoad}</span>%</div>
+                            <div class="hw-bar-wrapper">
+                                <div class="hw-bar-label">CPU</div>
+                                <div class="hw-bar-icon" id="cpu-icon">${initialCpuIcon}</div>
+                                <div class="hw-bar-track">
+                                    <div class="hw-bar-fill" id="cpu-bar-fill" style="height: ${initCpuHeight}; background: ${cpuColor}; box-shadow: 0 0 10px ${cpuColor};"></div>
+                                </div>
+                                <div class="hw-bar-value"><span id="cpu-t">${cpuTemp}</span>°</div>
                             </div>
+                            
                             <div class="cover-wrapper">
-                                ${weatherHTML}
                                 ${innerVisual}
                             </div>
-                            <div class="hw-pill">
-                                <div class="hw-top-icon" id="gpu-icon">${initialGpuIcon}</div>
-                                <div class="hw-title-card">GPU</div>
-                                <div class="hw-val-card"><span id="gpu-t">${gpuTemp}</span>°C</div>
-                                <div class="hw-val-card"><span id="gpu-l">${gpuLoad}</span>%</div>
+                            
+                            <div class="hw-bar-wrapper">
+                                <div class="hw-bar-label">GPU</div>
+                                <div class="hw-bar-icon" id="gpu-icon">${initialGpuIcon}</div>
+                                <div class="hw-bar-track">
+                                    <div class="hw-bar-fill" id="gpu-bar-fill" style="height: ${initGpuHeight}; background: ${gpuColor}; box-shadow: 0 0 10px ${gpuColor};"></div>
+                                </div>
+                                <div class="hw-bar-value"><span id="gpu-t">${gpuTemp}</span>°</div>
                             </div>
                         </div>
                     `;

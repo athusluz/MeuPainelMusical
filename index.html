@@ -81,7 +81,7 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 25px;
             padding: 8px 26px; 
-            font-size: 30px; /* Números maiores */
+            font-size: 30px; 
             font-weight: 800;
             color: #fff;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
@@ -89,11 +89,11 @@
             align-items: center;
             justify-content: center;
             gap: 12px; 
-            margin-bottom: 20px; /* Dá um respiro antes do painel */
+            margin-bottom: 20px; 
             text-shadow: 0 2px 6px rgba(0,0,0,0.6);
         }
 
-        /* --- DASHBOARD COM BARRAS DUPLAS --- */
+        /* --- DASHBOARD COM BARRAS DUPLAS E ICONE GIGANTE --- */
         .dashboard-container {
             display: flex;
             align-items: center;
@@ -107,43 +107,37 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px; /* Espaçamento mais compacto para alinhar bem */
             z-index: 5;
+            width: 120px; /* FIXED WIDTH: Impede o layout de tremer/mexer */
         }
 
-        .hw-bar-label {
-            font-size: 16px;
-            font-weight: 900;
-            color: #c2e9fb;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 2px 6px rgba(0,0,0,0.8);
-            margin-bottom: 4px;
+        .hw-big-icon {
+            font-size: 42px; /* Ícone gigante no topo */
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            margin-bottom: 2px;
         }
 
         .hw-bars-row {
             display: flex;
-            gap: 16px; /* Distância entre a barra de Temp e a barra de Uso */
+            gap: 18px; 
+            justify-content: center;
         }
 
         .hw-bar-col {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-        }
-
-        .hw-bar-icon {
-            font-size: 20px;
-            min-height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            gap: 6px;
+            width: 50px; /* Largura fixa para cada conjunto de barra + número */
         }
 
         .hw-bar-track {
-            width: 14px; /* Barra levemente mais fina para caberem duas */
+            width: 14px; 
             height: 150px; 
             background: rgba(0, 0, 0, 0.45);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -164,17 +158,31 @@
         }
 
         .hw-bar-value {
-            font-size: 28px; /* Números bem maiores */
+            font-size: 26px; 
             font-weight: 800;
             color: #fff;
             text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+            font-variant-numeric: tabular-nums; /* SOLUÇÃO DO TREMOR: Trava a largura dos números */
             margin-top: 4px;
+            display: flex;
+            align-items: baseline;
         }
         
         .hw-bar-unit {
-            font-size: 18px; /* Unidade (° ou %) um pouco menor que o número principal */
+            font-size: 16px; 
             font-weight: 600;
             color: #ddd;
+            margin-left: 2px;
+        }
+
+        .hw-bar-label {
+            font-size: 20px; /* Rótulo CPU/GPU agora na base, maior */
+            font-weight: 900;
+            color: #c2e9fb;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+            margin-top: 6px;
         }
 
         .cover-wrapper {
@@ -353,7 +361,6 @@
         <p style="font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Inicializando Sistema Híbrido...</p>
     </div>
 
-    <!-- MENU DE CONTEXTO -->
     <div id="context-menu">
         <h3>Fontes de Notícias</h3>
         <label class="menu-option"><input type="checkbox" value="g1" class="news-source-cb"> G1 (Geral)</label>
@@ -420,7 +427,6 @@
             return '#ff416c'; // Vermelho / Fogo
         }
 
-        // Nova função para as cores de Uso (Load)
         function getLoadColor(load) {
             if (load === '--') return 'transparent';
             if (load <= 40) return '#00d2ff'; // Uso leve
@@ -457,23 +463,22 @@
                         gpuLoad = Math.round(load <= 1 ? load * 100 : load);
                     }
                     
-                    // Textos CPU
+                    // Atualiza Textos
                     const elCpuT = document.getElementById('cpu-t');
                     if (elCpuT) elCpuT.innerText = cpuTemp;
-                    const elCpuI = document.getElementById('cpu-icon');
+                    const elCpuI = document.getElementById('cpu-icon'); // Ícone gigante
                     if (elCpuI) elCpuI.innerText = getStatusIcon(cpuTemp);
                     const elCpuL = document.getElementById('cpu-l');
                     if (elCpuL) elCpuL.innerText = cpuLoad;
 
-                    // Textos GPU
                     const elGpuT = document.getElementById('gpu-t');
                     if (elGpuT) elGpuT.innerText = gpuTemp;
-                    const elGpuI = document.getElementById('gpu-icon');
+                    const elGpuI = document.getElementById('gpu-icon'); // Ícone gigante
                     if (elGpuI) elGpuI.innerText = getStatusIcon(gpuTemp);
                     const elGpuL = document.getElementById('gpu-l');
                     if (elGpuL) elGpuL.innerText = gpuLoad;
 
-                    // Barras CPU (Temp e Load)
+                    // Atualiza Barras CPU
                     const elCpuBar = document.getElementById('cpu-bar-fill');
                     if (elCpuBar && cpuTemp !== '--') {
                         let pct = Math.min(Math.max(cpuTemp, 0), 100);
@@ -489,7 +494,7 @@
                         elCpuLoadBar.style.boxShadow = `0 0 10px ${getLoadColor(cpuLoad)}`;
                     }
 
-                    // Barras GPU (Temp e Load)
+                    // Atualiza Barras GPU
                     const elGpuBar = document.getElementById('gpu-bar-fill');
                     if (elGpuBar && gpuTemp !== '--') {
                         let pct = Math.min(Math.max(gpuTemp, 0), 100);
@@ -637,7 +642,6 @@
                         visualHTML = fallbackHTML;
                     }
 
-                    // Setup Inicial Dinâmico
                     let initialCpuIcon = getStatusIcon(cpuTemp);
                     let initialGpuIcon = getStatusIcon(gpuTemp);
 
@@ -654,23 +658,22 @@
                     let dashboardHTML = `
                         <div class="dashboard-container">
                             <div class="hw-side-panel">
-                                <div class="hw-bar-label">CPU</div>
+                                <div class="hw-big-icon" id="cpu-icon">${initialCpuIcon}</div>
                                 <div class="hw-bars-row">
                                     <div class="hw-bar-col">
-                                        <div class="hw-bar-icon" id="cpu-icon">${initialCpuIcon}</div>
                                         <div class="hw-bar-track">
                                             <div class="hw-bar-fill" id="cpu-bar-fill" style="height: ${initCpuHeight}; background: ${cpuColor}; box-shadow: 0 0 10px ${cpuColor};"></div>
                                         </div>
                                         <div class="hw-bar-value"><span id="cpu-t">${cpuTemp}</span><span class="hw-bar-unit">°</span></div>
                                     </div>
                                     <div class="hw-bar-col">
-                                        <div class="hw-bar-icon">⚙️</div>
                                         <div class="hw-bar-track">
                                             <div class="hw-bar-fill" id="cpu-load-fill" style="height: ${initCpuLoadHeight}; background: ${cpuLoadColor}; box-shadow: 0 0 10px ${cpuLoadColor};"></div>
                                         </div>
                                         <div class="hw-bar-value"><span id="cpu-l">${cpuLoad}</span><span class="hw-bar-unit">%</span></div>
                                     </div>
                                 </div>
+                                <div class="hw-bar-label">CPU</div>
                             </div>
                             
                             <div class="cover-wrapper">
@@ -678,23 +681,22 @@
                             </div>
                             
                             <div class="hw-side-panel">
-                                <div class="hw-bar-label">GPU</div>
+                                <div class="hw-big-icon" id="gpu-icon">${initialGpuIcon}</div>
                                 <div class="hw-bars-row">
                                     <div class="hw-bar-col">
-                                        <div class="hw-bar-icon" id="gpu-icon">${initialGpuIcon}</div>
                                         <div class="hw-bar-track">
                                             <div class="hw-bar-fill" id="gpu-bar-fill" style="height: ${initGpuHeight}; background: ${gpuColor}; box-shadow: 0 0 10px ${gpuColor};"></div>
                                         </div>
                                         <div class="hw-bar-value"><span id="gpu-t">${gpuTemp}</span><span class="hw-bar-unit">°</span></div>
                                     </div>
                                     <div class="hw-bar-col">
-                                        <div class="hw-bar-icon">⚙️</div>
                                         <div class="hw-bar-track">
                                             <div class="hw-bar-fill" id="gpu-load-fill" style="height: ${initGpuLoadHeight}; background: ${gpuLoadColor}; box-shadow: 0 0 10px ${gpuLoadColor};"></div>
                                         </div>
                                         <div class="hw-bar-value"><span id="gpu-l">${gpuLoad}</span><span class="hw-bar-unit">%</span></div>
                                     </div>
                                 </div>
+                                <div class="hw-bar-label">GPU</div>
                             </div>
                         </div>
                     `;
@@ -858,23 +860,22 @@
                     let dashboardHTML = `
                         <div class="dashboard-container">
                             <div class="hw-side-panel">
-                                <div class="hw-bar-label">CPU</div>
+                                <div class="hw-big-icon" id="cpu-icon">${initialCpuIcon}</div>
                                 <div class="hw-bars-row">
                                     <div class="hw-bar-col">
-                                        <div class="hw-bar-icon" id="cpu-icon">${initialCpuIcon}</div>
                                         <div class="hw-bar-track">
                                             <div class="hw-bar-fill" id="cpu-bar-fill" style="height: ${initCpuHeight}; background: ${cpuColor}; box-shadow: 0 0 10px ${cpuColor};"></div>
                                         </div>
                                         <div class="hw-bar-value"><span id="cpu-t">${cpuTemp}</span><span class="hw-bar-unit">°</span></div>
                                     </div>
                                     <div class="hw-bar-col">
-                                        <div class="hw-bar-icon">⚙️</div>
                                         <div class="hw-bar-track">
                                             <div class="hw-bar-fill" id="cpu-load-fill" style="height: ${initCpuLoadHeight}; background: ${cpuLoadColor}; box-shadow: 0 0 10px ${cpuLoadColor};"></div>
                                         </div>
                                         <div class="hw-bar-value"><span id="cpu-l">${cpuLoad}</span><span class="hw-bar-unit">%</span></div>
                                     </div>
                                 </div>
+                                <div class="hw-bar-label">CPU</div>
                             </div>
                             
                             <div class="cover-wrapper">
@@ -882,23 +883,22 @@
                             </div>
                             
                             <div class="hw-side-panel">
-                                <div class="hw-bar-label">GPU</div>
+                                <div class="hw-big-icon" id="gpu-icon">${initialGpuIcon}</div>
                                 <div class="hw-bars-row">
                                     <div class="hw-bar-col">
-                                        <div class="hw-bar-icon" id="gpu-icon">${initialGpuIcon}</div>
                                         <div class="hw-bar-track">
                                             <div class="hw-bar-fill" id="gpu-bar-fill" style="height: ${initGpuHeight}; background: ${gpuColor}; box-shadow: 0 0 10px ${gpuColor};"></div>
                                         </div>
                                         <div class="hw-bar-value"><span id="gpu-t">${gpuTemp}</span><span class="hw-bar-unit">°</span></div>
                                     </div>
                                     <div class="hw-bar-col">
-                                        <div class="hw-bar-icon">⚙️</div>
                                         <div class="hw-bar-track">
                                             <div class="hw-bar-fill" id="gpu-load-fill" style="height: ${initGpuLoadHeight}; background: ${gpuLoadColor}; box-shadow: 0 0 10px ${gpuLoadColor};"></div>
                                         </div>
                                         <div class="hw-bar-value"><span id="gpu-l">${gpuLoad}</span><span class="hw-bar-unit">%</span></div>
                                     </div>
                                 </div>
+                                <div class="hw-bar-label">GPU</div>
                             </div>
                         </div>
                     `;

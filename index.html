@@ -74,11 +74,41 @@
             transition: opacity 0.5s ease-in-out;
         }
 
+        /* --- NOVO LAYOUT DO DASHBOARD (ILHAS FLUTUANTES / PILLS) --- */
+        .dashboard-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px; /* Espaço limpo e sem sobreposições */
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        /* Cápsulas modernas */
+        .hw-pill {
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 45px; /* Formato de pílula arredondada */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 230px; /* Um pouco menor que o círculo para emoldurar bem */
+            min-width: 95px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            color: #fff;
+            padding: 20px 5px;
+            z-index: 5;
+        }
+
         .cover-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px; 
+            z-index: 5; 
+            position: relative;
         }
 
         .weather-overlay {
@@ -103,7 +133,7 @@
             height: 270px; 
             border-radius: 50%; 
             border: 4px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 10px 40px rgba(255, 255, 255, 0.2); 
+            box-shadow: 0 10px 40px rgba(255, 255, 255, 0.4); 
             object-fit: cover;
             display: block;
         }
@@ -185,39 +215,30 @@
             color: #aaa;
         }
 
-        /* --- ESTILOS DOS CARDS DE HARDWARE --- */
-        .hw-card {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 15px 15px; 
-            text-align: center;
-            color: #fff;
-            backdrop-filter: blur(10px);
-            min-width: 110px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+        /* Textos dentro das cápsulas de Hardware */
         .hw-top-icon {
-            font-size: 38px; 
-            min-height: 40px;
+            font-size: 30px; 
+            min-height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             text-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
         .hw-title-card {
-            font-size: 16px; 
-            font-weight: bold;
+            font-size: 14px; 
+            font-weight: 800;
             color: #c2e9fb;
             margin-bottom: 12px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            opacity: 0.9;
         }
         .hw-val-card {
-            font-size: 34px; 
+            font-size: 28px; 
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
         }
 
         /* --- ESTILOS DO MENU DE CONTEXTO --- */
@@ -347,7 +368,6 @@
         let gpuTemp = '--';
         let gpuLoad = '--';
 
-        // --- ATUALIZADO: Lógica de ícones progressivos por temperatura ---
         function getStatusIcon(temp, load) {
             if (temp === '--') return '';
             
@@ -535,11 +555,32 @@
                         visualHTML = fallbackHTML;
                     }
 
-                    widget.innerHTML = `
-                        <div style="margin-bottom: 25px;" class="cover-wrapper">
-                            ${weatherHTML}
-                            ${visualHTML}
+                    let initialCpuIcon = getStatusIcon(cpuTemp, cpuLoad);
+                    let initialGpuIcon = getStatusIcon(gpuTemp, gpuLoad);
+
+                    let dashboardHTML = `
+                        <div class="dashboard-container">
+                            <div class="hw-pill">
+                                <div class="hw-top-icon" id="cpu-icon">${initialCpuIcon}</div>
+                                <div class="hw-title-card">CPU</div>
+                                <div class="hw-val-card"><span id="cpu-t">${cpuTemp}</span>°C</div>
+                                <div class="hw-val-card"><span id="cpu-l">${cpuLoad}</span>%</div>
+                            </div>
+                            <div class="cover-wrapper">
+                                ${weatherHTML}
+                                ${visualHTML}
+                            </div>
+                            <div class="hw-pill">
+                                <div class="hw-top-icon" id="gpu-icon">${initialGpuIcon}</div>
+                                <div class="hw-title-card">GPU</div>
+                                <div class="hw-val-card"><span id="gpu-t">${gpuTemp}</span>°C</div>
+                                <div class="hw-val-card"><span id="gpu-l">${gpuLoad}</span>%</div>
+                            </div>
                         </div>
+                    `;
+
+                    widget.innerHTML = `
+                        ${dashboardHTML}
                         <div class="title" style="white-space: normal; font-size: 26px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; margin-bottom: 12px; padding: 0 15px;">${newsItem.title}</div>
                         <div class="artist" style="font-size: 18px; color: #ccc;">${newsItem.source}</div>
                     `;
@@ -683,9 +724,9 @@
                     let initialCpuIcon = getStatusIcon(cpuTemp, cpuLoad);
                     let initialGpuIcon = getStatusIcon(gpuTemp, gpuLoad);
 
-                    let visualHTML = `
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; margin-bottom: 25px;">
-                            <div class="hw-card">
+                    let dashboardHTML = `
+                        <div class="dashboard-container">
+                            <div class="hw-pill">
                                 <div class="hw-top-icon" id="cpu-icon">${initialCpuIcon}</div>
                                 <div class="hw-title-card">CPU</div>
                                 <div class="hw-val-card"><span id="cpu-t">${cpuTemp}</span>°C</div>
@@ -695,7 +736,7 @@
                                 ${weatherHTML}
                                 ${innerVisual}
                             </div>
-                            <div class="hw-card">
+                            <div class="hw-pill">
                                 <div class="hw-top-icon" id="gpu-icon">${initialGpuIcon}</div>
                                 <div class="hw-title-card">GPU</div>
                                 <div class="hw-val-card"><span id="gpu-t">${gpuTemp}</span>°C</div>
@@ -705,7 +746,7 @@
                     `;
 
                     widget.innerHTML = `
-                        ${visualHTML}
+                        ${dashboardHTML}
                         <div class="title">${songName}</div>
                         <div class="artist">${artistName}</div>
                         ${albumName}

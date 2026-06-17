@@ -376,12 +376,12 @@
         function getStatusIcon(temp) {
             if (temp === '--') return '';
             if (temp <= 30) return '🧊';
-            if (temp <= 35) return '❄️';
-            if (temp <= 39) return '🥶';
+            if (temp <= 35) return '🥶';
+            if (temp <= 40) return '❄️';
             if (temp <= 50) return '✔️';
-            if (temp <= 55) return '🥵';
-            if (temp <= 69) return '🔥';
-            if (temp <= 80) return '🌋';
+            if (temp <= 60) return '🔥';
+            if (temp <= 68) return '🥵';
+            if (temp <= 70) return '🌋';
             return '⚡';
         }
 

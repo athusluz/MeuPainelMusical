@@ -61,7 +61,7 @@
             background: rgba(0, 0, 0, 0.2); 
             backdrop-filter: blur(25px);
             z-index: 2;
-            transition: background 1.5s ease, box-shadow 1.5s ease; /* Transição suave de temperatura */
+            transition: background 1.5s ease, box-shadow 1.5s ease;
         }
 
         /* --- EFEITOS DE TEMPERATURA DINÂMICOS --- */
@@ -83,7 +83,8 @@
             align-items: center;
             text-align: center;
             width: 85%;
-            transition: opacity 0.5s ease-in-out;
+            transform: scale(1);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
         }
 
         /* --- CLIMA NO TOPO --- */
@@ -379,7 +380,7 @@
         let newsList = [];
         let currentNewsIndex = 0; 
         let goianiaWeather = null;
-        let lastNewsFetchTime = 0; // Controle de tempo para otimização da API
+        let lastNewsFetchTime = 0;
 
         let cpuTemp = '--';
         let cpuLoad = '--';
@@ -389,11 +390,11 @@
         function getStatusIcon(temp) {
             if (temp === '--') return '';
             if (temp <= 30) return '🧊';
-            if (temp <= 45) return '❄️';
+            if (temp <= 40) return '❄️';
             if (temp <= 50) return '⚡';
             if (temp <= 60) return '🔥';
             if (temp <= 70) return '🌋';
-            return '⚡'; // caso eu mude de ideia ✔️
+            // (igonora) return '⚡'; // ignora ✔️
         }
 
         function getBarColor(temp) {
@@ -473,7 +474,7 @@
                     const outerDashArray = 503; 
                     const innerDashArray = 446; 
 
-                    // Atualiza Arcos da CPU (Esquerda)
+                    // Atualiza Arcos da CPU
                     const elCpuBar = document.getElementById('cpu-bar-fill');
                     if (elCpuBar && cpuTemp !== '--') {
                         let pct = Math.min(Math.max(cpuTemp, 0), 100);
@@ -491,7 +492,7 @@
                         elCpuLoadBar.style.filter = `drop-shadow(0 0 4px ${getLoadColor(cpuLoad)})`;
                     }
 
-                    // Atualiza Arcos da GPU (Direita)
+                    // Atualiza Arcos da GPU
                     const elGpuBar = document.getElementById('gpu-bar-fill');
                     if (elGpuBar && gpuTemp !== '--') {
                         let pct = Math.min(Math.max(gpuTemp, 0), 100);
@@ -558,7 +559,7 @@
             activeSources = selected;
             localStorage.setItem('kraken_news_all_v2', JSON.stringify(activeSources));
             contextMenu.style.display = 'none';
-            fetchNews(true); // Força a atualização ao salvar
+            fetchNews(true);
         });
 
         async function fetchWeather() {
@@ -569,10 +570,9 @@
             } catch (e) { console.error("Erro ao buscar clima", e); }
         }
 
-        // Função otimizada com debounce
         async function fetchNews(force = false) {
             const now = Date.now();
-            if (!force && now - lastNewsFetchTime < 60000) return; // Limita a 1 fetch por minuto
+            if (!force && now - lastNewsFetchTime < 60000) return; 
             lastNewsFetchTime = now;
 
             try {
@@ -676,13 +676,15 @@
                 if (newsList.length === 0) return;
 
                 const bgLayer = document.getElementById('bg-layer');
+                
+                // Transição: fade-out e scale-down
                 widget.style.opacity = 0; 
+                widget.style.transform = 'scale(0.95)';
                 
                 setTimeout(() => {
                     let visualHTML = '';
                     let weatherHTML = '';
 
-                    // Mantém o clima durante as notícias
                     if (goianiaWeather) {
                         const wIcon = getWeatherIcon(goianiaWeather.weathercode);
                         const wTemp = Math.round(goianiaWeather.temperature);
@@ -716,7 +718,9 @@
                     currentNewsIndex++;
                     if (currentNewsIndex >= newsList.length) currentNewsIndex = 0; 
                     
+                    // Transição: fade-in e scale-up
                     widget.style.opacity = 1; 
+                    widget.style.transform = 'scale(1)';
                 }, 500);
             };
             
@@ -824,31 +828,41 @@
                     currentTrackUrl = trackIdentifier;
                     currentStatus = 'playing';
                     
-                    stopNewsCycle(); widget.style.opacity = 1; 
+                    stopNewsCycle(); 
+                    
+                    // Inicia a transição: fade-out e scale-down
+                    widget.style.opacity = 0;
+                    widget.style.transform = 'scale(0.95)';
 
-                    let innerVisual = '';
-                    let weatherHTML = ''; // Variável vazia: remove o clima enquanto toca música
+                    setTimeout(() => {
+                        let innerVisual = '';
+                        let weatherHTML = ''; 
 
-                    if (coverUrl !== '') {
-                        bgLayer.className = ''; 
-                        bgLayer.style.backgroundImage = `url('${coverUrl}')`;
-                        innerVisual = `<img class="cover-circle" src="${coverUrl}" alt="Capa">`;
-                    } else {
-                        bgLayer.style.backgroundImage = 'none';
-                        bgLayer.className = getBackgroundClass(); 
-                        innerVisual = fallbackHTML;
-                    }
+                        if (coverUrl !== '') {
+                            bgLayer.className = ''; 
+                            bgLayer.style.backgroundImage = `url('${coverUrl}')`;
+                            innerVisual = `<img class="cover-circle" src="${coverUrl}" alt="Capa">`;
+                        } else {
+                            bgLayer.style.backgroundImage = 'none';
+                            bgLayer.className = getBackgroundClass(); 
+                            innerVisual = fallbackHTML;
+                        }
 
-                    let dashboardHTML = generateDashboardHTML(innerVisual);
+                        let dashboardHTML = generateDashboardHTML(innerVisual);
 
-                    widget.innerHTML = `
-                        ${weatherHTML}
-                        ${dashboardHTML}
-                        <div class="title">${songName}</div>
-                        <div class="artist">${artistName}</div>
-                        ${albumName}
-                        <div class="source-badge">Via ${activeSource}</div>
-                    `;
+                        widget.innerHTML = `
+                            ${weatherHTML}
+                            ${dashboardHTML}
+                            <div class="title">${songName}</div>
+                            <div class="artist">${artistName}</div>
+                            ${albumName}
+                            <div class="source-badge">Via ${activeSource}</div>
+                        `;
+                        
+                        // Termina a transição: fade-in e scale-up
+                        widget.style.opacity = 1;
+                        widget.style.transform = 'scale(1)';
+                    }, 500);
                 }
             } else {
                 if (currentStatus !== 'paused') {

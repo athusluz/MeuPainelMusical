@@ -387,6 +387,28 @@
         let gpuTemp = '--';
         let gpuLoad = '--';
 
+        // --- SISTEMA DE PRELOAD DE IMAGEM ---
+        // Sincroniza a transição do CSS com o download da imagem real
+        function preloadImageAndUpdate(imageUrl, updateCallback) {
+            const fadeDuration = 500; // Tempo do fade-out no CSS
+            const startTime = Date.now();
+
+            const triggerUpdate = () => {
+                const elapsed = Date.now() - startTime;
+                const remainingDelay = Math.max(0, fadeDuration - elapsed);
+                setTimeout(updateCallback, remainingDelay);
+            };
+
+            if (imageUrl) {
+                const img = new Image();
+                img.onload = triggerUpdate;
+                img.onerror = triggerUpdate; // Se der erro no download, continua a transição
+                img.src = imageUrl;
+            } else {
+                triggerUpdate();
+            }
+        }
+
         function getStatusIcon(temp) {
             if (temp === '--') return '';
             if (temp <= 30) return '🧊';
@@ -394,24 +416,24 @@
             if (temp <= 50) return '⚡';
             if (temp <= 60) return '🔥';
             if (temp <= 70) return '🌋';
-            // (igonora) return '⚡'; // ignora ✔️
+            // igonra: return '✔️';
         }
 
         function getBarColor(temp) {
             if (temp === '--') return 'transparent';
-            if (temp <= 39) return '#00d2ff'; // Gelo / Azul
-            if (temp <= 50) return '#a8e063'; // Verde Saudável
-            if (temp <= 55) return '#f6d365'; // Amarelo
-            if (temp <= 69) return '#fc4a1a'; // Laranja / Quente
-            return '#ff416c'; // Vermelho / Fogo
+            if (temp <= 39) return '#00d2ff'; 
+            if (temp <= 50) return '#a8e063'; 
+            if (temp <= 55) return '#f6d365'; 
+            if (temp <= 69) return '#fc4a1a'; 
+            return '#ff416c'; 
         }
 
         function getLoadColor(load) {
             if (load === '--') return 'transparent';
-            if (load <= 40) return '#00d2ff'; // Uso leve
-            if (load <= 65) return '#a8e063'; // Uso médio
-            if (load <= 85) return '#f6d365'; // Uso alto
-            return '#ff416c'; // Uso extremo
+            if (load <= 40) return '#00d2ff'; 
+            if (load <= 65) return '#a8e063'; 
+            if (load <= 85) return '#f6d365'; 
+            return '#ff416c'; 
         }
 
         function getWeatherIcon(code) {
@@ -442,7 +464,6 @@
                         gpuLoad = Math.round(load <= 1 ? load * 100 : load);
                     }
                     
-                    // Atualiza Overlay de Temperatura Dinâmico
                     let maxTemp = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
                     const glass = document.getElementById('glass-overlay');
                     if (glass) {
@@ -455,7 +476,6 @@
                         }
                     }
 
-                    // Atualiza Textos
                     const elCpuT = document.getElementById('cpu-t');
                     if (elCpuT) elCpuT.innerText = cpuTemp;
                     const elCpuI = document.getElementById('cpu-icon');
@@ -470,11 +490,9 @@
                     const elGpuL = document.getElementById('gpu-l');
                     if (elGpuL) elGpuL.innerText = gpuLoad;
 
-                    // Constantes dos caminhos SVG
                     const outerDashArray = 503; 
                     const innerDashArray = 446; 
 
-                    // Atualiza Arcos da CPU
                     const elCpuBar = document.getElementById('cpu-bar-fill');
                     if (elCpuBar && cpuTemp !== '--') {
                         let pct = Math.min(Math.max(cpuTemp, 0), 100);
@@ -492,7 +510,6 @@
                         elCpuLoadBar.style.filter = `drop-shadow(0 0 4px ${getLoadColor(cpuLoad)})`;
                     }
 
-                    // Atualiza Arcos da GPU
                     const elGpuBar = document.getElementById('gpu-bar-fill');
                     if (elGpuBar && gpuTemp !== '--') {
                         let pct = Math.min(Math.max(gpuTemp, 0), 100);
@@ -676,12 +693,14 @@
                 if (newsList.length === 0) return;
 
                 const bgLayer = document.getElementById('bg-layer');
+                const newsItem = newsList[currentNewsIndex];
                 
-                // Transição: fade-out e scale-down
+                // 1. Inicia transição visual (fade-out)
                 widget.style.opacity = 0; 
                 widget.style.transform = 'scale(0.95)';
                 
-                setTimeout(() => {
+                // 2. Aguarda a imagem estar pronta na memória para renderizar
+                preloadImageAndUpdate(newsItem.image, () => {
                     let visualHTML = '';
                     let weatherHTML = '';
 
@@ -695,7 +714,6 @@
                         `;
                     }
                     
-                    const newsItem = newsList[currentNewsIndex];
                     if (newsItem.image) {
                         bgLayer.className = ''; 
                         bgLayer.style.backgroundImage = `url('${newsItem.image}')`;
@@ -718,10 +736,10 @@
                     currentNewsIndex++;
                     if (currentNewsIndex >= newsList.length) currentNewsIndex = 0; 
                     
-                    // Transição: fade-in e scale-up
+                    // 3. Finaliza transição (fade-in)
                     widget.style.opacity = 1; 
                     widget.style.transform = 'scale(1)';
-                }, 500);
+                });
             };
             
             updateNews(); 
@@ -830,11 +848,12 @@
                     
                     stopNewsCycle(); 
                     
-                    // Inicia a transição: fade-out e scale-down
+                    // 1. Inicia transição (fade-out)
                     widget.style.opacity = 0;
                     widget.style.transform = 'scale(0.95)';
 
-                    setTimeout(() => {
+                    // 2. Aguarda o download da capa do álbum na memória
+                    preloadImageAndUpdate(coverUrl, () => {
                         let innerVisual = '';
                         let weatherHTML = ''; 
 
@@ -859,10 +878,10 @@
                             <div class="source-badge">Via ${activeSource}</div>
                         `;
                         
-                        // Termina a transição: fade-in e scale-up
+                        // 3. Finaliza transição (fade-in)
                         widget.style.opacity = 1;
                         widget.style.transform = 'scale(1)';
-                    }, 500);
+                    });
                 }
             } else {
                 if (currentStatus !== 'paused') {

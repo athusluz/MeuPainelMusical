@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Híbrido Kraken Display V3</title>
+    <title>Tocando Agora - Híbrido Kraken Display V4</title>
     <style>
         * {
             box-sizing: border-box;
@@ -172,10 +172,10 @@
         }
 
         .cover-circle { 
-            width: 250px; 
-            height: 250px; 
+            width: 240px; 
+            height: 240px; 
             border-radius: 50%; 
-            border: 4px solid rgba(255, 255, 255, 0.2); 
+            border: 4px solid rgba(255, 255, 255, 0.8); 
             box-shadow: 0 10px 40px rgba(255, 255, 255, 0.4); 
             object-fit: cover;
             display: block;
@@ -184,8 +184,8 @@
         }
 
         .bars-container {
-            width: 250px;
-            height: 250px;
+            width: 240px;
+            height: 240px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -249,21 +249,6 @@
             text-overflow: ellipsis; 
             width: 100%;
             text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-        }
-
-        /* --- NOVOS ESTILOS PROGRESS BAR --- */
-        .time-elapsed {
-            font-size: 16px;
-            font-family: monospace;
-            font-weight: 700;
-            color: #ff9a9e;
-            background: rgba(0,0,0,0.4);
-            padding: 4px 12px;
-            border-radius: 10px;
-            margin-top: 5px;
-            margin-bottom: 5px;
-            letter-spacing: 1px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
         }
         
         .source-badge {
@@ -389,15 +374,6 @@
         }
         connectWNP();
 
-        function formatTime(sec) {
-            if(isNaN(sec) || sec < 0) return "00:00";
-            const h = Math.floor(sec / 3600);
-            const m = Math.floor((sec % 3600) / 60);
-            const s = Math.floor(sec % 60);
-            if (h > 0) return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
-
         function parseMpcTime(str) {
             if (!str) return 0;
             const parts = str.split(':');
@@ -428,10 +404,10 @@
             if (temp === '--') return '';
             if (temp <= 30) return '🧊';
             if (temp <= 40) return '❄️';
-            if (temp <= 50) return '✔️';
+            if (temp <= 50) return '⚡';
             if (temp <= 60) return '🔥';
             if (temp <= 70) return '🌋';
-            return '⚡';
+            // return '⚡'; ✔️
         }
 
         function getBarColor(temp) {
@@ -499,7 +475,7 @@
                     const elGpuL = document.getElementById('gpu-l'); if (elGpuL) elGpuL.innerText = gpuLoad;
 
                     const outerDashArray = 503; 
-                    const innerDashArray = 446; 
+                    const innerDashArray = 452; 
 
                     const elCpuBar = document.getElementById('cpu-bar-fill');
                     if (elCpuBar && cpuTemp !== '--') {
@@ -625,17 +601,16 @@
             let initCpuLoadPct = cpuLoad !== '--' ? Math.min(Math.max(cpuLoad, 0), 100) : 0;
             let initGpuLoadPct = gpuLoad !== '--' ? Math.min(Math.max(gpuLoad, 0), 100) : 0;
 
-            const outerDashArray = 503; const innerDashArray = 446;
+            const outerDashArray = 503; 
+            const innerDashArray = 452; 
 
-            let ringHTML = '';
+            let ringHTML_BG = '';
+            let ringHTML_FG = '';
+            
             if (showProgressRing) {
-                // Anel SVG Dinâmico da Música (Raio = 130, Comprimento total = 817)
-                ringHTML = `
-                    <svg id="music-progress-svg" width="280" height="280" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); z-index: 4; pointer-events: none;">
-                        <circle cx="140" cy="140" r="130" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
-                        <circle id="music-progress-ring-fill" cx="140" cy="140" r="130" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="817" stroke-dashoffset="817" style="transition: stroke-dashoffset 1s linear; stroke-linecap:round; filter:drop-shadow(0 0 5px #ff9a9e);"/>
-                    </svg>
-                `;
+                // Anel de Música com Raio 128 (Total = 804)
+                ringHTML_BG = `<circle cx="170" cy="170" r="128" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6"/>`;
+                ringHTML_FG = `<circle id="music-progress-ring-fill" cx="170" cy="170" r="128" fill="none" stroke="#ff9a9e" stroke-width="6" stroke-dasharray="804" stroke-dashoffset="804" transform="rotate(-90 170 170)" style="transition: stroke-dashoffset 1s linear; stroke-linecap:round; filter:drop-shadow(0 0 5px #ff9a9e);"/>`;
             }
 
             return `
@@ -651,19 +626,22 @@
                     
                     <div class="cover-wrapper">
                         <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
+                            
                             <path d="M 170,330 A 160,160 0 0,1 170,10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M 170,312 A 142,142 0 0,1 170,28" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
+                            <path d="M 170,314 A 144,144 0 0,1 170,26" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
                             <path d="M 170,330 A 160,160 0 0,0 170,10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M 170,312 A 142,142 0 0,0 170,28" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
+                            <path d="M 170,314 A 144,144 0 0,0 170,26" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
+                            ${ringHTML_BG}
 
                             <path id="cpu-bar-fill" d="M 170,330 A 160,160 0 0,1 170,10" fill="none" stroke="${cpuColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${outerDashArray}" stroke-dashoffset="${outerDashArray - (outerDashArray * initCpuPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 6px ${cpuColor});"/>
-                            <path id="cpu-load-fill" d="M 170,312 A 142,142 0 0,1 170,28" fill="none" stroke="${cpuLoadColor}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${innerDashArray}" stroke-dashoffset="${innerDashArray - (innerDashArray * initCpuLoadPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 4px ${cpuLoadColor});"/>
+                            <path id="cpu-load-fill" d="M 170,314 A 144,144 0 0,1 170,26" fill="none" stroke="${cpuLoadColor}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${innerDashArray}" stroke-dashoffset="${innerDashArray - (innerDashArray * initCpuLoadPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 4px ${cpuLoadColor});"/>
                             
                             <path id="gpu-bar-fill" d="M 170,330 A 160,160 0 0,0 170,10" fill="none" stroke="${gpuColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${outerDashArray}" stroke-dashoffset="${outerDashArray - (outerDashArray * initGpuPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 6px ${gpuColor});"/>
-                            <path id="gpu-load-fill" d="M 170,312 A 142,142 0 0,0 170,28" fill="none" stroke="${gpuLoadColor}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${innerDashArray}" stroke-dashoffset="${innerDashArray - (innerDashArray * initGpuLoadPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 4px ${gpuLoadColor});"/>
+                            <path id="gpu-load-fill" d="M 170,314 A 144,144 0 0,0 170,26" fill="none" stroke="${gpuLoadColor}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${innerDashArray}" stroke-dashoffset="${innerDashArray - (innerDashArray * initGpuLoadPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 4px ${gpuLoadColor});"/>
+                            
+                            ${ringHTML_FG}
                         </svg>
 
-                        ${ringHTML}
                         ${innerVisual}
                     </div>
                     
@@ -754,13 +732,11 @@
                 if (pTracker.posSec > pTracker.durSec) pTracker.posSec = pTracker.durSec;
 
                 const ring = document.getElementById('music-progress-ring-fill');
-                const text = document.getElementById('music-progress-text');
                 
-                if (ring && text) {
+                if (ring) {
                     let pct = Math.min(Math.max((pTracker.posSec / pTracker.durSec), 0), 1);
-                    const totalLength = 817; // Círculo r=130
+                    const totalLength = 804; // Círculo r=128
                     ring.style.strokeDashoffset = totalLength - (totalLength * pct);
-                    text.innerText = `${formatTime(pTracker.posSec)} / ${formatTime(pTracker.durSec)}`;
                 }
             }
         }, 1000);
@@ -863,15 +839,12 @@
                         }
 
                         let dashboardHTML = generateDashboardHTML(innerVisual, hasProgress);
-                        
-                        let progressTextHTML = hasProgress ? `<div class="time-elapsed" id="music-progress-text">${formatTime(pTracker.posSec)} / ${formatTime(pTracker.durSec)}</div>` : '';
 
                         widget.innerHTML = `
                             ${dashboardHTML}
                             <div class="title">${songName}</div>
                             <div class="artist">${artistName}</div>
                             ${albumName}
-                            ${progressTextHTML}
                             <div class="source-badge">Via ${activeSource}</div>
                         `;
                         

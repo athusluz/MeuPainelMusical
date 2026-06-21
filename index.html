@@ -61,6 +61,18 @@
             background: rgba(0, 0, 0, 0.2); 
             backdrop-filter: blur(25px);
             z-index: 2;
+            transition: background 1.5s ease, box-shadow 1.5s ease; /* Transição suave de temperatura */
+        }
+
+        /* --- EFEITOS DE TEMPERATURA DINÂMICOS --- */
+        #glass-overlay.fire-tint {
+            background: rgba(255, 65, 108, 0.35) !important;
+            box-shadow: inset 0 0 120px rgba(255, 65, 108, 0.6);
+        }
+
+        #glass-overlay.ice-tint {
+            background: rgba(0, 210, 255, 0.25) !important;
+            box-shadow: inset 0 0 120px rgba(0, 210, 255, 0.5);
         }
 
         #music-widget { 
@@ -367,6 +379,7 @@
         let newsList = [];
         let currentNewsIndex = 0; 
         let goianiaWeather = null;
+        let lastNewsFetchTime = 0; // Controle de tempo para otimização da API
 
         let cpuTemp = '--';
         let cpuLoad = '--';
@@ -376,11 +389,9 @@
         function getStatusIcon(temp) {
             if (temp === '--') return '';
             if (temp <= 30) return '🧊';
-            if (temp <= 35) return '🥶';
             if (temp <= 40) return '❄️';
             if (temp <= 50) return '✔️';
             if (temp <= 60) return '🔥';
-            if (temp <= 68) return '🥵';
             if (temp <= 70) return '🌋';
             return '⚡';
         }
@@ -430,6 +441,19 @@
                         gpuLoad = Math.round(load <= 1 ? load * 100 : load);
                     }
                     
+                    // Atualiza Overlay de Temperatura Dinâmico
+                    let maxTemp = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
+                    const glass = document.getElementById('glass-overlay');
+                    if (glass) {
+                        if (maxTemp > 50) {
+                            glass.className = 'fire-tint';
+                        } else if (maxTemp < 40 && maxTemp > 0) {
+                            glass.className = 'ice-tint';
+                        } else {
+                            glass.className = '';
+                        }
+                    }
+
                     // Atualiza Textos
                     const elCpuT = document.getElementById('cpu-t');
                     if (elCpuT) elCpuT.innerText = cpuTemp;
@@ -445,7 +469,7 @@
                     const elGpuL = document.getElementById('gpu-l');
                     if (elGpuL) elGpuL.innerText = gpuLoad;
 
-                    // Constantes dos caminhos SVG (comprimento total do arco)
+                    // Constantes dos caminhos SVG
                     const outerDashArray = 503; 
                     const innerDashArray = 446; 
 
@@ -534,7 +558,7 @@
             activeSources = selected;
             localStorage.setItem('kraken_news_all_v2', JSON.stringify(activeSources));
             contextMenu.style.display = 'none';
-            fetchNews(); 
+            fetchNews(true); // Força a atualização ao salvar
         });
 
         async function fetchWeather() {
@@ -545,7 +569,12 @@
             } catch (e) { console.error("Erro ao buscar clima", e); }
         }
 
-        async function fetchNews() {
+        // Função otimizada com debounce
+        async function fetchNews(force = false) {
+            const now = Date.now();
+            if (!force && now - lastNewsFetchTime < 60000) return; // Limita a 1 fetch por minuto
+            lastNewsFetchTime = now;
+
             try {
                 await fetchWeather();
                 newsList = [];
@@ -580,7 +609,7 @@
             } catch (error) { console.error("Erro ao buscar notícias:", error); }
         }
 
-        fetchNews();
+        fetchNews(true);
 
         function generateDashboardHTML(innerVisual) {
             let initialCpuIcon = getStatusIcon(cpuTemp);
@@ -653,6 +682,7 @@
                     let visualHTML = '';
                     let weatherHTML = '';
 
+                    // Mantém o clima durante as notícias
                     if (goianiaWeather) {
                         const wIcon = getWeatherIcon(goianiaWeather.weathercode);
                         const wTemp = Math.round(goianiaWeather.temperature);
@@ -794,20 +824,10 @@
                     currentTrackUrl = trackIdentifier;
                     currentStatus = 'playing';
                     
-                    stopNewsCycle(); fetchNews(); widget.style.opacity = 1; 
+                    stopNewsCycle(); widget.style.opacity = 1; 
 
                     let innerVisual = '';
-                    let weatherHTML = '';
-
-                    if (goianiaWeather) {
-                        const wIcon = getWeatherIcon(goianiaWeather.weathercode);
-                        const wTemp = Math.round(goianiaWeather.temperature);
-                        weatherHTML = `
-                            <div class="weather-overlay">
-                                ${wTemp}°C ${wIcon}
-                            </div>
-                        `;
-                    }
+                    let weatherHTML = ''; // Variável vazia: remove o clima enquanto toca música
 
                     if (coverUrl !== '') {
                         bgLayer.className = ''; 

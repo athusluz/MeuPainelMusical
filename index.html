@@ -172,10 +172,10 @@
         }
 
         .cover-circle { 
-            width: 270px; 
-            height: 270px; 
+            width: 250px; 
+            height: 250px; 
             border-radius: 50%; 
-            border: 4px solid rgba(255, 255, 255, 0.2); /* Borda mais fina para não brigar com o progresso */
+            border: 4px solid rgba(255, 255, 255, 0.2); 
             box-shadow: 0 10px 40px rgba(255, 255, 255, 0.4); 
             object-fit: cover;
             display: block;
@@ -184,8 +184,8 @@
         }
 
         .bars-container {
-            width: 270px;
-            height: 270px;
+            width: 250px;
+            height: 250px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -275,7 +275,6 @@
             color: #aaa;
         }
 
-        /* Menu de Contexto (Notícias) Ocultado para simplificar, mas mantido o funcionamento */
         #context-menu {
             display: none;
             position: absolute;
@@ -352,7 +351,7 @@
         let cpuTemp = '--'; let cpuLoad = '--';
         let gpuTemp = '--'; let gpuLoad = '--';
 
-        // --- GLOBAL PLAYBACK TRACKER (Para interpolação 1 segundo) ---
+        // --- GLOBAL PLAYBACK TRACKER ---
         let pTracker = {
             active: false,
             posSec: 0,
@@ -390,7 +389,6 @@
         }
         connectWNP();
 
-        // Helpers de Tempo
         function formatTime(sec) {
             if(isNaN(sec) || sec < 0) return "00:00";
             const h = Math.floor(sec / 3600);
@@ -631,11 +629,11 @@
 
             let ringHTML = '';
             if (showProgressRing) {
-                // Anel SVG Dinâmico da Música (Comprimento total = 879)
+                // Anel SVG Dinâmico da Música (Raio = 130, Comprimento total = 817)
                 ringHTML = `
-                    <svg id="music-progress-svg" width="300" height="300" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); z-index: 4; pointer-events: none;">
-                        <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
-                        <circle id="music-progress-ring-fill" cx="150" cy="150" r="140" fill="none" stroke="#ff9a9e" stroke-width="6" stroke-dasharray="879" stroke-dashoffset="879" style="transition: stroke-dashoffset 1s linear; stroke-linecap:round; filter:drop-shadow(0 0 5px #ff9a9e);"/>
+                    <svg id="music-progress-svg" width="280" height="280" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); z-index: 4; pointer-events: none;">
+                        <circle cx="140" cy="140" r="130" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+                        <circle id="music-progress-ring-fill" cx="140" cy="140" r="130" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="817" stroke-dashoffset="817" style="transition: stroke-dashoffset 1s linear; stroke-linecap:round; filter:drop-shadow(0 0 5px #ff9a9e);"/>
                     </svg>
                 `;
             }
@@ -760,7 +758,7 @@
                 
                 if (ring && text) {
                     let pct = Math.min(Math.max((pTracker.posSec / pTracker.durSec), 0), 1);
-                    const totalLength = 879; // Círculo r=140
+                    const totalLength = 817; // Círculo r=130
                     ring.style.strokeDashoffset = totalLength - (totalLength * pct);
                     text.innerText = `${formatTime(pTracker.posSec)} / ${formatTime(pTracker.durSec)}`;
                 }
@@ -772,7 +770,6 @@
             let coverUrl = ''; let activeSource = ''; let hasProgress = false;
             let tempPosSec = 0; let tempDurSec = 0;
 
-            // 1. Prioridade MAX: WebNowPlaying (Navegador)
             if (wnpConnected && wnpState.state === 1) {
                 isPlaying = true; activeSource = 'WebNowPlaying';
                 songName = wnpState.title; artistName = wnpState.artist;
@@ -786,7 +783,6 @@
                 }
             }
             
-            // 2. Prioridade ALTA: MPC-HC
             if (!isPlaying) {
                 try {
                     const mpcRes = await fetch('http://localhost:13579/variables.html');
@@ -806,7 +802,6 @@
                         }
                         coverUrl = await fetchItunesCover(artistName, songName);
 
-                        // Puxando o tempo do MPC-HC
                         const posStr = doc.getElementById('positionstring')?.innerText || '';
                         const durStr = doc.getElementById('durationstring')?.innerText || '';
                         if (durStr && durStr !== '00:00:00') {
@@ -818,7 +813,6 @@
                 } catch (e) {}
             }
 
-            // 3. Prioridade MÉDIA: Last.fm
             if (!isPlaying) {
                 try {
                     const lfmUrl = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`;
@@ -836,12 +830,11 @@
                         if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
                             coverUrl = await fetchItunesCover(artistName, songName);
                         }
-                        hasProgress = false; // Last.fm não tem tempo real em milissegundos
+                        hasProgress = false; 
                     }
                 } catch (error) { }
             }
 
-            // Sincroniza o Tracker
             pTracker.active = hasProgress;
             pTracker.posSec = tempPosSec;
             pTracker.durSec = tempDurSec;

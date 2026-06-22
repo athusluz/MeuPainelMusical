@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Híbrido Kraken Display V4</title>
+    <title>Tocando Agora - Híbrido Kraken Display V5.1</title>
     <style>
         * {
             box-sizing: border-box;
@@ -172,8 +172,8 @@
         }
 
         .cover-circle { 
-            width: 240px; 
-            height: 240px; 
+            width: 256px; 
+            height: 256px; 
             border-radius: 50%; 
             border: 4px solid rgba(255, 255, 255, 0.8); 
             box-shadow: 0 10px 40px rgba(255, 255, 255, 0.4); 
@@ -184,8 +184,8 @@
         }
 
         .bars-container {
-            width: 240px;
-            height: 240px;
+            width: 256px;
+            height: 256px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -256,7 +256,7 @@
             background: rgba(0,0,0,0.5);
             padding: 4px 10px;
             border-radius: 12px;
-            margin-top: 5px;
+            margin-top: 10px;
             color: #aaa;
         }
 
@@ -474,8 +474,8 @@
                     const elGpuI = document.getElementById('gpu-icon'); if (elGpuI) elGpuI.innerText = getStatusIcon(gpuTemp);
                     const elGpuL = document.getElementById('gpu-l'); if (elGpuL) elGpuL.innerText = gpuLoad;
 
-                    const outerDashArray = 503; 
-                    const innerDashArray = 452; 
+                    const outerDashArray = 509; // Raio 162
+                    const innerDashArray = 465; // Raio 148
 
                     const elCpuBar = document.getElementById('cpu-bar-fill');
                     if (elCpuBar && cpuTemp !== '--') {
@@ -591,7 +591,7 @@
         }
         fetchNews(true);
 
-        function generateDashboardHTML(innerVisual, showProgressRing = false) {
+        function generateDashboardHTML(innerVisual) {
             let initialCpuIcon = getStatusIcon(cpuTemp); let initialGpuIcon = getStatusIcon(gpuTemp);
             let cpuColor = getBarColor(cpuTemp); let gpuColor = getBarColor(gpuTemp);
             let cpuLoadColor = getLoadColor(cpuLoad); let gpuLoadColor = getLoadColor(gpuLoad);
@@ -601,16 +601,15 @@
             let initCpuLoadPct = cpuLoad !== '--' ? Math.min(Math.max(cpuLoad, 0), 100) : 0;
             let initGpuLoadPct = gpuLoad !== '--' ? Math.min(Math.max(gpuLoad, 0), 100) : 0;
 
-            const outerDashArray = 503; 
-            const innerDashArray = 452; 
+            const outerDashArray = 509; // Temp
+            const innerDashArray = 465; // Load
+            const musicDashArray = 427; // Music 
 
-            let ringHTML_BG = '';
-            let ringHTML_FG = '';
-            
-            if (showProgressRing) {
-                // Anel de Música com Raio 128 (Total = 804)
-                ringHTML_BG = `<circle cx="170" cy="170" r="128" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6"/>`;
-                ringHTML_FG = `<circle id="music-progress-ring-fill" cx="170" cy="170" r="128" fill="none" stroke="#ff9a9e" stroke-width="6" stroke-dasharray="804" stroke-dashoffset="804" transform="rotate(-90 170 170)" style="transition: stroke-dashoffset 1s linear; stroke-linecap:round; filter:drop-shadow(0 0 5px #ff9a9e);"/>`;
+            // CÁLCULO INICIAL DO PROGRESSO
+            let initMusicOffset = musicDashArray;
+            if (pTracker.active && pTracker.durSec > 0) {
+                let pct = Math.min(Math.max((pTracker.posSec / pTracker.durSec), 0), 1);
+                initMusicOffset = musicDashArray - (musicDashArray * pct);
             }
 
             return `
@@ -625,21 +624,32 @@
                     </div>
                     
                     <div class="cover-wrapper">
+                        <!-- SVG UNIFICADO PARA ALINHAMENTO PERFEITO DOS ARCOS (Total 340x340) -->
                         <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
                             
-                            <path d="M 170,330 A 160,160 0 0,1 170,10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M 170,314 A 144,144 0 0,1 170,26" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
-                            <path d="M 170,330 A 160,160 0 0,0 170,10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M 170,314 A 144,144 0 0,0 170,26" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
-                            ${ringHTML_BG}
+                            <!-- Fundos Translúcidos: Temp (Raio 162), Load (Raio 148) -->
+                            <path d="M 170,332 A 162,162 0 0,1 170,8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M 170,318 A 148,148 0 0,1 170,22" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
+                            
+                            <path d="M 170,332 A 162,162 0 0,0 170,8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M 170,318 A 148,148 0 0,0 170,22" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
+                            
+                            <!-- ARCOS DA MÚSICA SEMPRE RENDERIZADOS -->
+                            <g id="music-ring-container" style="opacity: 0; transition: opacity 0.5s ease;">
+                                <path d="M 170,306 A 136,136 0 0,1 170,34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M 170,306 A 136,136 0 0,0 170,34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+                                
+                                <path id="music-progress-left" d="M 170,306 A 136,136 0 0,1 170,34" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="${musicDashArray}" stroke-dashoffset="${initMusicOffset}" style="transition: stroke-dashoffset 1s linear; stroke-linecap:round; filter:drop-shadow(0 0 5px #ff9a9e);"/>
+                                <path id="music-progress-right" d="M 170,306 A 136,136 0 0,0 170,34" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="${musicDashArray}" stroke-dashoffset="${initMusicOffset}" style="transition: stroke-dashoffset 1s linear; stroke-linecap:round; filter:drop-shadow(0 0 5px #ff9a9e);"/>
+                            </g>
 
-                            <path id="cpu-bar-fill" d="M 170,330 A 160,160 0 0,1 170,10" fill="none" stroke="${cpuColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${outerDashArray}" stroke-dashoffset="${outerDashArray - (outerDashArray * initCpuPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 6px ${cpuColor});"/>
-                            <path id="cpu-load-fill" d="M 170,314 A 144,144 0 0,1 170,26" fill="none" stroke="${cpuLoadColor}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${innerDashArray}" stroke-dashoffset="${innerDashArray - (innerDashArray * initCpuLoadPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 4px ${cpuLoadColor});"/>
+                            <!-- Preenchimentos Coloridos (CPU) -->
+                            <path id="cpu-bar-fill" d="M 170,332 A 162,162 0 0,1 170,8" fill="none" stroke="${cpuColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${outerDashArray}" stroke-dashoffset="${outerDashArray - (outerDashArray * initCpuPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 6px ${cpuColor});"/>
+                            <path id="cpu-load-fill" d="M 170,318 A 148,148 0 0,1 170,22" fill="none" stroke="${cpuLoadColor}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${innerDashArray}" stroke-dashoffset="${innerDashArray - (innerDashArray * initCpuLoadPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 4px ${cpuLoadColor});"/>
                             
-                            <path id="gpu-bar-fill" d="M 170,330 A 160,160 0 0,0 170,10" fill="none" stroke="${gpuColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${outerDashArray}" stroke-dashoffset="${outerDashArray - (outerDashArray * initGpuPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 6px ${gpuColor});"/>
-                            <path id="gpu-load-fill" d="M 170,314 A 144,144 0 0,0 170,26" fill="none" stroke="${gpuLoadColor}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${innerDashArray}" stroke-dashoffset="${innerDashArray - (innerDashArray * initGpuLoadPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 4px ${gpuLoadColor});"/>
-                            
-                            ${ringHTML_FG}
+                            <!-- Preenchimentos Coloridos (GPU) -->
+                            <path id="gpu-bar-fill" d="M 170,332 A 162,162 0 0,0 170,8" fill="none" stroke="${gpuColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${outerDashArray}" stroke-dashoffset="${outerDashArray - (outerDashArray * initGpuPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 6px ${gpuColor});"/>
+                            <path id="gpu-load-fill" d="M 170,318 A 148,148 0 0,0 170,22" fill="none" stroke="${gpuLoadColor}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${innerDashArray}" stroke-dashoffset="${innerDashArray - (innerDashArray * initGpuLoadPct / 100)}" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; filter: drop-shadow(0 0 4px ${gpuLoadColor});"/>
                         </svg>
 
                         ${innerVisual}
@@ -682,7 +692,7 @@
                         visualHTML = fallbackHTML;
                     }
 
-                    let dashboardHTML = generateDashboardHTML(visualHTML, false);
+                    let dashboardHTML = generateDashboardHTML(visualHTML);
 
                     widget.innerHTML = `
                         ${weatherHTML}
@@ -725,19 +735,29 @@
             return '';
         }
 
-        // --- ATUALIZAÇÃO DO PROGRESSO LOCAL ---
+        // --- ATUALIZAÇÃO DO PROGRESSO LOCAL E VISIBILIDADE ---
         setInterval(() => {
+            const musicRingContainer = document.getElementById('music-ring-container');
+
             if (pTracker.active && pTracker.durSec > 0) {
+                // Revela os arcos suavemente assim que o tempo for detectado
+                if (musicRingContainer) musicRingContainer.style.opacity = '1';
+
                 pTracker.posSec++; // Interpola 1 segundo
                 if (pTracker.posSec > pTracker.durSec) pTracker.posSec = pTracker.durSec;
 
-                const ring = document.getElementById('music-progress-ring-fill');
+                const ringLeft = document.getElementById('music-progress-left');
+                const ringRight = document.getElementById('music-progress-right');
                 
-                if (ring) {
+                if (ringLeft && ringRight) {
                     let pct = Math.min(Math.max((pTracker.posSec / pTracker.durSec), 0), 1);
-                    const totalLength = 804; // Círculo r=128
-                    ring.style.strokeDashoffset = totalLength - (totalLength * pct);
+                    const totalLength = 427; 
+                    let offset = totalLength - (totalLength * pct);
+                    ringLeft.style.strokeDashoffset = offset;
+                    ringRight.style.strokeDashoffset = offset;
                 }
+            } else {
+                if (musicRingContainer) musicRingContainer.style.opacity = '0';
             }
         }, 1000);
 
@@ -838,7 +858,7 @@
                             innerVisual = fallbackHTML;
                         }
 
-                        let dashboardHTML = generateDashboardHTML(innerVisual, hasProgress);
+                        let dashboardHTML = generateDashboardHTML(innerVisual);
 
                         widget.innerHTML = `
                             ${dashboardHTML}

@@ -245,7 +245,7 @@
             </div>
         </div>
 
-        <div id="info-title" class="title">Inicializando Sistema...</div>
+        <div id="info-title" class="title">Inicializando...</div>
         <div id="info-artist" class="artist"></div>
         <div id="info-album" class="album"></div>
     </div>
@@ -297,6 +297,16 @@
             if (temp <= 75) return '#f6d365'; return '#ff416c'; 
         }
 
+        // Função dos Ícones baseados na Temperatura
+        function getStatusIcon(temp) {
+            if (temp === '--') return '⚡';
+            if (temp <= 30) return '🧊';
+            if (temp <= 40) return '❄️';
+            if (temp <= 50) return '⚡';
+            if (temp <= 60) return '🔥';
+            return '🌋';
+        }
+
         window.nzxt = {
             v1: {
                 onMonitoringDataUpdate: (data) => {
@@ -307,9 +317,17 @@
                     let mx = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
                     if (mx > 55) elGlass.className = 'fire-tint'; else if (mx < 40 && mx > 0) elGlass.className = 'ice-tint'; else elGlass.className = '';
 
-                    document.getElementById('cpu-t').innerText = cpuTemp; document.getElementById('cpu-l').innerText = cpuLoad;
-                    document.getElementById('gpu-t').innerText = gpuTemp; document.getElementById('gpu-l').innerText = gpuLoad;
+                    // Atualizando Textos
+                    document.getElementById('cpu-t').innerText = cpuTemp; 
+                    document.getElementById('cpu-l').innerText = cpuLoad;
+                    document.getElementById('gpu-t').innerText = gpuTemp; 
+                    document.getElementById('gpu-l').innerText = gpuLoad;
 
+                    // Atualizando Ícones Dinâmicos
+                    document.getElementById('cpu-icon').innerText = getStatusIcon(cpuTemp);
+                    document.getElementById('gpu-icon').innerText = getStatusIcon(gpuTemp);
+
+                    // Atualizando Barras SVG
                     if (cpuTemp !== '--') { document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); document.getElementById('cpu-bar-fill').style.stroke = getBarColor(cpuTemp); }
                     if (cpuLoad !== '--') { document.getElementById('cpu-load-fill').style.strokeDashoffset = 465 - (465 * Math.min(cpuLoad, 100) / 100); document.getElementById('cpu-load-fill').style.stroke = getBarColor(cpuLoad); }
                     if (gpuTemp !== '--') { document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); document.getElementById('gpu-bar-fill').style.stroke = getBarColor(gpuTemp); }
@@ -366,7 +384,7 @@
             } else { 
                 if (currentStatus !== 'paused') { 
                     currentStatus = 'paused'; currentTrackUrl = ''; pTracker.active = false; 
-                    updateUI('', 'Sistema Híbrido', 'Aguardando Música...', '');
+                    updateUI('', 'O silêncio..', '', '');
                 } 
             }
         }

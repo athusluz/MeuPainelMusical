@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Híbrido Kraken Display V6 (Otimizado)</title>
+    <title>Tocando Agora - Kraken V6 (Ultra Low CPU)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -26,52 +26,37 @@
 
         #bg-layer {
             position: absolute;
-            top: -5%; 
-            left: -5%;
-            width: 110%; 
-            height: 110%;
+            top: 0; 
+            left: 0;
+            width: 100%; 
+            height: 100%;
             background-size: cover;
             background-position: center;
             z-index: 1;
-            transition: background-image 1s ease-in-out;
+            /* Transição de fundo reduzida para aliviar a CPU */
+            transition: background-image 0.5s ease-in-out;
         }
 
-        /* Fundo Diurno (Animação otimizada) */
+        /* --- OTIMIZAÇÃO CRÍTICA: FUNDOS ESTÁTICOS SEM ANIMAÇÃO --- */
         .aurora-bg {
-            background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #fecfef, #ff9a9e);
-            background-size: 200% 200%;
-            animation: gradientBG 20s ease infinite;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
         }
 
-        /* Fundo Noturno */
         .dark-bg {
             background-color: #050505;
             background-image: none;
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Overlay otimizado (sem backdrop-filter pesado) */
         #glass-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.65); 
             z-index: 2;
-            transition: background 1.5s ease;
+            transition: background 1s ease;
         }
 
-        /* --- EFEITOS DE TEMPERATURA DINÂMICOS --- */
-        #glass-overlay.fire-tint {
-            background: rgba(180, 20, 50, 0.5) !important;
-        }
-
-        #glass-overlay.ice-tint {
-            background: rgba(0, 100, 150, 0.5) !important;
-        }
+        #glass-overlay.fire-tint { background: rgba(180, 20, 50, 0.4) !important; }
+        #glass-overlay.ice-tint { background: rgba(0, 100, 150, 0.4) !important; }
 
         #music-widget { 
             position: relative;
@@ -81,10 +66,8 @@
             align-items: center;
             text-align: center;
             width: 85%;
-            transition: opacity 0.5s ease-in-out;
         }
 
-        /* --- CLIMA NO TOPO --- */
         #weather-box {
             background: rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -93,14 +76,13 @@
             font-size: 30px; 
             font-weight: 800;
             color: #fff;
-            display: none; /* Escondido por padrão */
+            display: none; 
             align-items: center;
             justify-content: center;
             gap: 12px; 
             margin-bottom: 20px; 
         }
 
-        /* --- DASHBOARD COM ARCOS --- */
         .dashboard-container {
             display: flex;
             align-items: center;
@@ -193,24 +175,17 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
+        /* OTIMIZAÇÃO: Animação removida. As barras são apenas decorativas estáticas agora */
         .bar {
             width: 12px;
-            height: 40px;
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.6);
             border-radius: 6px;
-            animation: bounce 1s ease-in-out infinite alternate;
         }
-
-        .bar:nth-child(1) { animation-duration: 0.6s; animation-delay: 0.1s; }
-        .bar:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.4s; }
-        .bar:nth-child(3) { animation-duration: 0.5s; animation-delay: 0.2s; }
-        .bar:nth-child(4) { animation-duration: 0.7s; animation-delay: 0.5s; }
-        .bar:nth-child(5) { animation-duration: 0.9s; animation-delay: 0.3s; }
-
-        @keyframes bounce {
-            0% { height: 30px; transform: scaleY(1); }
-            100% { height: 140px; transform: scaleY(1.1); }
-        }
+        .bar:nth-child(1) { height: 40px; }
+        .bar:nth-child(2) { height: 80px; }
+        .bar:nth-child(3) { height: 120px; }
+        .bar:nth-child(4) { height: 60px; }
+        .bar:nth-child(5) { height: 90px; }
 
         .title { 
             font-size: 40px; 
@@ -224,7 +199,6 @@
             padding: 0 15px;
         }
 
-        /* Classe auxiliar para notícias (texto em múltiplas linhas) */
         .title.news-mode {
             white-space: normal;
             font-size: 26px;
@@ -245,10 +219,7 @@
             width: 100%;
         }
 
-        .artist.news-mode {
-            font-size: 18px;
-            color: #ccc;
-        }
+        .artist.news-mode { font-size: 18px; color: #ccc; }
 
         .album {
             color: #e0e0e0;
@@ -261,23 +232,7 @@
             width: 100%;
         }
 
-        #context-menu {
-            display: none;
-            position: absolute;
-            background: rgba(20, 20, 20, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 15px;
-            z-index: 9999;
-            min-width: 250px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        #context-menu h3 { font-size: 16px; margin-bottom: 12px; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; }
-        .menu-option { display: flex; align-items: center; margin-bottom: 10px; cursor: pointer; font-size: 14px; color: #ddd; transition: color 0.2s; }
-        .menu-option:hover { color: #fff; }
-        .menu-option input[type="checkbox"] { margin-right: 10px; accent-color: #ff9a9e; width: 16px; height: 16px; cursor: pointer; }
-        #save-menu-btn { width: 100%; padding: 10px; margin-top: 15px; background: linear-gradient(90deg, #a1c4fd, #c2e9fb); border: none; border-radius: 6px; color: #000; font-weight: bold; cursor: pointer; }
+        /* Transitions nos SVGs removidas para evitar recálculo de sub-pixel na CPU */
     </style>
 </head>
 <body>
@@ -306,18 +261,17 @@
                     <path d="M 170,332 A 162,162 0 0,0 170,8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                     <path d="M 170,318 A 148,148 0 0,0 170,22" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
                     
-                    <g id="music-ring-container" style="opacity: 0; transition: opacity 0.5s ease;">
+                    <g id="music-ring-container" style="display: none;">
                         <path d="M 170,306 A 136,136 0 0,1 170,34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
                         <path d="M 170,306 A 136,136 0 0,0 170,34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
-                        <path id="music-progress-left" d="M 170,306 A 136,136 0 0,1 170,34" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="427" stroke-dashoffset="427" style="transition: stroke-dashoffset 1s linear; stroke-linecap:round;"/>
-                        <path id="music-progress-right" d="M 170,306 A 136,136 0 0,0 170,34" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="427" stroke-dashoffset="427" style="transition: stroke-dashoffset 1s linear; stroke-linecap:round;"/>
+                        <path id="music-progress-left" d="M 170,306 A 136,136 0 0,1 170,34" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="427" stroke-dashoffset="427" stroke-linecap="round"/>
+                        <path id="music-progress-right" d="M 170,306 A 136,136 0 0,0 170,34" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="427" stroke-dashoffset="427" stroke-linecap="round"/>
                     </g>
 
-                    <path id="cpu-bar-fill" d="M 170,332 A 162,162 0 0,1 170,8" fill="none" stroke="transparent" stroke-width="8" stroke-linecap="round" stroke-dasharray="509" stroke-dashoffset="509" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                    <path id="cpu-load-fill" d="M 170,318 A 148,148 0 0,1 170,22" fill="none" stroke="transparent" stroke-width="6" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                    
-                    <path id="gpu-bar-fill" d="M 170,332 A 162,162 0 0,0 170,8" fill="none" stroke="transparent" stroke-width="8" stroke-linecap="round" stroke-dasharray="509" stroke-dashoffset="509" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                    <path id="gpu-load-fill" d="M 170,318 A 148,148 0 0,0 170,22" fill="none" stroke="transparent" stroke-width="6" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                    <path id="cpu-bar-fill" d="M 170,332 A 162,162 0 0,1 170,8" fill="none" stroke="transparent" stroke-width="8" stroke-linecap="round" stroke-dasharray="509" stroke-dashoffset="509"/>
+                    <path id="cpu-load-fill" d="M 170,318 A 148,148 0 0,1 170,22" fill="none" stroke="transparent" stroke-width="6" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465"/>
+                    <path id="gpu-bar-fill" d="M 170,332 A 162,162 0 0,0 170,8" fill="none" stroke="transparent" stroke-width="8" stroke-linecap="round" stroke-dasharray="509" stroke-dashoffset="509"/>
+                    <path id="gpu-load-fill" d="M 170,318 A 148,148 0 0,0 170,22" fill="none" stroke="transparent" stroke-width="6" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465"/>
                 </svg>
 
                 <div id="center-visual-container">
@@ -340,50 +294,22 @@
         <div id="info-album" class="album"></div>
     </div>
 
-    <div id="context-menu">
-        <h3>Fontes de Notícias</h3>
-        <label class="menu-option"><input type="checkbox" value="g1" class="news-source-cb"> G1 (Geral)</label>
-        <label class="menu-option"><input type="checkbox" value="copa" class="news-source-cb"> Copa do Mundo</label>
-        <label class="menu-option"><input type="checkbox" value="ge" class="news-source-cb"> Esportes (GE)</label>
-        <label class="menu-option"><input type="checkbox" value="esports" class="news-source-cb"> e-Sports & Games</label>
-        <label class="menu-option"><input type="checkbox" value="pop" class="news-source-cb"> Pop & Arte (Filmes/Séries)</label>
-        <label class="menu-option"><input type="checkbox" value="tecnologia" class="news-source-cb"> Tecnologia</label>
-        <label class="menu-option"><input type="checkbox" value="carros" class="news-source-cb"> Carros & Auto</label>
-        <label class="menu-option"><input type="checkbox" value="economia" class="news-source-cb"> Economia</label>
-        <label class="menu-option"><input type="checkbox" value="politica" class="news-source-cb"> Política</label>
-        <button id="save-menu-btn">Salvar & Atualizar</button>
-    </div>
-
     <script>
         const USERNAME = 'athusluz'; 
         const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b'; 
 
         const RSS_FEEDS = {
             'g1': { url: 'https://g1.globo.com/rss/g1/', name: 'G1' },
-            'copa': { url: 'https://ge.globo.com/rss/futebol/copa-do-mundo/', name: 'Copa do Mundo' },
-            'ge': { url: 'https://ge.globo.com/rss/ge/', name: 'GE Esportes' },
             'esports': { url: 'https://ge.globo.com/rss/esports/', name: 'e-Sports' },
-            'pop': { url: 'https://g1.globo.com/rss/g1/pop-arte/', name: 'Pop & Arte' },
-            'tecnologia': { url: 'https://g1.globo.com/rss/g1/tecnologia/', name: 'Tecnologia' },
-            'carros': { url: 'https://g1.globo.com/rss/g1/carros/', name: 'AutoEsporte' },
-            'economia': { url: 'https://g1.globo.com/rss/g1/economia/', name: 'Economia' },
-            'politica': { url: 'https://g1.globo.com/rss/g1/politica/', name: 'Política' }
+            'tecnologia': { url: 'https://g1.globo.com/rss/g1/tecnologia/', name: 'Tecnologia' }
         };
 
-        let activeSources = JSON.parse(localStorage.getItem('kraken_news_all_v2')) || Object.keys(RSS_FEEDS);
+        let activeSources = Object.keys(RSS_FEEDS);
+        let currentTrackUrl = ''; let currentStatus = ''; 
+        let newsInterval = null; let newsList = []; let currentNewsIndex = 0; 
+        let goianiaWeather = null; let lastNewsFetchTime = 0;
+        let cpuTemp = '--'; let cpuLoad = '--'; let gpuTemp = '--'; let gpuLoad = '--';
 
-        let currentTrackUrl = '';
-        let currentStatus = ''; 
-        let newsInterval = null; 
-        let newsList = [];
-        let currentNewsIndex = 0; 
-        let goianiaWeather = null;
-        let lastNewsFetchTime = 0;
-
-        let cpuTemp = '--'; let cpuLoad = '--';
-        let gpuTemp = '--'; let gpuLoad = '--';
-
-        // Elementos do DOM Cacheados para Performance
         const elBgLayer = document.getElementById('bg-layer');
         const elWidget = document.getElementById('music-widget');
         const elWeatherBox = document.getElementById('weather-box');
@@ -400,340 +326,123 @@
         let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0 };
         
         function connectWNP() {
-            let wnpSocket = new WebSocket('ws://127.0.0.1:8999');
-            wnpSocket.onopen = () => { wnpConnected = true; };
-            wnpSocket.onclose = () => { wnpConnected = false; setTimeout(connectWNP, 5000); };
-            wnpSocket.onmessage = (e) => {
-                const data = e.data;
-                if (data.startsWith('STATE:')) wnpState.state = parseInt(data.substring(6));
-                else if (data.startsWith('TITLE:')) wnpState.title = data.substring(6);
-                else if (data.startsWith('ARTIST:')) wnpState.artist = data.substring(7);
-                else if (data.startsWith('ALBUM:')) wnpState.album = data.substring(6);
-                else if (data.startsWith('COVER:')) wnpState.coverUrl = data.substring(6);
-                else if (data.startsWith('POSITION:')) {
-                    let parts = data.substring(9).split(':');
-                    wnpState.positionSec = parts.length === 2 ? parseInt(parts[0])*60 + parseInt(parts[1]) : parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseInt(parts[2]);
+            let ws = new WebSocket('ws://127.0.0.1:8999');
+            ws.onopen = () => wnpConnected = true;
+            ws.onclose = () => { wnpConnected = false; setTimeout(connectWNP, 10000); };
+            ws.onmessage = (e) => {
+                const d = e.data;
+                if (d.startsWith('STATE:')) wnpState.state = parseInt(d.substring(6));
+                else if (d.startsWith('TITLE:')) wnpState.title = d.substring(6);
+                else if (d.startsWith('ARTIST:')) wnpState.artist = d.substring(7);
+                else if (d.startsWith('COVER:')) wnpState.coverUrl = d.substring(6);
+                else if (d.startsWith('POSITION:')) {
+                    let p = d.substring(9).split(':'); wnpState.positionSec = p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]);
                 }
-                else if (data.startsWith('DURATION:')) {
-                    let parts = data.substring(9).split(':');
-                    wnpState.durationSec = parts.length === 2 ? parseInt(parts[0])*60 + parseInt(parts[1]) : parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseInt(parts[2]);
+                else if (d.startsWith('DURATION:')) {
+                    let p = d.substring(9).split(':'); wnpState.durationSec = p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]);
                 }
             };
         }
         connectWNP();
 
-        function parseMpcTime(str) {
-            if (!str) return 0;
-            const parts = str.split(':');
-            return parts.length === 3 ? parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseInt(parts[2]) : 0;
-        }
-
-        function getStatusIcon(temp) {
-            if (temp === '--') return '';
-            if (temp <= 30) return '🧊';
-            if (temp <= 40) return '❄️';
-            if (temp <= 50) return '✔️';
-            if (temp <= 60) return '🔥';
-            if (temp <= 70) return '🌋';
-            return '⚡';
-        }
-
         function getBarColor(temp) {
             if (temp === '--') return 'transparent';
-            if (temp <= 39) return '#00d2ff'; 
-            if (temp <= 50) return '#a8e063'; 
-            if (temp <= 55) return '#f6d365'; 
-            if (temp <= 69) return '#fc4a1a'; 
-            return '#ff416c'; 
-        }
-
-        function getLoadColor(load) {
-            if (load === '--') return 'transparent';
-            if (load <= 40) return '#00d2ff'; 
-            if (load <= 65) return '#a8e063'; 
-            if (load <= 85) return '#f6d365'; 
-            return '#ff416c'; 
-        }
-
-        function getWeatherIcon(code) {
-            if (code === 0) return '☀️'; 
-            if (code <= 2) return '⛅'; 
-            if (code === 3) return '☁️'; 
-            if (code >= 45 && code <= 48) return '🌫️'; 
-            if (code >= 51 && code <= 67) return '🌧️'; 
-            if (code >= 71 && code <= 77) return '❄️'; 
-            if (code >= 80 && code <= 82) return '🌦️'; 
-            if (code >= 95) return '⛈️'; 
-            return '☀️';
+            if (temp <= 40) return '#00d2ff'; if (temp <= 65) return '#a8e063'; 
+            if (temp <= 75) return '#f6d365'; return '#ff416c'; 
         }
 
         window.nzxt = {
             v1: {
                 onMonitoringDataUpdate: (data) => {
                     const { cpus, gpus } = data;
-                    if (cpus && cpus.length > 0) {
-                        cpuTemp = Math.round(cpus[0].temperature);
-                        let load = cpus[0].load;
-                        cpuLoad = Math.round(load <= 1 ? load * 100 : load);
-                    }
-                    if (gpus && gpus.length > 0) {
-                        let gpuIndex = gpus.length > 1 ? 1 : 0;
-                        gpuTemp = Math.round(gpus[gpuIndex].temperature);
-                        let load = gpus[gpuIndex].load;
-                        gpuLoad = Math.round(load <= 1 ? load * 100 : load);
-                    }
+                    if (cpus?.length > 0) { cpuTemp = Math.round(cpus[0].temperature); cpuLoad = Math.round(cpus[0].load <= 1 ? cpus[0].load * 100 : cpus[0].load); }
+                    if (gpus?.length > 0) { gpuTemp = Math.round(gpus[0].temperature); gpuLoad = Math.round(gpus[0].load <= 1 ? gpus[0].load * 100 : gpus[0].load); }
                     
-                    let maxTemp = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
-                    
-                    if (maxTemp > 50) elGlass.className = 'fire-tint';
-                    else if (maxTemp < 40 && maxTemp > 0) elGlass.className = 'ice-tint';
-                    else elGlass.className = '';
+                    let mx = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
+                    if (mx > 55) elGlass.className = 'fire-tint'; else if (mx < 40 && mx > 0) elGlass.className = 'ice-tint'; else elGlass.className = '';
 
-                    document.getElementById('cpu-t').innerText = cpuTemp;
-                    document.getElementById('cpu-icon').innerText = getStatusIcon(cpuTemp);
-                    document.getElementById('cpu-l').innerText = cpuLoad;
-                    document.getElementById('gpu-t').innerText = gpuTemp;
-                    document.getElementById('gpu-icon').innerText = getStatusIcon(gpuTemp);
-                    document.getElementById('gpu-l').innerText = gpuLoad;
+                    document.getElementById('cpu-t').innerText = cpuTemp; document.getElementById('cpu-l').innerText = cpuLoad;
+                    document.getElementById('gpu-t').innerText = gpuTemp; document.getElementById('gpu-l').innerText = gpuLoad;
 
-                    const outer = 509; const inner = 465;
-
-                    const cBar = document.getElementById('cpu-bar-fill');
-                    if (cpuTemp !== '--') {
-                        cBar.style.strokeDashoffset = outer - (outer * Math.min(Math.max(cpuTemp, 0), 100) / 100);
-                        cBar.style.stroke = getBarColor(cpuTemp);
-                    }
-                    const cLoad = document.getElementById('cpu-load-fill');
-                    if (cpuLoad !== '--') {
-                        cLoad.style.strokeDashoffset = inner - (inner * Math.min(Math.max(cpuLoad, 0), 100) / 100);
-                        cLoad.style.stroke = getLoadColor(cpuLoad);
-                    }
-
-                    const gBar = document.getElementById('gpu-bar-fill');
-                    if (gpuTemp !== '--') {
-                        gBar.style.strokeDashoffset = outer - (outer * Math.min(Math.max(gpuTemp, 0), 100) / 100);
-                        gBar.style.stroke = getBarColor(gpuTemp);
-                    }
-                    const gLoad = document.getElementById('gpu-load-fill');
-                    if (gpuLoad !== '--') {
-                        gLoad.style.strokeDashoffset = inner - (inner * Math.min(Math.max(gpuLoad, 0), 100) / 100);
-                        gLoad.style.stroke = getLoadColor(gpuLoad);
-                    }
+                    if (cpuTemp !== '--') { document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); document.getElementById('cpu-bar-fill').style.stroke = getBarColor(cpuTemp); }
+                    if (cpuLoad !== '--') { document.getElementById('cpu-load-fill').style.strokeDashoffset = 465 - (465 * Math.min(cpuLoad, 100) / 100); document.getElementById('cpu-load-fill').style.stroke = getBarColor(cpuLoad); }
+                    if (gpuTemp !== '--') { document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); document.getElementById('gpu-bar-fill').style.stroke = getBarColor(gpuTemp); }
+                    if (gpuLoad !== '--') { document.getElementById('gpu-load-fill').style.strokeDashoffset = 465 - (465 * Math.min(gpuLoad, 100) / 100); document.getElementById('gpu-load-fill').style.stroke = getBarColor(gpuLoad); }
                 }
             }
         };
 
-        function getBackgroundClass() {
-            const hour = new Date().getHours();
-            return (hour >= 18 || hour < 6) ? 'dark-bg' : 'aurora-bg';
-        }
-
-        const contextMenu = document.getElementById('context-menu');
-        const checkboxes = document.querySelectorAll('.news-source-cb');
-
-        checkboxes.forEach(cb => { cb.checked = activeSources.includes(cb.value); });
-
-        window.addEventListener('contextmenu', (e) => {
-            e.preventDefault(); 
-            contextMenu.style.display = 'block';
-            let x = e.pageX; let y = e.pageY;
-            if (x + contextMenu.offsetWidth > window.innerWidth) x = window.innerWidth - contextMenu.offsetWidth - 10;
-            if (y + contextMenu.offsetHeight > window.innerHeight) y = window.innerHeight - contextMenu.offsetHeight - 10;
-            contextMenu.style.left = `${x}px`; contextMenu.style.top = `${y}px`;
-        });
-        window.addEventListener('click', (e) => { if (!contextMenu.contains(e.target)) contextMenu.style.display = 'none'; });
-
-        document.getElementById('save-menu-btn').addEventListener('click', () => {
-            const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-            if (selected.length === 0) { alert("Selecione pelo menos uma fonte!"); return; }
-            activeSources = selected;
-            localStorage.setItem('kraken_news_all_v2', JSON.stringify(activeSources));
-            contextMenu.style.display = 'none';
-            fetchNews(true);
-        });
-
-        async function fetchWeather() {
+        async function fetchNews() {
+            if (Date.now() - lastNewsFetchTime < 120000) return; lastNewsFetchTime = Date.now();
             try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-16.6799&longitude=-49.2562&current_weather=true');
-                const data = await res.json();
-                if (data.current_weather) goianiaWeather = data.current_weather;
-            } catch (e) { }
-        }
-
-        async function fetchNews(force = false) {
-            const now = Date.now();
-            if (!force && now - lastNewsFetchTime < 60000) return; 
-            lastNewsFetchTime = now;
-            try {
-                await fetchWeather();
+                let r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-16.6799&longitude=-49.2562&current_weather=true');
+                goianiaWeather = (await r.json()).current_weather;
                 newsList = [];
-                const fetchPromises = activeSources.map(async (sourceKey) => {
-                    const sourceData = RSS_FEEDS[sourceKey];
-                    if (!sourceData) return;
-                    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${sourceData.url}`);
-                    const data = await response.json();
-                    if (data.items && data.items.length > 0) {
-                        data.items.forEach(item => {
-                            let imgUrl = item.enclosure?.link || item.thumbnail || (item.description.match(/<img[^>]+src="([^">]+)"/) || [])[1] || '';
-                            if (imgUrl) newsList.push({ title: item.title, source: sourceData.name, image: imgUrl });
-                        });
-                    }
-                });
-                await Promise.all(fetchPromises);
-                newsList = newsList.sort(() => Math.random() - 0.5);
-                currentNewsIndex = 0; 
-            } catch (error) { }
+                for (let k of activeSources) {
+                    let d = await (await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${RSS_FEEDS[k].url}`)).json();
+                    d.items?.forEach(i => {
+                        let img = i.enclosure?.link || i.thumbnail || (i.description.match(/<img[^>]+src="([^">]+)"/) || [])[1] || '';
+                        if (img) newsList.push({ title: i.title, source: RSS_FEEDS[k].name, image: img });
+                    });
+                }
+                newsList.sort(() => Math.random() - 0.5); currentNewsIndex = 0; 
+            } catch (e) {}
         }
-        fetchNews(true);
+        fetchNews();
 
-        function updateUI(bgImage, title, subtitle, album, isNews) {
-            elWidget.style.opacity = 0; 
-            setTimeout(() => {
-                if (bgImage) {
-                    elBgLayer.className = ''; elBgLayer.style.backgroundImage = `url('${bgImage}')`;
-                    elCenterVisual.innerHTML = `<img class="cover-circle" src="${bgImage}">`;
-                } else {
-                    elBgLayer.style.backgroundImage = 'none'; elBgLayer.className = getBackgroundClass(); 
-                    elCenterVisual.innerHTML = fallbackBarsHTML;
-                }
-
-                if (isNews) {
-                    elTitle.className = 'title news-mode'; elArtist.className = 'artist news-mode';
-                    elAlbum.style.display = 'none';
-                    if (goianiaWeather) {
-                        elWeatherBox.style.display = 'flex';
-                        elWeatherBox.innerHTML = `${Math.round(goianiaWeather.temperature)}°C ${getWeatherIcon(goianiaWeather.weathercode)}`;
-                    }
-                } else {
-                    elTitle.className = 'title'; elArtist.className = 'artist';
-                    elWeatherBox.style.display = 'none';
-                    if(album) { elAlbum.style.display = 'block'; elAlbum.innerText = album; } 
-                    else { elAlbum.style.display = 'none'; }
-                }
-
-                elTitle.innerText = title;
-                elArtist.innerText = subtitle;
-                
-                elWidget.style.opacity = 1; 
-            }, 400); // Tempo do fade out
+        function updateUI(bg, t, a, al, isNews) {
+            if (bg) { elBgLayer.className = ''; elBgLayer.style.backgroundImage = `url('${bg}')`; elCenterVisual.innerHTML = `<img class="cover-circle" src="${bg}">`; } 
+            else { elBgLayer.style.backgroundImage = 'none'; elBgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; elCenterVisual.innerHTML = fallbackBarsHTML; }
+            if (isNews) { elTitle.className = 'title news-mode'; elArtist.className = 'artist news-mode'; elAlbum.style.display = 'none'; if (goianiaWeather) { elWeatherBox.style.display = 'flex'; elWeatherBox.innerHTML = `${Math.round(goianiaWeather.temperature)}°C`; } } 
+            else { elTitle.className = 'title'; elArtist.className = 'artist'; elWeatherBox.style.display = 'none'; if(al) { elAlbum.style.display = 'block'; elAlbum.innerText = al; } else elAlbum.style.display = 'none'; }
+            elTitle.innerText = t; elArtist.innerText = a;
         }
 
         function startNewsCycle() {
             if (newsInterval) return;
-            const updateNews = () => {
-                if (newsList.length === 0) return;
-                const item = newsList[currentNewsIndex];
-                
-                const img = new Image();
-                img.onload = () => updateUI(item.image, item.title, item.source, null, true);
-                img.onerror = () => updateUI('', item.title, item.source, null, true);
-                img.src = item.image;
-
-                currentNewsIndex = (currentNewsIndex + 1) % newsList.length; 
+            const u = () => {
+                if (!newsList.length) return;
+                const i = newsList[currentNewsIndex];
+                const img = new Image(); img.onload = () => updateUI(i.image, i.title, i.source, null, true); img.onerror = () => updateUI('', i.title, i.source, null, true); img.src = i.image;
+                currentNewsIndex = (currentNewsIndex + 1) % newsList.length;
             };
-            updateNews(); newsInterval = setInterval(updateNews, 10000); 
+            u(); newsInterval = setInterval(u, 15000); 
         }
 
         function stopNewsCycle() { if (newsInterval) { clearInterval(newsInterval); newsInterval = null; } }
 
-        function cleanStringForSearch(str) {
-            return (str || '').replace(/\(.*?\)/g, ' ').replace(/\[.*?\]/g, ' ').replace(/[-_]/g, ' ')
-                .replace(/(ft\.|feat\.|prod\.|remix|official|video|audio|lyrics).*$/i, ' ')
-                .replace(/[^a-zA-Z0-9À-ÿ\s]/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-
-        async function fetchItunesCover(query) {
-            if (!query) return '';
-            try {
-                let res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
-                let data = await res.json();
-                if (data.results && data.results.length > 0) return data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-            } catch (e) { }
-            return '';
-        }
-
         setInterval(() => {
-            const container = document.getElementById('music-ring-container');
+            const c = document.getElementById('music-ring-container');
             if (pTracker.active && pTracker.durSec > 0) {
-                container.style.opacity = '1';
-                pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
-                let offset = 427 - (427 * (pTracker.posSec / pTracker.durSec));
-                document.getElementById('music-progress-left').style.strokeDashoffset = offset;
-                document.getElementById('music-progress-right').style.strokeDashoffset = offset;
-            } else {
-                container.style.opacity = '0';
-            }
+                c.style.display = 'block'; pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
+                let o = 427 - (427 * (pTracker.posSec / pTracker.durSec));
+                document.getElementById('music-progress-left').style.strokeDashoffset = o; document.getElementById('music-progress-right').style.strokeDashoffset = o;
+            } else { c.style.display = 'none'; }
         }, 1000);
 
         async function getNowPlaying() {
-            let isPlaying = false; let songName = ''; let artistName = ''; let albumName = '';
-            let defaultCoverUrl = ''; let hasProgress = false; let tempPosSec = 0; let tempDurSec = 0;
-
-            if (wnpConnected && wnpState.state === 1) {
-                isPlaying = true; songName = wnpState.title; artistName = wnpState.artist; albumName = wnpState.album; defaultCoverUrl = wnpState.coverUrl;
-                if (wnpState.durationSec > 0) { hasProgress = true; tempPosSec = wnpState.positionSec; tempDurSec = wnpState.durationSec; }
-            }
-            
-            if (!isPlaying) {
+            let isP = false; let sn = ''; let an = ''; let al = ''; let dc = ''; let hasP = false; let tp = 0; let td = 0;
+            if (wnpConnected && wnpState.state === 1) { isP = true; sn = wnpState.title; an = wnpState.artist; dc = wnpState.coverUrl; if (wnpState.durationSec > 0) { hasP = true; tp = wnpState.positionSec; td = wnpState.durationSec; } }
+            if (!isP) {
                 try {
-                    const mpcRes = await fetch('http://localhost:13579/variables.html');
-                    const text = await mpcRes.text();
-                    const doc = new DOMParser().parseFromString(text, "text/html");
-                    if (doc.getElementById('state')?.innerText === '2') { 
-                        isPlaying = true; 
-                        let cleanName = (doc.getElementById('file')?.innerText || '').replace(/\.[^/.]+$/, ""); 
-                        artistName = "Desconhecido"; songName = cleanName;
-                        if (cleanName.includes(" - ")) {
-                            const parts = cleanName.split(" - ");
-                            artistName = parts[0].trim(); songName = parts.slice(1).join(" - ").trim();
-                        }
-                        const posStr = doc.getElementById('positionstring')?.innerText;
-                        const durStr = doc.getElementById('durationstring')?.innerText;
-                        if (durStr && durStr !== '00:00:00') { hasProgress = true; tempPosSec = parseMpcTime(posStr); tempDurSec = parseMpcTime(durStr); }
-                    }
-                } catch (e) {}
+                    const lfm = await (await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`)).json();
+                    const tr = lfm.recenttracks.track[0];
+                    if (tr['@attr']?.nowplaying === 'true') { isP = true; sn = tr.name; an = tr.artist['#text']; dc = tr.image?.[3]?.[`#text`]?.replace('http://', 'https://') || ''; }
+                } catch (e) { }
             }
-
-            if (!isPlaying) {
-                try {
-                    const lfmRes = await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`);
-                    const track = (await lfmRes.json()).recenttracks.track[0];
-                    if (track['@attr']?.nowplaying === 'true') {
-                        isPlaying = true; songName = track.name; artistName = track.artist['#text']; albumName = track.album?.['#text'];
-                        defaultCoverUrl = track.image?.[3]?.[`#text`]?.replace('http://', 'https://') || '';
-                        if (defaultCoverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) defaultCoverUrl = '';
-                    }
-                } catch (error) { }
-            }
-
-            pTracker.active = hasProgress; pTracker.posSec = tempPosSec; pTracker.durSec = tempDurSec;
-
-            if (isPlaying) {
-                const trackId = `${songName}-${artistName}`;
-                if (currentTrackUrl !== trackId || currentStatus !== 'playing') {
-                    currentTrackUrl = trackId; currentStatus = 'playing';
-                    stopNewsCycle(); 
-                    
-                    const cleanArtist = cleanStringForSearch(artistName).normalize('NFKC');
-                    const cleanSong = cleanStringForSearch(songName).normalize('NFKC');
-                    
-                    let coverUrl = await fetchItunesCover(encodeURIComponent(`${cleanArtist} ${cleanSong}`)) || defaultCoverUrl || (cleanSong.length > 0 ? await fetchItunesCover(encodeURIComponent(cleanSong)) : '');
-
-                    const img = new Image();
-                    img.onload = () => updateUI(coverUrl, songName, artistName, albumName, false);
-                    img.onerror = () => updateUI('', songName, artistName, albumName, false);
-                    img.src = coverUrl || 'empty';
+            pTracker.active = hasP; pTracker.posSec = tp; pTracker.durSec = td;
+            if (isP) {
+                const tId = `${sn}-${an}`;
+                if (currentTrackUrl !== tId || currentStatus !== 'playing') {
+                    currentTrackUrl = tId; currentStatus = 'playing'; stopNewsCycle(); 
+                    const clean = encodeURIComponent((sn || '').replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim());
+                    let cv = dc; 
+                    if(!cv) { try { cv = (await (await fetch(`https://itunes.apple.com/search?term=${clean}&media=music&entity=song&limit=1`)).json()).results[0]?.artworkUrl100.replace('100x100bb', '600x600bb') || ''; } catch(e){} }
+                    const img = new Image(); img.onload = () => updateUI(cv, sn, an, al, false); img.onerror = () => updateUI('', sn, an, al, false); img.src = cv || 'empty';
                 }
-            } else {
-                if (currentStatus !== 'paused') {
-                    currentStatus = 'paused'; currentTrackUrl = ''; pTracker.active = false;
-                    startNewsCycle(); 
-                }
-            }
+            } else { if (currentStatus !== 'paused') { currentStatus = 'paused'; currentTrackUrl = ''; pTracker.active = false; startNewsCycle(); } }
         }
-
-        getNowPlaying();
-        setInterval(getNowPlaying, 4000); 
+        getNowPlaying(); setInterval(getNowPlaying, 5000); 
     </script>
 </body>
 </html>

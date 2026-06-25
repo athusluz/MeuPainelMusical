@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Kraken V6 (Apenas Música/Sensores)</title>
+    <title>Tocando Agora - Kraken V6</title>
+
     <style>
         * {
             box-sizing: border-box;
@@ -227,26 +228,19 @@
             
             <div class="cover-wrapper">
                 <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
-                    <path d="M 170,332 A 162,162 0 0,1 170,8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                    <path d="M 170,318 A 148,148 0 0,1 170,22" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
-                    <path d="M 170,332 A 162,162 0 0,0 170,8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                    <path d="M 170,318 A 148,148 0 0,0 170,22" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
-                    
-                    <g id="music-ring-container" style="display: none;">
-                        <path d="M 170,306 A 136,136 0 0,1 170,34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
-                        <path d="M 170,306 A 136,136 0 0,0 170,34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
-                        <path id="music-progress-left" d="M 170,306 A 136,136 0 0,1 170,34" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="427" stroke-dashoffset="427" stroke-linecap="round"/>
-                        <path id="music-progress-right" d="M 170,306 A 136,136 0 0,0 170,34" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="427" stroke-dashoffset="427" stroke-linecap="round"/>
-                    </g>
+                    <g transform="rotate(90, 170, 170)">
+                        
+                        <circle cx="170" cy="170" r="162" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" />
+                        <circle cx="170" cy="170" r="148" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" />
+                        <circle id="music-bg-ring" cx="170" cy="170" r="136" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" style="display: none;" />
 
-                    <path id="cpu-bar-fill" d="M 170,332 A 162,162 0 0,1 170,8" fill="none" stroke="transparent" stroke-width="8" stroke-linecap="round" stroke-dasharray="509" stroke-dashoffset="509"/>
-                    <path id="cpu-load-fill" d="M 170,318 A 148,148 0 0,1 170,22" fill="none" stroke="transparent" stroke-width="6" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465"/>
-                    <path id="gpu-bar-fill" d="M 170,332 A 162,162 0 0,0 170,8" fill="none" stroke="transparent" stroke-width="8" stroke-linecap="round" stroke-dasharray="509" stroke-dashoffset="509"/>
-                    <path id="gpu-load-fill" d="M 170,318 A 148,148 0 0,0 170,22" fill="none" stroke="transparent" stroke-width="6" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465"/>
+                        <circle id="cpu-bar-fill" cx="170" cy="170" r="162" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="1018" stroke-dashoffset="1018" stroke-linecap="round" />
+                        <circle id="gpu-bar-fill" cx="170" cy="170" r="148" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="930" stroke-dashoffset="930" stroke-linecap="round" />
+                        <circle id="music-progress" cx="170" cy="170" r="136" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="855" stroke-dashoffset="855" stroke-linecap="round" style="display: none;" />
+                    </g>
                 </svg>
 
-                <div id="center-visual-container">
-                    </div>
+                <div id="center-visual-container"></div>
             </div>
             
             <div class="hw-side-panel">
@@ -271,6 +265,11 @@
         let currentTrackUrl = ''; let currentStatus = ''; 
         let cpuTemp = '--'; let cpuLoad = '--'; let gpuTemp = '--'; let gpuLoad = '--';
 
+        // --- SISTEMA DE CACHE DE DOM (Impede repaints desnecessários da CPU/GPU) ---
+        const cache = {
+            cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null, musicOffset: null
+        };
+
         const elBgLayer = document.getElementById('bg-layer');
         const elCenterVisual = document.getElementById('center-visual-container');
         const elTitle = document.getElementById('info-title');
@@ -278,7 +277,7 @@
         const elAlbum = document.getElementById('info-album');
         const elGlass = document.getElementById('glass-overlay');
 
-        // HTML base para os dois cenários visuais de fallback
+        // Cenários de fallback
         const fallbackBarsAnimatedHTML = `<div class="bars-container"><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div></div>`;
         const fallbackBarsFlatHTML = `<div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>`;
 
@@ -313,7 +312,6 @@
             if (temp <= 75) return '#f6d365'; return '#ff416c'; 
         }
 
-        // Função dos Ícones baseados na Temperatura
         function getStatusIcon(temp) {
             if (temp === '--') return '⚡';
             if (temp <= 30) return '🧊';
@@ -331,28 +329,42 @@
                     if (gpus?.length > 0) { gpuTemp = Math.round(gpus[0].temperature); gpuLoad = Math.round(gpus[0].load <= 1 ? gpus[0].load * 100 : gpus[0].load); }
                     
                     let mx = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
-                    if (mx > 55) elGlass.className = 'fire-tint'; else if (mx < 40 && mx > 0) elGlass.className = 'ice-tint'; else elGlass.className = '';
+                    let newGlassClass = mx > 55 ? 'fire-tint' : (mx < 40 && mx > 0 ? 'ice-tint' : '');
+                    
+                    if (cache.glassClass !== newGlassClass) {
+                        elGlass.className = newGlassClass;
+                        cache.glassClass = newGlassClass;
+                    }
 
-                    // Atualizando Textos
-                    document.getElementById('cpu-t').innerText = cpuTemp; 
-                    document.getElementById('cpu-l').innerText = cpuLoad;
-                    document.getElementById('gpu-t').innerText = gpuTemp; 
-                    document.getElementById('gpu-l').innerText = gpuLoad;
+                    // CPU TEMP - SVG e Texto
+                    if (cache.cpuT !== cpuTemp) {
+                        document.getElementById('cpu-t').innerText = cpuTemp; 
+                        document.getElementById('cpu-icon').innerText = getStatusIcon(cpuTemp);
+                        if (cpuTemp !== '--') { 
+                            document.getElementById('cpu-bar-fill').style.strokeDashoffset = 1018 - (1018 * Math.min(cpuTemp, 100) / 100); 
+                            document.getElementById('cpu-bar-fill').style.stroke = getBarColor(cpuTemp); 
+                        }
+                        cache.cpuT = cpuTemp;
+                    }
 
-                    // Atualizando Ícones Dinâmicos
-                    document.getElementById('cpu-icon').innerText = getStatusIcon(cpuTemp);
-                    document.getElementById('gpu-icon').innerText = getStatusIcon(gpuTemp);
+                    // GPU TEMP - SVG e Texto
+                    if (cache.gpuT !== gpuTemp) {
+                        document.getElementById('gpu-t').innerText = gpuTemp; 
+                        document.getElementById('gpu-icon').innerText = getStatusIcon(gpuTemp);
+                        if (gpuTemp !== '--') { 
+                            document.getElementById('gpu-bar-fill').style.strokeDashoffset = 930 - (930 * Math.min(gpuTemp, 100) / 100); 
+                            document.getElementById('gpu-bar-fill').style.stroke = getBarColor(gpuTemp); 
+                        }
+                        cache.gpuT = gpuTemp;
+                    }
 
-                    // Atualizando Barras SVG
-                    if (cpuTemp !== '--') { document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); document.getElementById('cpu-bar-fill').style.stroke = getBarColor(cpuTemp); }
-                    if (cpuLoad !== '--') { document.getElementById('cpu-load-fill').style.strokeDashoffset = 465 - (465 * Math.min(cpuLoad, 100) / 100); document.getElementById('cpu-load-fill').style.stroke = getBarColor(cpuLoad); }
-                    if (gpuTemp !== '--') { document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); document.getElementById('gpu-bar-fill').style.stroke = getBarColor(gpuTemp); }
-                    if (gpuLoad !== '--') { document.getElementById('gpu-load-fill').style.strokeDashoffset = 465 - (465 * Math.min(gpuLoad, 100) / 100); document.getElementById('gpu-load-fill').style.stroke = getBarColor(gpuLoad); }
+                    // LOAD - Apenas Texto
+                    if (cache.cpuL !== cpuLoad) { document.getElementById('cpu-l').innerText = cpuLoad; cache.cpuL = cpuLoad; }
+                    if (cache.gpuL !== gpuLoad) { document.getElementById('gpu-l').innerText = gpuLoad; cache.gpuL = gpuLoad; }
                 }
             }
         };
 
-        // Agora recebe a flag "isPlaying" para determinar a injeção do HTML animado vs plano
         function updateUI(bg, t, a, al, isPlaying) {
             if (bg) { 
                 elBgLayer.className = ''; elBgLayer.style.backgroundImage = `url('${bg}')`; 
@@ -368,14 +380,26 @@
             if(al) { elAlbum.style.display = 'block'; elAlbum.innerText = al; } else { elAlbum.style.display = 'none'; }
         }
 
-        // Loop separado só para a barra de progresso (reduzindo complexidade em NowPlaying)
         setInterval(() => {
-            const c = document.getElementById('music-ring-container');
+            const bgRing = document.getElementById('music-bg-ring');
+            const progRing = document.getElementById('music-progress');
+
             if (pTracker.active && pTracker.durSec > 0) {
-                c.style.display = 'block'; pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
-                let o = 427 - (427 * (pTracker.posSec / pTracker.durSec));
-                document.getElementById('music-progress-left').style.strokeDashoffset = o; document.getElementById('music-progress-right').style.strokeDashoffset = o;
-            } else { c.style.display = 'none'; }
+                bgRing.style.display = 'block'; 
+                progRing.style.display = 'block'; 
+                
+                pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
+                let o = 855 - (855 * (pTracker.posSec / pTracker.durSec));
+                
+                if (cache.musicOffset !== o) {
+                    progRing.style.strokeDashoffset = o; 
+                    cache.musicOffset = o;
+                }
+            } else { 
+                bgRing.style.display = 'none'; 
+                progRing.style.display = 'none'; 
+                cache.musicOffset = null; 
+            }
         }, 1000);
 
         async function getNowPlaying() {

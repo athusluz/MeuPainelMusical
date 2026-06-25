@@ -37,20 +37,21 @@
             transition: background-image 0.5s ease-in-out;
         }
 
-        /* Fundos estáticos para performance máxima */
         .aurora-bg { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); }
         .dark-bg { background-color: #050505; background-image: none; }
 
+        /* O Blur está de volta para o teste de desempenho */
         #glass-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.65); 
+            background: rgba(0, 0, 0, 0.4); 
+            backdrop-filter: blur(20px); 
             z-index: 2;
             transition: background 1s ease;
         }
 
-        #glass-overlay.fire-tint { background: rgba(180, 20, 50, 0.4) !important; }
-        #glass-overlay.ice-tint { background: rgba(0, 100, 150, 0.4) !important; }
+        #glass-overlay.fire-tint { background: rgba(180, 20, 50, 0.45) !important; }
+        #glass-overlay.ice-tint { background: rgba(0, 100, 150, 0.45) !important; }
 
         #music-widget { 
             position: relative;
@@ -66,50 +67,71 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px; 
+            gap: 20px; 
             width: 100%;
             margin-bottom: 25px;
         }
 
+        /* --- REDESIGN DOS PAINÉIS DE HARDWARE --- */
         .hw-side-panel {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 18px 12px;
             z-index: 5;
             width: 110px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .hw-big-icon {
-            font-size: 42px; 
-            min-height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 5px;
+            font-size: 32px; 
+            margin-bottom: 8px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
         }
 
-        .hw-bar-value {
-            font-size: 24px; 
+        .hw-temp-row {
+            font-size: 28px; 
             font-weight: 800;
             color: #fff;
-            font-variant-numeric: tabular-nums; 
+            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            line-height: 1;
             display: flex;
             align-items: baseline;
-            justify-content: center;
         }
-        
-        .hw-bar-unit { font-size: 14px; font-weight: 600; color: #ddd; margin-left: 2px; }
+
+        .hw-load-row {
+            font-size: 15px;
+            font-weight: 600;
+            color: #b0c4de;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: baseline;
+        }
+
+        .hw-bar-unit { 
+            font-size: 14px; 
+            opacity: 0.7; 
+            margin-left: 2px; 
+        }
 
         .hw-bar-label {
-            font-size: 20px; 
+            font-size: 13px; 
             font-weight: 900;
-            color: #c2e9fb;
+            color: #fff;
             text-transform: uppercase;
-            letter-spacing: 2.5px;
-            margin-top: 5px;
+            letter-spacing: 2px;
+            background: rgba(255,255,255,0.15);
+            padding: 4px 12px;
+            border-radius: 12px;
         }
 
+        /* --- REDESIGN DA CAPA (Tamanho Máximo) --- */
         .cover-wrapper {
             display: flex;
             flex-direction: column;
@@ -128,9 +150,10 @@
             align-items: center;
         }
 
+        /* Aumentado de 256px para 266px */
         .cover-circle { 
-            width: 256px; 
-            height: 256px; 
+            width: 266px; 
+            height: 266px; 
             border-radius: 50%; 
             border: 4px solid rgba(255, 255, 255, 0.8); 
             object-fit: cover;
@@ -138,8 +161,8 @@
         }
 
         .bars-container {
-            width: 256px;
-            height: 256px;
+            width: 266px;
+            height: 266px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -149,27 +172,23 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
-        /* Configuração base da barra (recolhida) */
         .bar {
             width: 12px;
             height: 100px;
             background-color: rgba(255, 255, 255, 0.7);
             border-radius: 6px;
             transform-origin: center;
-            transform: scaleY(0.1); /* Deixa a barra como um pontinho em repouso */
+            transform: scaleY(0.1); 
             transition: transform 0.5s ease;
         }
 
-        /* Configuração de animação ativa (quando há música sem capa) */
         .bar.animated { animation: bounce-opt 1s ease-in-out infinite alternate; }
-
         .bar.animated:nth-child(1) { animation-duration: 0.6s; animation-delay: 0.1s; }
         .bar.animated:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.4s; }
         .bar.animated:nth-child(3) { animation-duration: 0.5s; animation-delay: 0.2s; }
         .bar.animated:nth-child(4) { animation-duration: 0.7s; animation-delay: 0.5s; }
         .bar.animated:nth-child(5) { animation-duration: 0.9s; animation-delay: 0.3s; }
 
-        /* Animação via transform para zerar o reflow da CPU */
         @keyframes bounce-opt {
             0% { transform: scaleY(0.2); }
             100% { transform: scaleY(1.2); }
@@ -185,6 +204,7 @@
             width: 100%;
             letter-spacing: 1px;
             padding: 0 15px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
 
         .artist { 
@@ -196,6 +216,7 @@
             overflow: hidden; 
             text-overflow: ellipsis; 
             width: 100%;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .album {
@@ -217,26 +238,24 @@
 
     <div id="music-widget">
         <div class="dashboard-container">
+            
             <div class="hw-side-panel">
                 <div class="hw-big-icon" id="cpu-icon">⚡</div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <div class="hw-bar-value"><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span></div>
-                    <div class="hw-bar-value" style="font-size: 18px; color: #ccc;"><span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
-                </div>
+                <div class="hw-temp-row"><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span></div>
+                <div class="hw-load-row"><span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
                 <div class="hw-bar-label">CPU</div>
             </div>
             
             <div class="cover-wrapper">
                 <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
                     <g transform="rotate(90, 170, 170)">
-                        
                         <circle cx="170" cy="170" r="162" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" />
                         <circle cx="170" cy="170" r="148" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" />
                         <circle id="music-bg-ring" cx="170" cy="170" r="136" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" style="display: none;" />
 
-                        <circle id="cpu-bar-fill" cx="170" cy="170" r="162" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="1018" stroke-dashoffset="1018" stroke-linecap="round" />
-                        <circle id="gpu-bar-fill" cx="170" cy="170" r="148" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="930" stroke-dashoffset="930" stroke-linecap="round" />
-                        <circle id="music-progress" cx="170" cy="170" r="136" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="855" stroke-dashoffset="855" stroke-linecap="round" style="display: none;" />
+                        <circle id="cpu-bar-fill" cx="170" cy="170" r="162" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="1018" stroke-dashoffset="1018" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                        <circle id="gpu-bar-fill" cx="170" cy="170" r="148" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="930" stroke-dashoffset="930" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                        <circle id="music-progress" cx="170" cy="170" r="136" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="855" stroke-dashoffset="855" stroke-linecap="round" style="display: none; transition: stroke-dashoffset 1s linear;" />
                     </g>
                 </svg>
 
@@ -245,10 +264,8 @@
             
             <div class="hw-side-panel">
                 <div class="hw-big-icon" id="gpu-icon">⚡</div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <div class="hw-bar-value"><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span></div>
-                    <div class="hw-bar-value" style="font-size: 18px; color: #ccc;"><span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
-                </div>
+                <div class="hw-temp-row"><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span></div>
+                <div class="hw-load-row"><span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
                 <div class="hw-bar-label">GPU</div>
             </div>
         </div>
@@ -265,7 +282,6 @@
         let currentTrackUrl = ''; let currentStatus = ''; 
         let cpuTemp = '--'; let cpuLoad = '--'; let gpuTemp = '--'; let gpuLoad = '--';
 
-        // --- SISTEMA DE CACHE DE DOM (Impede repaints desnecessários da CPU/GPU) ---
         const cache = {
             cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null, musicOffset: null
         };
@@ -277,7 +293,6 @@
         const elAlbum = document.getElementById('info-album');
         const elGlass = document.getElementById('glass-overlay');
 
-        // Cenários de fallback
         const fallbackBarsAnimatedHTML = `<div class="bars-container"><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div></div>`;
         const fallbackBarsFlatHTML = `<div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>`;
 
@@ -336,7 +351,6 @@
                         cache.glassClass = newGlassClass;
                     }
 
-                    // CPU TEMP - SVG e Texto
                     if (cache.cpuT !== cpuTemp) {
                         document.getElementById('cpu-t').innerText = cpuTemp; 
                         document.getElementById('cpu-icon').innerText = getStatusIcon(cpuTemp);
@@ -347,7 +361,6 @@
                         cache.cpuT = cpuTemp;
                     }
 
-                    // GPU TEMP - SVG e Texto
                     if (cache.gpuT !== gpuTemp) {
                         document.getElementById('gpu-t').innerText = gpuTemp; 
                         document.getElementById('gpu-icon').innerText = getStatusIcon(gpuTemp);
@@ -358,7 +371,6 @@
                         cache.gpuT = gpuTemp;
                     }
 
-                    // LOAD - Apenas Texto
                     if (cache.cpuL !== cpuLoad) { document.getElementById('cpu-l').innerText = cpuLoad; cache.cpuL = cpuLoad; }
                     if (cache.gpuL !== gpuLoad) { document.getElementById('gpu-l').innerText = gpuLoad; cache.gpuL = gpuLoad; }
                 }

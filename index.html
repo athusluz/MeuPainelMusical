@@ -3,7 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Kraken V6</title>
+    <title>Tocando Agora - Kraken V6 (Estilo Arcos)</title>
+
+    <!-- 
+    ========================================================================
+    RESUMO PARA IA FUTURA (MANUTENÇÃO DO HÍBRIDO KRAKEN V6)
+    ========================================================================
+    CONTEXTO DO PROJETO:
+    Este widget foi rigorosamente otimizado para resolver problemas de alto 
+    uso de CPU rodando em background no NZXT CAM.
+    A engine do Kraken usa renderização via software (Chromium), o que 
+    significa que repaints excessivos causam picos de processamento.
+
+    FUNCIONALIDADES REMOVIDAS/DESATIVADAS PARA PERFORMANCE:
+    1. Recriação do DOM (innerHTML): Abolido. O painel possui uma 
+       estrutura HTML estática e o JS apenas atualiza `.innerText` ou os 
+       offsets do SVG usando a técnica de DOM Diffing (só altera se o valor mudar).
+    2. APIs Secundárias: As integrações de Notícias (RSS) e Clima foram 
+       removidas para evitar polling de rede e vazamentos de memória.
+    3. Animações de Layout (Reflow): A animação das barras de áudio em repouso
+       usa `transform: scaleY` ao invés de `height`, rodando via composite.
+
+    ATUALIZAÇÕES DE DESIGN DESTA VERSÃO:
+    - Retorno do `backdrop-filter: blur(20px)` para teste de estresse visual.
+    - Gráfico central expandido para 266px.
+    - Painéis de telemetria redesenhados em cards estilo glassmorphism.
+    - Estilo em Arcos: CPU na lateral esquerda, GPU na lateral direita. 
+      Progresso de música sobe de forma espelhada por dois arcos internos.
+    ========================================================================
+    -->
 
     <style>
         * {
@@ -150,7 +178,6 @@
             align-items: center;
         }
 
-        /* Aumentado de 256px para 266px */
         .cover-circle { 
             width: 266px; 
             height: 266px; 
@@ -248,15 +275,29 @@
             
             <div class="cover-wrapper">
                 <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
-                    <g transform="rotate(90, 170, 170)">
-                        <circle cx="170" cy="170" r="162" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" />
-                        <circle cx="170" cy="170" r="148" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" />
-                        <circle id="music-bg-ring" cx="170" cy="170" r="136" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" style="display: none;" />
-
-                        <circle id="cpu-bar-fill" cx="170" cy="170" r="162" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="1018" stroke-dashoffset="1018" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                        <circle id="gpu-bar-fill" cx="170" cy="170" r="148" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="930" stroke-dashoffset="930" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                        <circle id="music-progress" cx="170" cy="170" r="136" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="855" stroke-dashoffset="855" stroke-linecap="round" style="display: none; transition: stroke-dashoffset 1s linear;" />
+                    
+                    <!-- Fundo das Temperaturas (Raio 162) -->
+                    <!-- Esquerda CPU (Sweep 1) -->
+                    <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                    <!-- Direita GPU (Sweep 0) -->
+                    <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                    
+                    <!-- Fundo da Música (Raio 146 - Mais interno) -->
+                    <g id="music-bg-ring" style="display: none;">
+                        <path d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
                     </g>
+
+                    <!-- Preenchimentos Dinâmicos de Temperatura (Comprimento do arco: 509) -->
+                    <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                    <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                    
+                    <!-- Preenchimentos Dinâmicos de Música (Comprimento do arco: 459) -->
+                    <g id="music-progress" style="display: none;">
+                        <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                        <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                    </g>
+
                 </svg>
 
                 <div id="center-visual-container"></div>
@@ -355,7 +396,8 @@
                         document.getElementById('cpu-t').innerText = cpuTemp; 
                         document.getElementById('cpu-icon').innerText = getStatusIcon(cpuTemp);
                         if (cpuTemp !== '--') { 
-                            document.getElementById('cpu-bar-fill').style.strokeDashoffset = 1018 - (1018 * Math.min(cpuTemp, 100) / 100); 
+                            // Cálculo baseado em arco de tamanho 509
+                            document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); 
                             document.getElementById('cpu-bar-fill').style.stroke = getBarColor(cpuTemp); 
                         }
                         cache.cpuT = cpuTemp;
@@ -365,7 +407,8 @@
                         document.getElementById('gpu-t').innerText = gpuTemp; 
                         document.getElementById('gpu-icon').innerText = getStatusIcon(gpuTemp);
                         if (gpuTemp !== '--') { 
-                            document.getElementById('gpu-bar-fill').style.strokeDashoffset = 930 - (930 * Math.min(gpuTemp, 100) / 100); 
+                            // Cálculo baseado em arco de tamanho 509
+                            document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); 
                             document.getElementById('gpu-bar-fill').style.stroke = getBarColor(gpuTemp); 
                         }
                         cache.gpuT = gpuTemp;
@@ -395,16 +438,20 @@
         setInterval(() => {
             const bgRing = document.getElementById('music-bg-ring');
             const progRing = document.getElementById('music-progress');
+            const progLeft = document.getElementById('music-progress-left');
+            const progRight = document.getElementById('music-progress-right');
 
             if (pTracker.active && pTracker.durSec > 0) {
                 bgRing.style.display = 'block'; 
                 progRing.style.display = 'block'; 
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
-                let o = 855 - (855 * (pTracker.posSec / pTracker.durSec));
+                // Cálculo baseado no comprimento dos arcos internos da música (459)
+                let o = 459 - (459 * (pTracker.posSec / pTracker.durSec));
                 
                 if (cache.musicOffset !== o) {
-                    progRing.style.strokeDashoffset = o; 
+                    progLeft.style.strokeDashoffset = o; 
+                    progRight.style.strokeDashoffset = o; 
                     cache.musicOffset = o;
                 }
             } else { 

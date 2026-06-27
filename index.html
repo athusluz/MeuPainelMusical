@@ -3,35 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Kraken V6 (Estilo Arcos)</title>
-
-    <!-- 
-    ========================================================================
-    RESUMO PARA IA FUTURA (MANUTENÇÃO DO HÍBRIDO KRAKEN V6)
-    ========================================================================
-    CONTEXTO DO PROJETO:
-    Este widget foi rigorosamente otimizado para resolver problemas de alto 
-    uso de CPU rodando em background no NZXT CAM.
-    A engine do Kraken usa renderização via software (Chromium), o que 
-    significa que repaints excessivos causam picos de processamento.
-
-    FUNCIONALIDADES REMOVIDAS/DESATIVADAS PARA PERFORMANCE:
-    1. Recriação do DOM (innerHTML): Abolido. O painel possui uma 
-       estrutura HTML estática e o JS apenas atualiza `.innerText` ou os 
-       offsets do SVG usando a técnica de DOM Diffing (só altera se o valor mudar).
-    2. APIs Secundárias: As integrações de Notícias (RSS) e Clima foram 
-       removidas para evitar polling de rede e vazamentos de memória.
-    3. Animações de Layout (Reflow): A animação das barras de áudio em repouso
-       usa `transform: scaleY` ao invés de `height`, rodando via composite.
-
-    ATUALIZAÇÕES DE DESIGN DESTA VERSÃO:
-    - Retorno do `backdrop-filter: blur(20px)` para teste de estresse visual.
-    - Gráfico central expandido para 266px.
-    - Painéis de telemetria redesenhados em cards estilo glassmorphism.
-    - Estilo em Arcos: CPU na lateral esquerda, GPU na lateral direita. 
-      Progresso de música sobe de forma espelhada por dois arcos internos.
-    ========================================================================
-    -->
+    <title>Tocando Agora - Kraken V6 (Arcos & Roleta de Capas)</title>
 
     <style>
         * {
@@ -61,6 +33,7 @@
             height: 100%;
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
             z-index: 1;
             transition: background-image 0.5s ease-in-out;
         }
@@ -68,7 +41,6 @@
         .aurora-bg { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); }
         .dark-bg { background-color: #050505; background-image: none; }
 
-        /* O Blur está de volta para o teste de desempenho */
         #glass-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -100,20 +72,14 @@
             margin-bottom: 25px;
         }
 
-        /* --- REDESIGN DOS PAINÉIS DE HARDWARE --- */
         .hw-side-panel {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            padding: 18px 12px;
+            padding: 10px 5px;
             z-index: 5;
             width: 110px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .hw-big-icon {
@@ -133,10 +99,10 @@
         }
 
         .hw-load-row {
-            font-size: 15px;
-            font-weight: 600;
+            font-size: 20px; 
+            font-weight: 700;
             color: #b0c4de;
-            margin-top: 4px;
+            margin-top: 2px;
             margin-bottom: 12px;
             display: flex;
             align-items: baseline;
@@ -159,7 +125,6 @@
             border-radius: 12px;
         }
 
-        /* --- REDESIGN DA CAPA (Tamanho Máximo) --- */
         .cover-wrapper {
             display: flex;
             flex-direction: column;
@@ -179,17 +144,18 @@
         }
 
         .cover-circle { 
-            width: 266px; 
-            height: 266px; 
+            width: 272px;  
+            height: 272px; 
             border-radius: 50%; 
             border: 4px solid rgba(255, 255, 255, 0.8); 
             object-fit: cover;
+            aspect-ratio: 1 / 1; 
             display: block;
         }
 
         .bars-container {
-            width: 266px;
-            height: 266px;
+            width: 272px;
+            height: 272px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -276,28 +242,23 @@
             <div class="cover-wrapper">
                 <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
                     
-                    <!-- Fundo das Temperaturas (Raio 162) -->
-                    <!-- Esquerda CPU (Sweep 1) -->
-                    <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                    <!-- Direita GPU (Sweep 0) -->
-                    <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                    
-                    <!-- Fundo da Música (Raio 146 - Mais interno) -->
-                    <g id="music-bg-ring" style="display: none;">
-                        <path d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
-                        <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
-                    </g>
+                    <g transform="rotate(90, 170, 170)">
+                        <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                        
+                        <g id="music-bg-ring" style="display: none;">
+                            <path d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+                        </g>
 
-                    <!-- Preenchimentos Dinâmicos de Temperatura (Comprimento do arco: 509) -->
-                    <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                    <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                    
-                    <!-- Preenchimentos Dinâmicos de Música (Comprimento do arco: 459) -->
-                    <g id="music-progress" style="display: none;">
-                        <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
-                        <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                        <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                        <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                        
+                        <g id="music-progress" style="display: none;">
+                            <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                            <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                        </g>
                     </g>
-
                 </svg>
 
                 <div id="center-visual-container"></div>
@@ -385,7 +346,16 @@
                     if (gpus?.length > 0) { gpuTemp = Math.round(gpus[0].temperature); gpuLoad = Math.round(gpus[0].load <= 1 ? gpus[0].load * 100 : gpus[0].load); }
                     
                     let mx = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
-                    let newGlassClass = mx > 55 ? 'fire-tint' : (mx < 40 && mx > 0 ? 'ice-tint' : '');
+                    let newGlassClass = cache.glassClass || '';
+                    
+                    if (newGlassClass === 'fire-tint') {
+                        if (mx < 60) newGlassClass = '';
+                    } else if (newGlassClass === 'ice-tint') {
+                        if (mx > 40) newGlassClass = '';
+                    } else {
+                        if (mx >= 68) newGlassClass = 'fire-tint';
+                        else if (mx <= 35 && mx > 0) newGlassClass = 'ice-tint';
+                    }
                     
                     if (cache.glassClass !== newGlassClass) {
                         elGlass.className = newGlassClass;
@@ -396,7 +366,6 @@
                         document.getElementById('cpu-t').innerText = cpuTemp; 
                         document.getElementById('cpu-icon').innerText = getStatusIcon(cpuTemp);
                         if (cpuTemp !== '--') { 
-                            // Cálculo baseado em arco de tamanho 509
                             document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); 
                             document.getElementById('cpu-bar-fill').style.stroke = getBarColor(cpuTemp); 
                         }
@@ -407,7 +376,6 @@
                         document.getElementById('gpu-t').innerText = gpuTemp; 
                         document.getElementById('gpu-icon').innerText = getStatusIcon(gpuTemp);
                         if (gpuTemp !== '--') { 
-                            // Cálculo baseado em arco de tamanho 509
                             document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); 
                             document.getElementById('gpu-bar-fill').style.stroke = getBarColor(gpuTemp); 
                         }
@@ -446,7 +414,6 @@
                 progRing.style.display = 'block'; 
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
-                // Cálculo baseado no comprimento dos arcos internos da música (459)
                 let o = 459 - (459 * (pTracker.posSec / pTracker.durSec));
                 
                 if (cache.musicOffset !== o) {
@@ -463,7 +430,43 @@
 
         async function getNowPlaying() {
             let isP = false; let sn = ''; let an = ''; let al = ''; let dc = ''; let hasP = false; let tp = 0; let td = 0;
-            if (wnpConnected && wnpState.state === 1) { isP = true; sn = wnpState.title; an = wnpState.artist; al = wnpState.album; dc = wnpState.coverUrl; if (wnpState.durationSec > 0) { hasP = true; tp = wnpState.positionSec; td = wnpState.durationSec; } }
+            
+            // 1. WebNowPlaying
+            if (wnpConnected && wnpState.state === 1) { 
+                isP = true; sn = wnpState.title; an = wnpState.artist; al = wnpState.album; dc = wnpState.coverUrl; 
+                if (wnpState.durationSec > 0) { hasP = true; tp = wnpState.positionSec; td = wnpState.durationSec; } 
+            }
+            
+            // 2. MPC-HC
+            if (!isP) {
+                try {
+                    const mpcRes = await fetch('http://localhost:13579/variables.html');
+                    const text = await mpcRes.text();
+                    const doc = new DOMParser().parseFromString(text, "text/html");
+                    if (doc.getElementById('state')?.innerText === '2') { 
+                        isP = true; 
+                        let cleanName = (doc.getElementById('file')?.innerText || '').replace(/\.[^/.]+$/, ""); 
+                        an = "Desconhecido"; sn = cleanName;
+                        if (cleanName.includes(" - ")) {
+                            const parts = cleanName.split(" - ");
+                            an = parts[0].trim(); sn = parts.slice(1).join(" - ").trim();
+                        }
+                        const posStr = doc.getElementById('positionstring')?.innerText;
+                        const durStr = doc.getElementById('durationstring')?.innerText;
+                        if (durStr && durStr !== '00:00:00') { 
+                            hasP = true; 
+                            const parseTime = (s) => {
+                                if (!s) return 0;
+                                let p = s.split(':');
+                                return p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : (p.length === 3 ? parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]) : 0);
+                            };
+                            tp = parseTime(posStr); td = parseTime(durStr); 
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            // 3. Last.fm
             if (!isP) {
                 try {
                     const lfm = await (await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`)).json();
@@ -471,15 +474,47 @@
                     if (tr['@attr']?.nowplaying === 'true') { isP = true; sn = tr.name; an = tr.artist['#text']; al = tr.album?.['#text']; dc = tr.image?.[3]?.[`#text`]?.replace('http://', 'https://') || ''; }
                 } catch (e) { }
             }
+            
             pTracker.active = hasP; pTracker.posSec = tp; pTracker.durSec = td;
             
             if (isP) {
                 const tId = `${sn}-${an}`;
                 if (currentTrackUrl !== tId || currentStatus !== 'playing') {
                     currentTrackUrl = tId; currentStatus = 'playing';
-                    const clean = encodeURIComponent((sn || '').replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim());
-                    let cv = dc; 
-                    if(!cv) { try { cv = (await (await fetch(`https://itunes.apple.com/search?term=${clean}&media=music&entity=song&limit=1`)).json()).results[0]?.artworkUrl100.replace('100x100bb', '600x600bb') || ''; } catch(e){} }
+                    
+                    // --- ROLETA DE CAPAS (Fallback Aleatório) ---
+                    let coverFetchers = [
+                        async () => { // Fonte 1: WNP Local ou Last.fm padrão
+                            return dc || null; 
+                        },
+                        async () => { // Fonte 2: iTunes (Variação de capas)
+                            const clean = encodeURIComponent((sn + ' ' + an).replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim());
+                            try { 
+                                let data = await (await fetch(`https://itunes.apple.com/search?term=${clean}&media=music&entity=song&limit=5`)).json(); 
+                                if (data.results?.length > 0) {
+                                    return data.results[Math.floor(Math.random() * Math.min(data.results.length, 3))].artworkUrl100.replace('100x100bb', '600x600bb'); 
+                                }
+                            } catch(e){} 
+                            return null;
+                        },
+                        async () => { // Fonte 3: Last.fm API Direta (Track.getInfo)
+                            try {
+                                let data = await (await fetch(`https://ws.audioscrobbler.com/2.0/?method=track.getinfo&api_key=${API_KEY}&artist=${encodeURIComponent(an)}&track=${encodeURIComponent(sn)}&format=json`)).json();
+                                let img = data.track?.album?.image?.[3]?.['#text'];
+                                return img ? img.replace('http://', 'https://') : null;
+                            } catch(e){}
+                            return null;
+                        }
+                    ];
+
+                    // Embaralha a ordem das fontes para garantir aleatoriedade
+                    coverFetchers = coverFetchers.sort(() => Math.random() - 0.5);
+
+                    let cv = null;
+                    for (let fetcher of coverFetchers) {
+                        cv = await fetcher();
+                        if (cv && cv !== '') break; // Se achou a capa, para o loop e usa ela!
+                    }
                     
                     const img = new Image(); 
                     img.onload = () => updateUI(cv, sn, an, al, true); 

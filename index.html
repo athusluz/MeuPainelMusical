@@ -85,46 +85,36 @@
             justify-content: center;
         }
 
-        /* --- NOVOS ESTILOS MINIMALISTAS --- */
+        /* --- TEMPERATURAS DINÂMICAS QUE SEGUEM A BARRA --- */
         .minimal-temp {
             position: absolute;
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-size: 26px; 
+            font-size: 22px; 
             font-weight: 800;
-            color: #fff;
-            text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
             z-index: 10;
-            transition: color 0.5s ease;
+            transform: translate(-50%, -50%); /* Garante o alinhamento centralizado no ponto exato */
+            transition: color 0.5s ease, left 0.5s ease-out, top 0.5s ease-out; /* Transição suave de movimento */
             line-height: 1;
         }
 
-        .minimal-temp.cpu {
-            left: 0px; 
-            bottom: 60px; /* Posição perto dos 25% da barra */
-        }
-
-        .minimal-temp.gpu {
-            right: 0px; 
-            bottom: 60px; /* Posição perto dos 25% da barra */
-        }
-
         .minimal-temp .hw-bar-unit { 
-            font-size: 14px; 
+            font-size: 13px; 
             opacity: 0.8; 
-            margin-left: 2px; 
+            margin-left: 1px; 
         }
 
         .minimal-label {
-            font-size: 12px; 
+            font-size: 11px; 
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            opacity: 0.9;
-            margin-top: 4px;
+            letter-spacing: 1.5px;
+            opacity: 0.8;
+            margin-top: 2px;
         }
-        /* ---------------------------------- */
+        /* ------------------------------------------------ */
 
         #center-visual-container {
             z-index: 2;
@@ -239,7 +229,7 @@
             
             <div class="cover-wrapper">
                 
-                <div id="cpu-minimal" class="minimal-temp cpu">
+                <div id="cpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span></div>
                     <div class="minimal-label">CPU</div>
                 </div>
@@ -268,7 +258,7 @@
                     <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
 
-                <div id="gpu-minimal" class="minimal-temp gpu">
+                <div id="gpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span></div>
                     <div class="minimal-label">GPU</div>
                 </div>
@@ -346,6 +336,43 @@
             if (temp <= 75) return '#f6d365'; return '#ff416c'; 
         }
 
+        // --- FUNÇÃO MATEMÁTICA PARA CALCULAR A POSIÇÃO NA BORDA DA BARRA ---
+        function updateTempPosition(pathId, elementId, temp) {
+            const path = document.getElementById(pathId);
+            const element = document.getElementById(elementId);
+            if (!path || !element || temp === '--') return;
+
+            const totalLength = 509; 
+            // Calcula o comprimento correspondente à temperatura atual
+            const currentLength = (Math.min(temp, 100) / 100) * totalLength;
+            
+            // Pega as coordenadas X e Y locais da ponta da curva antes da rotação do SVG
+            const pt = path.getPointAtLength(currentLength);
+            
+            const cx = 170; // Centro do widget (340 / 2)
+            const cy = 170;
+            
+            // Vetores de distância do centro
+            const vx = pt.x - cx;
+            const vy = pt.y - cy;
+            
+            // Afastamento do texto para o lado de fora (Raio original do arco é 162 + margem externa)
+            const targetRadius = 196; 
+            const currentRadius = 162;
+            const scale = targetRadius / currentRadius;
+            
+            const outerX = cx + vx * scale;
+            const outerY = cy + vy * scale;
+            
+            // Aplica a rotação de 90° idêntica ao grupo SVG para alinhar perfeitamente com a renderização da tela
+            const finalX = cx - (outerY - cy);
+            const finalY = cy + (outerX - cx);
+            
+            // Atualiza o CSS inline do elemento de texto
+            element.style.left = `${finalX}px`;
+            element.style.top = `${finalY}px`;
+        }
+
         window.nzxt = {
             v1: {
                 onMonitoringDataUpdate: (data) => {
@@ -370,26 +397,38 @@
                         cache.glassClass = newGlassClass;
                     }
 
-                    // Sincronizando Temperatura e Cor - CPU
+                    // Atualizando CPU dinamicamente acompanhando o progresso
                     if (cache.cpuT !== cpuTemp) {
                         document.getElementById('cpu-t').innerText = cpuTemp; 
                         if (cpuTemp !== '--') { 
                             let color = getBarColor(cpuTemp);
                             document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); 
                             document.getElementById('cpu-bar-fill').style.stroke = color; 
-                            document.getElementById('cpu-minimal').style.color = color; // Pinta o texto
+                            
+                            const elCpuMin = document.getElementById('cpu-minimal');
+                            elCpuMin.style.color = color;
+                            elCpuMin.style.display = 'flex';
+                            updateTempPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp);
+                        } else {
+                            document.getElementById('cpu-minimal').style.display = 'none';
                         }
                         cache.cpuT = cpuTemp;
                     }
 
-                    // Sincronizando Temperatura e Cor - GPU
+                    // Atualizando GPU dinamicamente acompanhando o progresso
                     if (cache.gpuT !== gpuTemp) {
                         document.getElementById('gpu-t').innerText = gpuTemp; 
                         if (gpuTemp !== '--') { 
                             let color = getBarColor(gpuTemp);
                             document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); 
                             document.getElementById('gpu-bar-fill').style.stroke = color; 
-                            document.getElementById('gpu-minimal').style.color = color; // Pinta o texto
+                            
+                            const elGpuMin = document.getElementById('gpu-minimal');
+                            elGpuMin.style.color = color;
+                            elGpuMin.style.display = 'flex';
+                            updateTempPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp);
+                        } else {
+                            document.getElementById('gpu-minimal').style.display = 'none';
                         }
                         cache.gpuT = gpuTemp;
                     }
@@ -631,6 +670,10 @@
 
                         elWidget.style.opacity = 1; 
                         elWidget.style.transform = 'scale(1)';
+                        
+                        // Atualiza as posições imediatamente após renderizar a música
+                        updateTempPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp);
+                        updateTempPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp);
                     });
                 }
             } else { 

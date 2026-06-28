@@ -126,7 +126,7 @@
         }
 
         /* --- USO EM PÍLULA (Lado de DENTRO do arco, flutuante) --- */
-        .minimal-load-float-unused {
+        .minimal-load-float {
             position: absolute;
             display: flex;
             flex-direction: column;
@@ -293,9 +293,9 @@
                     <div class="minimal-label">CPU</div>
                 </div>
 
-                <div id="cpu-load-minimal" class="minimal-temp" style="display: none;">
+                <div id="cpu-load-minimal" class="minimal-load-float" style="display: none;">
+                    <div class="hw-load-label">Uso CPU</div>
                     <div><span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
-                    <div class="minimal-label">CPU</div>
                 </div>
 
                 <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
@@ -327,9 +327,9 @@
                     <div class="minimal-label">GPU</div>
                 </div>
 
-                <div id="gpu-load-minimal" class="minimal-temp" style="display: none;">
+                <div id="gpu-load-minimal" class="minimal-load-float" style="display: none;">
+                    <div class="hw-load-label">Uso GPU</div>
                     <div><span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
-                    <div class="minimal-label">GPU</div>
                 </div>
 
             </div>
@@ -509,8 +509,8 @@
                         
                         // Uso (Pílula Dentro, acompanhando o ângulo do Uso)
                         if (cpuLoad !== '--') {
-                            document.getElementById('cpu-load-minimal').style.display='flex'; document.getElementById('cpu-load-minimal').style.color=color;
-                            updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 150); // Raio interno
+                            document.getElementById('cpu-load-minimal').style.display = 'flex';
+                            updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 134); // Raio interno
                         } else {
                             document.getElementById('cpu-load-minimal').style.display = 'none';
                         }
@@ -542,8 +542,8 @@
 
                         // Uso (Pílula Dentro, acompanhando o ângulo do Uso)
                         if (gpuLoad !== '--') {
-                            document.getElementById('gpu-load-minimal').style.display='flex'; document.getElementById('gpu-load-minimal').style.color=color;
-                            updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 150); // Raio interno
+                            document.getElementById('gpu-load-minimal').style.display = 'flex';
+                            updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 134); // Raio interno
                         } else {
                             document.getElementById('gpu-load-minimal').style.display = 'none';
                         }

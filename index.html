@@ -85,79 +85,66 @@
             justify-content: center;
         }
 
-        /* --- TEMPERATURAS (Lado de FORA do arco) --- */
-        .minimal-temp {
+        /* --- HARDWARE LAYER (Controla a opacidade global dos status) --- */
+        #hardware-layer {
             position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 24px; 
-            font-weight: 800;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none;
             z-index: 10;
-            transform: translate(-50%, -50%);
-            transition: color 0.5s ease, left 0.5s ease-out, top 0.5s ease-out; 
-            line-height: 1;
         }
 
-        .minimal-temp .hw-bar-unit { 
-            font-size: 13px;
-            opacity: 0.8; 
-            margin-left: 2px; 
-        }
-
-        .hw-emoji {
-            font-size: 11px;
-            margin-left: 4px;
-            vertical-align: 3px;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-        }
-
-        .minimal-label {
-            font-size: 10px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            opacity: 0.8;
-            margin-top: 4px;
-            background: rgba(255,255,255,0.15);
-            padding: 3px 8px;
-            border-radius: 8px;
-        }
-
-        /* --- USO EM PÍLULA (Lado de DENTRO do arco, flutuante) --- */
-        .minimal-load-float {
+        /* --- PADRONIZAÇÃO: PÍLULAS DE HARDWARE (Temp e Uso) --- */
+        .minimal-hw-pill {
             position: absolute;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 14px; 
-            font-weight: 800;
             color: #ffffff;
             background: rgba(0, 0, 0, 0.65);
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            z-index: 9;
             transform: translate(-50%, -50%); 
-            transition: left 0.5s ease-out, top 0.5s ease-out;
+            transition: left 0.5s ease-out, top 0.5s ease-out, color 0.5s ease;
             line-height: 1.1;
         }
 
-        .minimal-load-float .hw-load-label {
-            font-size: 8px;
+        .minimal-hw-pill .hw-val-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .minimal-hw-pill .hw-label {
+            font-size: 9px;
             text-transform: uppercase;
             letter-spacing: 1px;
             opacity: 0.7;
+            margin-bottom: 2px;
         }
 
-        .minimal-load-float .hw-bar-unit { 
-            font-size: 10px;
+        .minimal-hw-pill .hw-bar-unit { 
+            font-size: 11px;
             opacity: 0.8; 
-            margin-left: 1px; 
+            margin-left: 2px; 
+        }
+
+        /* --- ÍCONE AUMENTADO --- */
+        .hw-emoji {
+            font-size: 22px; /* Aumentado */
+            margin-left: 6px;
+            vertical-align: -2px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
         }
 
         #center-visual-container {
@@ -165,6 +152,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .cover-circle { 
@@ -224,7 +215,6 @@
             text-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
 
-        /* --- ESTILO DE CARREGAMENTO --- */
         .loading-pulse {
             font-size: 30px !important;
             color: rgba(255, 255, 255, 0.8) !important;
@@ -288,50 +278,53 @@
             
             <div class="cover-wrapper">
                 
-                <div id="cpu-minimal" class="minimal-temp" style="display: none;">
-                    <div><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span><span id="cpu-emoji" class="hw-emoji"></span></div>
-                    <div class="minimal-label">CPU</div>
-                </div>
-
-                <div id="cpu-load-minimal" class="minimal-load-float" style="display: none;">
-                    <div class="hw-load-label">Uso CPU</div>
-                    <div><span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
-                </div>
-
-                <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
-                    <g transform="rotate(90, 170, 170)">
-                        <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                        <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                        
-                        <g id="music-bg-ring" style="display: none;">
-                            <path d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
-                            <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
-                        </g>
-
-                        <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                        <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                         
-                        <g id="music-progress" style="display: none;">
-                            <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
-                            <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
-                        </g>
-                    </g>
-                </svg>
-
                 <div id="center-visual-container">
                     <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
 
-                <div id="gpu-minimal" class="minimal-temp" style="display: none;">
-                    <div><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span><span id="gpu-emoji" class="hw-emoji"></span></div>
-                    <div class="minimal-label">GPU</div>
-                </div>
+                <div id="hardware-layer">
+                    
+                    <div id="cpu-minimal" class="minimal-hw-pill" style="display: none;">
+                        <div class="hw-label">Temp CPU</div>
+                        <div class="hw-val-container"><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span><span id="cpu-emoji" class="hw-emoji"></span></div>
+                    </div>
 
-                <div id="gpu-load-minimal" class="minimal-load-float" style="display: none;">
-                    <div class="hw-load-label">Uso GPU</div>
-                    <div><span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
-                </div>
+                    <div id="cpu-load-minimal" class="minimal-hw-pill" style="display: none;">
+                        <div class="hw-label">Uso CPU</div>
+                        <div class="hw-val-container"><span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
+                    </div>
 
+                    <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1;">
+                        <g transform="rotate(90, 170, 170)">
+                            <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                            
+                            <g id="music-bg-ring" style="display: none;">
+                                <path d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+                            </g>
+
+                            <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            
+                            <g id="music-progress" style="display: none;">
+                                <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                                <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                            </g>
+                        </g>
+                    </svg>
+
+                    <div id="gpu-minimal" class="minimal-hw-pill" style="display: none;">
+                        <div class="hw-label">Temp GPU</div>
+                        <div class="hw-val-container"><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span><span id="gpu-emoji" class="hw-emoji"></span></div>
+                    </div>
+
+                    <div id="gpu-load-minimal" class="minimal-hw-pill" style="display: none;">
+                        <div class="hw-label">Uso GPU</div>
+                        <div class="hw-val-container"><span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
+                    </div>
+
+                </div>
             </div>
         </div>
 
@@ -363,6 +356,7 @@
             cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null, musicOffset: null
         };
         const elWidget = document.getElementById('music-widget');
+        const elHwLayer = document.getElementById('hardware-layer'); // Nova referência
         const elBgLayer = document.getElementById('bg-layer');
         const elCenterVisual = document.getElementById('center-visual-container');
         const elTitle = document.getElementById('info-title');
@@ -405,7 +399,6 @@
             if (temp <= 75) return '#f6d365'; return '#ff416c';
         }
 
-        // --- SISTEMA DE ÍCONES ---
         function getCpuIcon(temp) {
             if (temp === '--') return '';
             if (temp <= 35) return '🧊';
@@ -424,7 +417,6 @@
             return '⚠️';
         }
 
-        // --- FUNÇÃO MATEMÁTICA UNIVERSAL ---
         function updateTrackPosition(pathId, elementId, value, targetRadius) {
             const path = document.getElementById(pathId);
             const element = document.getElementById(elementId);
@@ -462,10 +454,11 @@
                     }
                     
                     if (gpus?.length > 0) { 
-                        gpuTemp = Math.round(gpus[0].temperature);
+                        // FIX DA RTX 4060: Puxa a GPU 1 (dedicada) caso exista. A GPU 0 é o vídeo integrado do Ryzen 8600G.
+                        let targetGpu = gpus.length > 1 ? gpus[1] : gpus[0];
+                        gpuTemp = Math.round(targetGpu.temperature);
                         
-                        // Correção robusta para GPU Load (pega load ou usage, e converte se for decimal)
-                        let gLoad = gpus[0].load !== undefined ? gpus[0].load : (gpus[0].usage !== undefined ? gpus[0].usage : 0);
+                        let gLoad = targetGpu.load !== undefined ? targetGpu.load : (targetGpu.usage !== undefined ? targetGpu.usage : 0);
                         gpuLoad = Math.round(gLoad <= 1 && gLoad > 0 ? gLoad * 100 : gLoad);
                     }
                     
@@ -492,25 +485,22 @@
                         document.getElementById('cpu-emoji').innerText = getCpuIcon(cpuTemp);
                         document.getElementById('cpu-l').innerText = cpuLoad; 
                         
-                        // Temperatura (Fora)
                         if (cpuTemp !== '--') { 
                             let color = getBarColor(cpuTemp);
                             document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); 
                             document.getElementById('cpu-bar-fill').style.stroke = color; 
                             
                             const elCpuMin = document.getElementById('cpu-minimal');
-                            elCpuMin.style.color = color;
                             elCpuMin.style.display = 'flex';
                             
-                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 208); // Raio externo
+                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 218); 
                         } else {
                             document.getElementById('cpu-minimal').style.display = 'none';
                         }
                         
-                        // Uso (Pílula Dentro, acompanhando o ângulo do Uso)
                         if (cpuLoad !== '--') {
                             document.getElementById('cpu-load-minimal').style.display = 'flex';
-                            updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 134); // Raio interno
+                            updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 126); 
                         } else {
                             document.getElementById('cpu-load-minimal').style.display = 'none';
                         }
@@ -525,25 +515,22 @@
                         document.getElementById('gpu-emoji').innerText = getGpuIcon(gpuTemp); 
                         document.getElementById('gpu-l').innerText = gpuLoad; 
                         
-                        // Temperatura (Fora)
                         if (gpuTemp !== '--') { 
                             let color = getBarColor(gpuTemp);
                             document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); 
                             document.getElementById('gpu-bar-fill').style.stroke = color; 
                             
                             const elGpuMin = document.getElementById('gpu-minimal');
-                            elGpuMin.style.color = color;
                             elGpuMin.style.display = 'flex';
                             
-                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 208); // Raio externo
+                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 218); 
                         } else {
                             document.getElementById('gpu-minimal').style.display = 'none';
                         }
 
-                        // Uso (Pílula Dentro, acompanhando o ângulo do Uso)
                         if (gpuLoad !== '--') {
                             document.getElementById('gpu-load-minimal').style.display = 'flex';
-                            updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 134); // Raio interno
+                            updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 126); 
                         } else {
                             document.getElementById('gpu-load-minimal').style.display = 'none';
                         }
@@ -573,7 +560,6 @@
             }
         }
 
-        // --- SISTEMA DE NOTÍCIAS & REPOUSO ---
         async function fetchNews() {
             const now = Date.now();
             if (now - lastNewsFetchTime < 120000) return; 
@@ -600,12 +586,14 @@
             elBgLayer.style.backgroundImage = 'none'; 
             elBgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
             elCenterVisual.innerHTML = fallbackBarsFlatHTML;
+            elHwLayer.style.opacity = 0; // Esconde hardware no repouso
         }
 
         function showNextNews() {
             if (currentNewsIndex >= newsList.length) {
                 stopNewsCycle();
                 elWidget.style.opacity = 0; 
+                elHwLayer.style.opacity = 0;
                 elWidget.style.transform = 'scale(0.95)';
                 setTimeout(() => {
                     showSilenceState();
@@ -626,7 +614,6 @@
                 elCenterVisual.innerHTML = fallbackBarsFlatHTML;
             }
 
-            // Remove a classe de loading e volta ao estilo normal de notícia
             elTitle.className = 'title news-mode';
             elArtist.className = 'artist news-mode';
             elAlbum.style.display = 'none';
@@ -655,7 +642,6 @@
             newsInterval = null; }
         }
 
-        // --- SISTEMA DE PROGRESSO ---
         setInterval(() => {
             const bgRing = document.getElementById('music-bg-ring');
             const progRing = document.getElementById('music-progress');
@@ -702,7 +688,6 @@
             return '';
         }
 
-        // --- NÚCLEO MUSICAL ---
         async function getNowPlaying() {
             let isP = false;
             let sn = ''; let an = ''; let al = ''; let dc = ''; let hasP = false;
@@ -762,7 +747,9 @@
                     currentStatus = 'playing';
                     stopNewsCycle();
                     
+                    // Esconde widget E hardware durante a transição
                     elWidget.style.opacity = 0; 
+                    elHwLayer.style.opacity = 0; 
                     elWidget.style.transform = 'scale(0.95)';
 
                     const cleanArtist = cleanStringForSearch(an).normalize('NFKC');
@@ -779,7 +766,6 @@
                     }
 
                     preloadImageAndUpdate(coverUrl, () => {
-                        // Reseta a classe de loading e volta ao normal
                         elTitle.className = 'title'; elArtist.className = 'artist';
                         
                         if (coverUrl !== '') {
@@ -799,7 +785,9 @@
                             elAlbum.style.display = 'none';
                         }
 
+                        // Mostra widget E hardware novamente
                         elWidget.style.opacity = 1;
+                        elHwLayer.style.opacity = 1; 
                         elWidget.style.transform = 'scale(1)';
                     });
                 }
@@ -808,7 +796,9 @@
                     currentStatus = 'paused';
                     currentTrackUrl = ''; pTracker.active = false; 
                     
+                    // Esconde widget E hardware 
                     elWidget.style.opacity = 0; 
+                    elHwLayer.style.opacity = 0;
                     elWidget.style.transform = 'scale(0.95)';
                     
                     setTimeout(() => {

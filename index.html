@@ -279,6 +279,10 @@
                     </g>
                 </svg>
 
+                
+<div id="cpu-arc-value" style="position:absolute;left:-8px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:700;color:#00d2ff;text-shadow:0 0 6px rgba(0,0,0,.6);">--°C</div>
+<div id="gpu-arc-value" style="position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:700;color:#00d2ff;text-shadow:0 0 6px rgba(0,0,0,.6);">--%</div>
+
                 <div id="center-visual-container">
                     <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
@@ -401,6 +405,10 @@
                         if (cpuTemp !== '--') { 
                             document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); 
                             document.getElementById('cpu-bar-fill').style.stroke = getBarColor(cpuTemp); 
+                            const c=getBarColor(cpuTemp);
+                            document.getElementById('cpu-arc-value').innerText=cpuTemp+'°C';
+                            document.getElementById('cpu-arc-value').style.color=c;
+
                         }
                         cache.cpuT = cpuTemp;
                     }
@@ -411,6 +419,10 @@
                         if (gpuTemp !== '--') { 
                             document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); 
                             document.getElementById('gpu-bar-fill').style.stroke = getBarColor(gpuTemp); 
+                            const g=getBarColor(gpuTemp);
+                            document.getElementById('gpu-arc-value').innerText=gpuLoad+'%';
+                            document.getElementById('gpu-arc-value').style.color=g;
+
                         }
                         cache.gpuT = gpuTemp;
                     }

@@ -85,7 +85,7 @@
             justify-content: center;
         }
 
-        /* --- TEMPERATURAS (Órbita Interna - Raio 204) --- */
+        /* --- TEMPERATURAS (Órbita Externa) --- */
         .minimal-temp {
             position: absolute;
             display: flex;
@@ -125,7 +125,7 @@
             border-radius: 8px;
         }
 
-        /* --- USO (Órbita Externa - Raio 228) --- */
+        /* --- USO (Órbita Interna - Colada na barra) --- */
         .minimal-load-float {
             position: absolute;
             display: flex;
@@ -258,13 +258,11 @@
             
             <div class="cover-wrapper">
                 
-                <!-- CPU: Temperatura (Órbita 1) -->
                 <div id="cpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span><span id="cpu-emoji" class="hw-emoji"></span></div>
                     <div class="minimal-label">CPU</div>
                 </div>
                 
-                <!-- CPU: Uso % (Órbita 2 - Externa) -->
                 <div id="cpu-load-minimal" class="minimal-load-float" style="display: none;">
                     <span id="cpu-l">--</span><span class="hw-bar-unit">%</span>
                 </div>
@@ -279,7 +277,6 @@
                             <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
                         </g>
 
-                        <!-- Barra visível que acompanha a Temperatura -->
                         <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                         <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                         
@@ -294,13 +291,11 @@
                     <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
 
-                <!-- GPU: Temperatura (Órbita 1) -->
                 <div id="gpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span><span id="gpu-emoji" class="hw-emoji"></span></div>
                     <div class="minimal-label">GPU</div>
                 </div>
 
-                <!-- GPU: Uso % (Órbita 2 - Externa) -->
                 <div id="gpu-load-minimal" class="minimal-load-float" style="display: none;">
                     <span id="gpu-l">--</span><span class="hw-bar-unit">%</span>
                 </div>
@@ -468,7 +463,9 @@
                             const elCpuMin = document.getElementById('cpu-minimal');
                             elCpuMin.style.color = tempColor;
                             elCpuMin.style.display = 'flex';
-                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 204); 
+                            
+                            // Temperatura: raio 212 (mais pra fora)
+                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 212); 
                         } else {
                             document.getElementById('cpu-minimal').style.display = 'none';
                         }
@@ -478,7 +475,9 @@
                             const elCpuLoad = document.getElementById('cpu-load-minimal');
                             elCpuLoad.style.color = loadColor;
                             elCpuLoad.style.display = 'flex';
-                            updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 228); 
+                            
+                            // Uso: raio 182 (colado na barra)
+                            updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 182); 
                         } else {
                             document.getElementById('cpu-load-minimal').style.display = 'none';
                         }
@@ -501,7 +500,9 @@
                             const elGpuMin = document.getElementById('gpu-minimal');
                             elGpuMin.style.color = tempColor;
                             elGpuMin.style.display = 'flex';
-                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 204); 
+                            
+                            // Temperatura: raio 212 (mais pra fora)
+                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 212); 
                         } else {
                             document.getElementById('gpu-minimal').style.display = 'none';
                         }
@@ -511,7 +512,9 @@
                             const elGpuLoad = document.getElementById('gpu-load-minimal');
                             elGpuLoad.style.color = loadColor;
                             elGpuLoad.style.display = 'flex';
-                            updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 228); 
+                            
+                            // Uso: raio 182 (colado na barra)
+                            updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 182); 
                         } else {
                             document.getElementById('gpu-load-minimal').style.display = 'none';
                         }
@@ -759,10 +762,10 @@
                         elWidget.style.transform = 'scale(1)';
                         
                         // Atualiza as posições instantaneamente no momento que a música carrega
-                        updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 204);
-                        updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 228);
-                        updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 204);
-                        updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 228);
+                        updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 212);
+                        updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 182);
+                        updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 212);
+                        updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 182);
                     });
                 }
             } else { 

@@ -69,63 +69,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px; 
             width: 100%;
             margin-bottom: 25px;
-        }
-
-        .hw-side-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 5px;
-            z-index: 5;
-            width: 110px;
-        }
-
-        .hw-big-icon {
-            font-size: 32px; 
-            margin-bottom: 8px;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-        }
-
-        .hw-temp-row {
-            font-size: 28px; 
-            font-weight: 800;
-            color: #fff;
-            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-            line-height: 1;
-            display: flex;
-            align-items: baseline;
-        }
-
-        .hw-load-row {
-            font-size: 24px; 
-            font-weight: 800;
-            color: #c2e9fb;
-            margin-top: 4px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: baseline;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-        }
-
-        .hw-bar-unit { 
-            font-size: 14px; 
-            opacity: 0.7; 
-            margin-left: 2px; 
-        }
-
-        .hw-bar-label {
-            font-size: 13px; 
-            font-weight: 900;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            background: rgba(255,255,255,0.15);
-            padding: 4px 12px;
-            border-radius: 12px;
+            position: relative;
         }
 
         .cover-wrapper {
@@ -138,6 +84,47 @@
             height: 340px;
             justify-content: center;
         }
+
+        /* --- NOVOS ESTILOS MINIMALISTAS --- */
+        .minimal-temp {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 26px; 
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+            z-index: 10;
+            transition: color 0.5s ease;
+            line-height: 1;
+        }
+
+        .minimal-temp.cpu {
+            left: 0px; 
+            bottom: 60px; /* Posição perto dos 25% da barra */
+        }
+
+        .minimal-temp.gpu {
+            right: 0px; 
+            bottom: 60px; /* Posição perto dos 25% da barra */
+        }
+
+        .minimal-temp .hw-bar-unit { 
+            font-size: 14px; 
+            opacity: 0.8; 
+            margin-left: 2px; 
+        }
+
+        .minimal-label {
+            font-size: 12px; 
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        /* ---------------------------------- */
 
         #center-visual-container {
             z-index: 2;
@@ -250,14 +237,13 @@
         
         <div class="dashboard-container">
             
-            <div class="hw-side-panel">
-                <div class="hw-big-icon" id="cpu-icon">⚡</div>
-                <div class="hw-temp-row"><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span></div>
-                <div class="hw-load-row"><span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
-                <div class="hw-bar-label">CPU</div>
-            </div>
-            
             <div class="cover-wrapper">
+                
+                <div id="cpu-minimal" class="minimal-temp cpu">
+                    <div><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span></div>
+                    <div class="minimal-label">CPU</div>
+                </div>
+
                 <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
                     <g transform="rotate(90, 170, 170)">
                         <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
@@ -274,25 +260,19 @@
                         <g id="music-progress" style="display: none;">
                             <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
                             <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
-                            <text id="progress-text" x="170" y="176" text-anchor="middle" style="font-family: sans-serif; font-size: 14px; fill: white; pointer-events: none; opacity: 0.6; font-weight: bold;">0%</text>
                         </g>
                     </g>
                 </svg>
 
-                
-<div id="cpu-arc-value" style="position:absolute;left:-8px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:700;color:#00d2ff;text-shadow:0 0 6px rgba(0,0,0,.6);">--°C</div>
-<div id="gpu-arc-value" style="position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:700;color:#00d2ff;text-shadow:0 0 6px rgba(0,0,0,.6);">--%</div>
-
                 <div id="center-visual-container">
                     <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
-            </div>
-            
-            <div class="hw-side-panel">
-                <div class="hw-big-icon" id="gpu-icon">⚡</div>
-                <div class="hw-temp-row"><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span></div>
-                <div class="hw-load-row"><span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
-                <div class="hw-bar-label">GPU</div>
+
+                <div id="gpu-minimal" class="minimal-temp gpu">
+                    <div><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span></div>
+                    <div class="minimal-label">GPU</div>
+                </div>
+
             </div>
         </div>
 
@@ -318,10 +298,10 @@
         let lastNewsFetchTime = 0;
 
         let currentTrackUrl = ''; let currentStatus = ''; 
-        let cpuTemp = '--'; let cpuLoad = '--'; let gpuTemp = '--'; let gpuLoad = '--';
+        let cpuTemp = '--'; let gpuTemp = '--';
 
         const cache = {
-            cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null, musicOffset: null
+            cpuT: null, gpuT: null, glassClass: null, musicOffset: null
         };
 
         const elWidget = document.getElementById('music-widget');
@@ -366,21 +346,12 @@
             if (temp <= 75) return '#f6d365'; return '#ff416c'; 
         }
 
-        function getStatusIcon(temp) {
-            if (temp === '--') return '⚡';
-            if (temp <= 30) return '🧊';
-            if (temp <= 40) return '❄️';
-            if (temp <= 50) return '⚡';
-            if (temp <= 60) return '🔥';
-            return '🌋';
-        }
-
         window.nzxt = {
             v1: {
                 onMonitoringDataUpdate: (data) => {
                     const { cpus, gpus } = data;
-                    if (cpus?.length > 0) { cpuTemp = Math.round(cpus[0].temperature); cpuLoad = Math.round(cpus[0].load <= 1 ? cpus[0].load * 100 : cpus[0].load); }
-                    if (gpus?.length > 0) { gpuTemp = Math.round(gpus[0].temperature); gpuLoad = Math.round(gpus[0].load <= 1 ? gpus[0].load * 100 : gpus[0].load); }
+                    if (cpus?.length > 0) { cpuTemp = Math.round(cpus[0].temperature); }
+                    if (gpus?.length > 0) { gpuTemp = Math.round(gpus[0].temperature); }
                     
                     let mx = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
                     let newGlassClass = cache.glassClass || '';
@@ -399,36 +370,29 @@
                         cache.glassClass = newGlassClass;
                     }
 
+                    // Sincronizando Temperatura e Cor - CPU
                     if (cache.cpuT !== cpuTemp) {
                         document.getElementById('cpu-t').innerText = cpuTemp; 
-                        document.getElementById('cpu-icon').innerText = getStatusIcon(cpuTemp);
                         if (cpuTemp !== '--') { 
+                            let color = getBarColor(cpuTemp);
                             document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); 
-                            document.getElementById('cpu-bar-fill').style.stroke = getBarColor(cpuTemp); 
-                            const c=getBarColor(cpuTemp);
-                            document.getElementById('cpu-arc-value').innerText=cpuTemp+'°C';
-                            document.getElementById('cpu-arc-value').style.color=c;
-
+                            document.getElementById('cpu-bar-fill').style.stroke = color; 
+                            document.getElementById('cpu-minimal').style.color = color; // Pinta o texto
                         }
                         cache.cpuT = cpuTemp;
                     }
 
+                    // Sincronizando Temperatura e Cor - GPU
                     if (cache.gpuT !== gpuTemp) {
                         document.getElementById('gpu-t').innerText = gpuTemp; 
-                        document.getElementById('gpu-icon').innerText = getStatusIcon(gpuTemp);
                         if (gpuTemp !== '--') { 
+                            let color = getBarColor(gpuTemp);
                             document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); 
-                            document.getElementById('gpu-bar-fill').style.stroke = getBarColor(gpuTemp); 
-                            const g=getBarColor(gpuTemp);
-                            document.getElementById('gpu-arc-value').innerText=gpuLoad+'%';
-                            document.getElementById('gpu-arc-value').style.color=g;
-
+                            document.getElementById('gpu-bar-fill').style.stroke = color; 
+                            document.getElementById('gpu-minimal').style.color = color; // Pinta o texto
                         }
                         cache.gpuT = gpuTemp;
                     }
-
-                    if (cache.cpuL !== cpuLoad) { document.getElementById('cpu-l').innerText = cpuLoad; cache.cpuL = cpuLoad; }
-                    if (cache.gpuL !== gpuLoad) { document.getElementById('gpu-l').innerText = gpuLoad; cache.gpuL = gpuLoad; }
                 }
             }
         };
@@ -538,7 +502,6 @@
             const progRing = document.getElementById('music-progress');
             const progLeft = document.getElementById('music-progress-left');
             const progRight = document.getElementById('music-progress-right');
-            const progText = document.getElementById('progress-text');
 
             if (pTracker.active && pTracker.durSec > 0) {
                 bgRing.style.display = 'block'; 
@@ -546,9 +509,6 @@
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
                 let o = 459 - (459 * (pTracker.posSec / pTracker.durSec));
-                
-                let percentage = Math.round((pTracker.posSec / pTracker.durSec) * 100);
-                progText.innerText = `${percentage}%`;
                 
                 if (cache.musicOffset !== o) {
                     progLeft.style.strokeDashoffset = o; 
@@ -558,7 +518,6 @@
             } else { 
                 bgRing.style.display = 'none'; 
                 progRing.style.display = 'none'; 
-                progText.innerText = '';
                 cache.musicOffset = null; 
             }
         }, 1000);

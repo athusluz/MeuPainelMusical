@@ -85,7 +85,7 @@
             justify-content: center;
         }
 
-        /* --- TEMPERATURAS (Lado de FORA do arco) --- */
+        /* --- TEMPERATURAS (Órbita Interna - Raio 204) --- */
         .minimal-temp {
             position: absolute;
             display: flex;
@@ -125,18 +125,17 @@
             border-radius: 8px;
         }
 
-        /* --- USO (Lado de DENTRO do arco) --- */
+        /* --- USO (Órbita Externa - Raio 228) --- */
         .minimal-load-float {
             position: absolute;
             display: flex;
             align-items: center;
             font-size: 16px; 
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.85);
-            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+            font-weight: 800;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.8);
             z-index: 9;
             transform: translate(-50%, -50%); 
-            transition: left 0.5s ease-out, top 0.5s ease-out; 
+            transition: color 0.5s ease, left 0.5s ease-out, top 0.5s ease-out; 
         }
 
         .minimal-load-float .hw-bar-unit { 
@@ -259,13 +258,13 @@
             
             <div class="cover-wrapper">
                 
-                <!-- CPU: Temperatura (Fora) -->
+                <!-- CPU: Temperatura (Órbita 1) -->
                 <div id="cpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span><span id="cpu-emoji" class="hw-emoji"></span></div>
                     <div class="minimal-label">CPU</div>
                 </div>
                 
-                <!-- CPU: Uso % (Dentro) -->
+                <!-- CPU: Uso % (Órbita 2 - Externa) -->
                 <div id="cpu-load-minimal" class="minimal-load-float" style="display: none;">
                     <span id="cpu-l">--</span><span class="hw-bar-unit">%</span>
                 </div>
@@ -280,7 +279,7 @@
                             <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
                         </g>
 
-                        <!-- A progressão destas barras agora acompanha a TEMPERATURA novamente -->
+                        <!-- Barra visível que acompanha a Temperatura -->
                         <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                         <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                         
@@ -295,13 +294,13 @@
                     <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
 
-                <!-- GPU: Temperatura (Fora) -->
+                <!-- GPU: Temperatura (Órbita 1) -->
                 <div id="gpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span><span id="gpu-emoji" class="hw-emoji"></span></div>
                     <div class="minimal-label">GPU</div>
                 </div>
 
-                <!-- GPU: Uso % (Dentro) -->
+                <!-- GPU: Uso % (Órbita 2 - Externa) -->
                 <div id="gpu-load-minimal" class="minimal-load-float" style="display: none;">
                     <span id="gpu-l">--</span><span class="hw-bar-unit">%</span>
                 </div>
@@ -374,13 +373,12 @@
         }
         connectWNP();
 
-        function getBarColor(temp) {
-            if (temp === '--') return 'transparent';
-            if (temp <= 40) return '#00d2ff'; if (temp <= 65) return '#a8e063'; 
-            if (temp <= 75) return '#f6d365'; return '#ff416c'; 
+        function getBarColor(value) {
+            if (value === '--') return 'transparent';
+            if (value <= 40) return '#00d2ff'; if (value <= 65) return '#a8e063'; 
+            if (value <= 75) return '#f6d365'; return '#ff416c'; 
         }
 
-        // --- SISTEMA DE ÍCONES (Baseado nas suas regras) ---
         function getCpuIcon(temp) {
             if (temp === '--') return '';
             if (temp <= 30) return '🧊';
@@ -394,13 +392,11 @@
             if (temp === '--') return '';
             if (temp <= 30) return '🧊';
             if (temp <= 50) return '❄️';
-            if (temp <= 74) return '🔥'; // Cobre a lacuna de 51 a 74
+            if (temp <= 74) return '🔥'; 
             if (temp <= 84) return '🌋';
             return '⚠️';
         }
 
-        // --- FUNÇÃO MATEMÁTICA UNIVERSAL (Para Temp e Uso) ---
-        // targetRadius permite posicionar mais longe (ex: 204 pra temp) ou mais perto do centro (ex: 138 pra Uso)
         function updateTrackPosition(pathId, elementId, value, targetRadius) {
             const path = document.getElementById(pathId);
             const element = document.getElementById(elementId);
@@ -415,7 +411,7 @@
             const vx = pt.x - cx;
             const vy = pt.y - cy;
             
-            const currentRadius = 162; // Raio fixo do caminho SVG original
+            const currentRadius = 162; 
             const scale = targetRadius / currentRadius;
             
             const outerX = cx + vx * scale;
@@ -464,25 +460,25 @@
                         document.getElementById('cpu-emoji').innerText = getCpuIcon(cpuTemp);
                         document.getElementById('cpu-l').innerText = cpuLoad; 
                         
-                        // Temperatura (Barra visual e texto do lado de fora)
                         if (cpuTemp !== '--') { 
-                            let color = getBarColor(cpuTemp);
+                            let tempColor = getBarColor(cpuTemp);
                             document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); 
-                            document.getElementById('cpu-bar-fill').style.stroke = color; 
+                            document.getElementById('cpu-bar-fill').style.stroke = tempColor; 
                             
                             const elCpuMin = document.getElementById('cpu-minimal');
-                            elCpuMin.style.color = color;
+                            elCpuMin.style.color = tempColor;
                             elCpuMin.style.display = 'flex';
-                            
-                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 204); // Raio 204 (Lado de FORA)
+                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 204); 
                         } else {
                             document.getElementById('cpu-minimal').style.display = 'none';
                         }
                         
-                        // Uso % (Texto satélite flutuando na posição dele do lado de dentro)
                         if (cpuLoad !== '--') {
-                            document.getElementById('cpu-load-minimal').style.display = 'flex';
-                            updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 138); // Raio 138 (Lado de DENTRO)
+                            let loadColor = getBarColor(cpuLoad);
+                            const elCpuLoad = document.getElementById('cpu-load-minimal');
+                            elCpuLoad.style.color = loadColor;
+                            elCpuLoad.style.display = 'flex';
+                            updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 228); 
                         } else {
                             document.getElementById('cpu-load-minimal').style.display = 'none';
                         }
@@ -497,25 +493,25 @@
                         document.getElementById('gpu-emoji').innerText = getGpuIcon(gpuTemp); 
                         document.getElementById('gpu-l').innerText = gpuLoad; 
                         
-                        // Temperatura (Barra visual e texto do lado de fora)
                         if (gpuTemp !== '--') { 
-                            let color = getBarColor(gpuTemp);
+                            let tempColor = getBarColor(gpuTemp);
                             document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); 
-                            document.getElementById('gpu-bar-fill').style.stroke = color; 
+                            document.getElementById('gpu-bar-fill').style.stroke = tempColor; 
                             
                             const elGpuMin = document.getElementById('gpu-minimal');
-                            elGpuMin.style.color = color;
+                            elGpuMin.style.color = tempColor;
                             elGpuMin.style.display = 'flex';
-                            
-                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 204); // Raio 204 (Lado de FORA)
+                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 204); 
                         } else {
                             document.getElementById('gpu-minimal').style.display = 'none';
                         }
                         
-                        // Uso % (Texto satélite flutuando na posição dele do lado de dentro)
                         if (gpuLoad !== '--') {
-                            document.getElementById('gpu-load-minimal').style.display = 'flex';
-                            updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 138); // Raio 138 (Lado de DENTRO)
+                            let loadColor = getBarColor(gpuLoad);
+                            const elGpuLoad = document.getElementById('gpu-load-minimal');
+                            elGpuLoad.style.color = loadColor;
+                            elGpuLoad.style.display = 'flex';
+                            updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 228); 
                         } else {
                             document.getElementById('gpu-load-minimal').style.display = 'none';
                         }
@@ -615,7 +611,7 @@
                 if(newsList.length > 0) {
                     currentNewsIndex = 0;
                     showNextNews();
-                    newsInterval = setInterval(showNextNews, 60000); 
+                    newsInterval = setInterval(showNextNews, 15000); 
                 } else {
                     showSilenceState();
                 }
@@ -762,10 +758,11 @@
                         elWidget.style.opacity = 1; 
                         elWidget.style.transform = 'scale(1)';
                         
+                        // Atualiza as posições instantaneamente no momento que a música carrega
                         updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 204);
-                        updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 138);
+                        updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 228);
                         updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 204);
-                        updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 138);
+                        updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 228);
                     });
                 }
             } else { 

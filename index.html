@@ -85,7 +85,7 @@
             justify-content: center;
         }
 
-        /* --- TEMPERATURA E USO JUNTOS (Satélite do arco) --- */
+        /* --- TEMPERATURAS (Lado de FORA do arco) --- */
         .minimal-temp {
             position: absolute;
             display: flex;
@@ -112,18 +112,6 @@
             vertical-align: 3px;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
         }
-        
-        .hw-load-inline {
-            font-size: 14px; 
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.9);
-            margin-top: 2px;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
-        }
-
-        .hw-load-inline .hw-bar-unit {
-            font-size: 10px;
-        }
 
         .minimal-label {
             font-size: 10px;
@@ -135,6 +123,41 @@
             background: rgba(255,255,255,0.15);
             padding: 3px 8px;
             border-radius: 8px;
+        }
+
+        /* --- USO EM PÍLULA (Lado de DENTRO do arco, flutuante) --- */
+        .minimal-load-float {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px; 
+            font-weight: 800;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 5px 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 9;
+            transform: translate(-50%, -50%); 
+            transition: left 0.5s ease-out, top 0.5s ease-out;
+            line-height: 1.1;
+        }
+
+        .minimal-load-float .hw-load-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+        }
+
+        .minimal-load-float .hw-bar-unit { 
+            font-size: 10px;
+            opacity: 0.8; 
+            margin-left: 1px; 
         }
 
         #center-visual-container {
@@ -201,6 +224,21 @@
             text-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
 
+        /* --- ESTILO DE CARREGAMENTO --- */
+        .loading-pulse {
+            font-size: 30px !important;
+            color: rgba(255, 255, 255, 0.8) !important;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            animation: pulse 1.5s infinite ease-in-out;
+            margin-top: 10px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+
         .title.news-mode {
             white-space: normal;
             font-size: 26px;
@@ -241,7 +279,7 @@
 </head>
 <body>
 
-    <div id="bg-layer" class="aurora-bg"></div>
+    <div id="bg-layer" class="dark-bg"></div>
     <div id="glass-overlay"></div>
 
     <div id="music-widget">
@@ -252,8 +290,12 @@
                 
                 <div id="cpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span><span id="cpu-emoji" class="hw-emoji"></span></div>
-                    <div class="hw-load-inline">Uso: <span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
                     <div class="minimal-label">CPU</div>
+                </div>
+
+                <div id="cpu-load-minimal" class="minimal-load-float" style="display: none;">
+                    <div class="hw-load-label">Uso CPU</div>
+                    <div><span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
                 </div>
 
                 <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
@@ -282,14 +324,18 @@
 
                 <div id="gpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span><span id="gpu-emoji" class="hw-emoji"></span></div>
-                    <div class="hw-load-inline">Uso: <span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
                     <div class="minimal-label">GPU</div>
+                </div>
+
+                <div id="gpu-load-minimal" class="minimal-load-float" style="display: none;">
+                    <div class="hw-load-label">Uso GPU</div>
+                    <div><span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
                 </div>
 
             </div>
         </div>
 
-        <div id="info-title" class="title">Inicializando...</div>
+        <div id="info-title" class="title loading-pulse">Carregando...</div>
         <div id="info-artist" class="artist"></div>
         <div id="info-album" class="album"></div>
     </div>
@@ -408,13 +454,19 @@
             v1: {
                 onMonitoringDataUpdate: (data) => {
                     const { cpus, gpus } = data;
+                    
                     if (cpus?.length > 0) { 
                         cpuTemp = Math.round(cpus[0].temperature);
-                        cpuLoad = Math.round(cpus[0].load <= 1 ? cpus[0].load * 100 : cpus[0].load);
+                        let cLoad = cpus[0].load !== undefined ? cpus[0].load : 0;
+                        cpuLoad = Math.round(cLoad <= 1 && cLoad > 0 ? cLoad * 100 : cLoad);
                     }
+                    
                     if (gpus?.length > 0) { 
                         gpuTemp = Math.round(gpus[0].temperature);
-                        gpuLoad = Math.round(gpus[0].load <= 1 ? gpus[0].load * 100 : gpus[0].load);
+                        
+                        // Correção robusta para GPU Load (pega load ou usage, e converte se for decimal)
+                        let gLoad = gpus[0].load !== undefined ? gpus[0].load : (gpus[0].usage !== undefined ? gpus[0].usage : 0);
+                        gpuLoad = Math.round(gLoad <= 1 && gLoad > 0 ? gLoad * 100 : gLoad);
                     }
                     
                     let mx = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
@@ -440,7 +492,7 @@
                         document.getElementById('cpu-emoji').innerText = getCpuIcon(cpuTemp);
                         document.getElementById('cpu-l').innerText = cpuLoad; 
                         
-                        // Temperatura e Uso flutuando juntos
+                        // Temperatura (Fora)
                         if (cpuTemp !== '--') { 
                             let color = getBarColor(cpuTemp);
                             document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); 
@@ -450,9 +502,17 @@
                             elCpuMin.style.color = color;
                             elCpuMin.style.display = 'flex';
                             
-                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 204); 
+                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 208); // Raio externo
                         } else {
                             document.getElementById('cpu-minimal').style.display = 'none';
+                        }
+                        
+                        // Uso (Pílula Dentro, acompanhando o ângulo do Uso)
+                        if (cpuLoad !== '--') {
+                            document.getElementById('cpu-load-minimal').style.display = 'flex';
+                            updateTrackPosition('cpu-bar-fill', 'cpu-load-minimal', cpuLoad, 134); // Raio interno
+                        } else {
+                            document.getElementById('cpu-load-minimal').style.display = 'none';
                         }
 
                         cache.cpuT = cpuTemp;
@@ -465,7 +525,7 @@
                         document.getElementById('gpu-emoji').innerText = getGpuIcon(gpuTemp); 
                         document.getElementById('gpu-l').innerText = gpuLoad; 
                         
-                        // Temperatura e Uso flutuando juntos
+                        // Temperatura (Fora)
                         if (gpuTemp !== '--') { 
                             let color = getBarColor(gpuTemp);
                             document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); 
@@ -475,9 +535,17 @@
                             elGpuMin.style.color = color;
                             elGpuMin.style.display = 'flex';
                             
-                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 204); 
+                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 208); // Raio externo
                         } else {
                             document.getElementById('gpu-minimal').style.display = 'none';
+                        }
+
+                        // Uso (Pílula Dentro, acompanhando o ângulo do Uso)
+                        if (gpuLoad !== '--') {
+                            document.getElementById('gpu-load-minimal').style.display = 'flex';
+                            updateTrackPosition('gpu-bar-fill', 'gpu-load-minimal', gpuLoad, 134); // Raio interno
+                        } else {
+                            document.getElementById('gpu-load-minimal').style.display = 'none';
                         }
 
                         cache.gpuT = gpuTemp;
@@ -558,6 +626,7 @@
                 elCenterVisual.innerHTML = fallbackBarsFlatHTML;
             }
 
+            // Remove a classe de loading e volta ao estilo normal de notícia
             elTitle.className = 'title news-mode';
             elArtist.className = 'artist news-mode';
             elAlbum.style.display = 'none';
@@ -710,6 +779,7 @@
                     }
 
                     preloadImageAndUpdate(coverUrl, () => {
+                        // Reseta a classe de loading e volta ao normal
                         elTitle.className = 'title'; elArtist.className = 'artist';
                         
                         if (coverUrl !== '') {
@@ -731,9 +801,6 @@
 
                         elWidget.style.opacity = 1;
                         elWidget.style.transform = 'scale(1)';
-                        
-                        updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 204);
-                        updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 204);
                     });
                 }
             } else { 

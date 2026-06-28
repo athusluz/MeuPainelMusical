@@ -85,7 +85,7 @@
             justify-content: center;
         }
 
-        /* --- HARDWARE LAYER (Controla a opacidade global dos status) --- */
+        /* --- HARDWARE LAYER --- */
         #hardware-layer {
             position: absolute;
             top: 0;
@@ -98,54 +98,8 @@
             z-index: 10;
         }
 
-        /* --- TEMPERATURAS (Lado de FORA, sem pílula, número grande e colorido) --- */
-        .minimal-temp {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            transform: translate(-50%, -50%);
-            transition: left 0.5s ease-out, top 0.5s ease-out, color 0.5s ease;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
-            line-height: 1;
-        }
-
-        .minimal-temp .hw-val-container {
-            font-size: 34px; 
-            font-weight: 900;
-            display: flex;
-            align-items: center;
-        }
-
-        .minimal-temp .hw-label {
-            font-size: 11px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            opacity: 0.8;
-            margin-bottom: 4px;
-            color: #ffffff;
-        }
-
-        .minimal-temp .hw-bar-unit { 
-            font-size: 16px;
-            opacity: 0.9; 
-            margin-left: 2px; 
-            font-weight: 700;
-        }
-
-        /* --- ÍCONE DE TEMPERATURA AUMENTADO --- */
-        .hw-emoji {
-            font-size: 24px; 
-            margin-left: 6px;
-            vertical-align: middle;
-            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
-        }
-
-        /* --- USO (Lado de DENTRO, formato pílula discreta) --- */
-        .minimal-load-pill {
+        /* --- PADRÃO UNIFICADO (Temp e Load iguais por dentro) --- */
+        .minimal-hw-pill {
             position: absolute;
             display: flex;
             flex-direction: column;
@@ -158,12 +112,14 @@
             padding: 5px 10px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            transform: translate(-50%, -50%); 
-            transition: left 0.5s ease-out, top 0.5s ease-out;
+            /* Transformação inicial, sobregravada pelo JS para dar o efeito de aumento */
+            transform: translate(-50%, -50%) scale(1); 
+            transition: left 0.5s ease-out, top 0.5s ease-out, color 0.5s ease, transform 0.3s ease;
             line-height: 1.1;
+            z-index: 10;
         }
 
-        .minimal-load-pill .hw-label {
+        .minimal-hw-pill .hw-label {
             font-size: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -171,15 +127,23 @@
             margin-bottom: 1px;
         }
 
-        .minimal-load-pill .hw-val-container {
+        .minimal-hw-pill .hw-val-container {
             font-size: 13px;
             font-weight: 800;
+            display: flex;
+            align-items: center;
         }
 
-        .minimal-load-pill .hw-bar-unit { 
+        .minimal-hw-pill .hw-bar-unit { 
             font-size: 9px;
             opacity: 0.8; 
             margin-left: 1px; 
+        }
+
+        .hw-emoji {
+            font-size: 11px; 
+            margin-left: 4px;
+            vertical-align: 1px;
         }
 
         #center-visual-container {
@@ -319,12 +283,12 @@
 
                 <div id="hardware-layer">
                     
-                    <div id="cpu-minimal" class="minimal-temp" style="display: none;">
-                        <div class="hw-label">CPU</div>
+                    <div id="cpu-minimal" class="minimal-hw-pill" style="display: none;">
+                        <div class="hw-label">Temp CPU</div>
                         <div class="hw-val-container"><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span><span id="cpu-emoji" class="hw-emoji"></span></div>
                     </div>
 
-                    <div id="cpu-load-minimal" class="minimal-load-pill" style="display: none;">
+                    <div id="cpu-load-minimal" class="minimal-hw-pill" style="display: none;">
                         <div class="hw-label">Uso CPU</div>
                         <div class="hw-val-container"><span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
                     </div>
@@ -349,12 +313,12 @@
                         </g>
                     </svg>
 
-                    <div id="gpu-minimal" class="minimal-temp" style="display: none;">
-                        <div class="hw-label">GPU</div>
+                    <div id="gpu-minimal" class="minimal-hw-pill" style="display: none;">
+                        <div class="hw-label">Temp GPU</div>
                         <div class="hw-val-container"><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span><span id="gpu-emoji" class="hw-emoji"></span></div>
                     </div>
 
-                    <div id="gpu-load-minimal" class="minimal-load-pill" style="display: none;">
+                    <div id="gpu-load-minimal" class="minimal-hw-pill" style="display: none;">
                         <div class="hw-label">Uso GPU</div>
                         <div class="hw-val-container"><span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
                     </div>
@@ -458,7 +422,8 @@
             if (!path || !element || value === '--') return;
 
             const totalLength = 509;
-            const currentLength = (Math.min(value, 100) / 100) * totalLength;
+            const numericValue = Math.min(value, 100);
+            const currentLength = (numericValue / 100) * totalLength;
             const pt = path.getPointAtLength(currentLength);
             
             const cx = 170;
@@ -467,14 +432,18 @@
             const vy = pt.y - cy;
             
             const currentRadius = 162;
-            const scale = targetRadius / currentRadius;
-            const outerX = cx + vx * scale;
-            const outerY = cy + vy * scale;
+            const scaleFactor = targetRadius / currentRadius;
+            const outerX = cx + vx * scaleFactor;
+            const outerY = cy + vy * scaleFactor;
             const finalX = cx - (outerY - cy);
             const finalY = cy + (outerX - cx);
             
             element.style.left = `${finalX}px`;
             element.style.top = `${finalY}px`;
+
+            // Lógica de Escala Dinâmica: Quanto maior o valor (0 a 100), maior fica a pílula (1x até 1.45x)
+            const dynamicScale = 1 + (numericValue / 100) * 0.45;
+            element.style.transform = `translate(-50%, -50%) scale(${dynamicScale})`;
         }
 
         window.nzxt = {
@@ -528,7 +497,7 @@
                             elCpuMin.style.color = color;
                             elCpuMin.style.display = 'flex';
                             
-                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 218); 
+                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 126); 
                         } else {
                             document.getElementById('cpu-minimal').style.display = 'none';
                         }
@@ -559,7 +528,7 @@
                             elGpuMin.style.color = color;
                             elGpuMin.style.display = 'flex';
                             
-                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 218); 
+                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 126); 
                         } else {
                             document.getElementById('gpu-minimal').style.display = 'none';
                         }

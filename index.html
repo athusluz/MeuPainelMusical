@@ -85,7 +85,7 @@
             justify-content: center;
         }
 
-        /* --- TEMPERATURAS & ÍCONES DINÂMICOS --- */
+        /* --- TEMPERATURAS (Órbita Externa) --- */
         .minimal-temp {
             position: absolute;
             display: flex;
@@ -123,6 +123,25 @@
             background: rgba(255,255,255,0.15);
             padding: 3px 8px;
             border-radius: 8px;
+        }
+
+        /* --- USO (Órbita Interna) --- */
+        .minimal-load-float {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            font-size: 14px; 
+            font-weight: 800;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+            z-index: 9;
+            transform: translate(-50%, -50%); 
+            transition: color 0.5s ease, left 0.5s ease-out, top 0.5s ease-out; 
+        }
+
+        .minimal-load-float .hw-bar-unit { 
+            font-size: 10px; 
+            opacity: 0.8; 
+            margin-left: 1px; 
         }
         /* -------------------------------------- */
 
@@ -239,27 +258,42 @@
             
             <div class="cover-wrapper">
                 
+                <!-- CPU: Temperatura (Satélite Externo) -->
                 <div id="cpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span><span id="cpu-emoji" class="hw-emoji"></span></div>
                     <div class="minimal-label">CPU</div>
                 </div>
+                
+                <!-- CPU: Uso % (Satélite Interno - Ancorado à nova barra) -->
+                <div id="cpu-load-minimal" class="minimal-load-float" style="display: none;">
+                    <span id="cpu-l">--</span><span class="hw-bar-unit">%</span>
+                </div>
 
                 <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
                     <g transform="rotate(90, 170, 170)">
-                        <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                        <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                        
+                        <!-- FUNDOS DAS BARRAS (TRILHOS) -->
+                        <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="round"/>
+                        <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="round"/>
+                        
+                        <path d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4" stroke-linecap="round"/>
                         
                         <g id="music-bg-ring" style="display: none;">
-                            <path d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
-                            <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M 170,308 A 138 138 0 0 1 170 32" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M 170,308 A 138 138 0 0 0 170 32" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
                         </g>
 
-                        <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                        <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                        <!-- PREENCHIMENTOS ANIMADOS (BARRAS ATIVAS) -->
+                        <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                        <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                        
+                        <path id="cpu-load-fill" d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                        <path id="gpu-load-fill" d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                         
                         <g id="music-progress" style="display: none;">
-                            <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
-                            <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                            <path id="music-progress-left" d="M 170,308 A 138 138 0 0 1 170 32" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="434" stroke-dashoffset="434" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                            <path id="music-progress-right" d="M 170,308 A 138 138 0 0 0 170 32" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="434" stroke-dashoffset="434" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
                         </g>
                     </g>
                 </svg>
@@ -268,9 +302,15 @@
                     <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
 
+                <!-- GPU: Temperatura (Satélite Externo) -->
                 <div id="gpu-minimal" class="minimal-temp" style="display: none;">
                     <div><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span><span id="gpu-emoji" class="hw-emoji"></span></div>
                     <div class="minimal-label">GPU</div>
+                </div>
+
+                <!-- GPU: Uso % (Satélite Interno - Ancorado à nova barra) -->
+                <div id="gpu-load-minimal" class="minimal-load-float" style="display: none;">
+                    <span id="gpu-l">--</span><span class="hw-bar-unit">%</span>
                 </div>
 
             </div>
@@ -341,13 +381,12 @@
         }
         connectWNP();
 
-        function getBarColor(temp) {
-            if (temp === '--') return 'transparent';
-            if (temp <= 40) return '#00d2ff'; if (temp <= 65) return '#a8e063'; 
-            if (temp <= 75) return '#f6d365'; return '#ff416c'; 
+        function getBarColor(value) {
+            if (value === '--') return 'transparent';
+            if (value <= 40) return '#00d2ff'; if (value <= 65) return '#a8e063'; 
+            if (value <= 75) return '#f6d365'; return '#ff416c'; 
         }
 
-        // --- SISTEMA DE ÍCONES (Baseado nas especificações) ---
         function getCpuIcon(temp) {
             if (temp === '--') return '';
             if (temp <= 30) return '🧊';
@@ -361,19 +400,17 @@
             if (temp === '--') return '';
             if (temp <= 30) return '🧊';
             if (temp <= 50) return '❄️';
-            if (temp <= 74) return '🔥'; // Cobre a lacuna até 75
+            if (temp <= 74) return '🔥'; 
             if (temp <= 84) return '🌋';
             return '⚠️';
         }
 
-        // --- FUNÇÃO MATEMÁTICA AGORA GUIADA PELO USO (LOAD) ---
-        function updateTempPosition(pathId, elementId, loadValue) {
+        function updateTrackPosition(pathId, elementId, value, targetRadius, totalLength) {
             const path = document.getElementById(pathId);
             const element = document.getElementById(elementId);
-            if (!path || !element || loadValue === '--') return;
+            if (!path || !element || value === '--') return;
 
-            const totalLength = 509; 
-            const currentLength = (Math.min(loadValue, 100) / 100) * totalLength;
+            const currentLength = (Math.min(value, 100) / 100) * totalLength;
             const pt = path.getPointAtLength(currentLength);
             
             const cx = 170; 
@@ -381,8 +418,7 @@
             const vx = pt.x - cx;
             const vy = pt.y - cy;
             
-            const targetRadius = 200; 
-            const currentRadius = 162;
+            const currentRadius = Math.sqrt(vx * vx + vy * vy) || 162; 
             const scale = targetRadius / currentRadius;
             
             const outerX = cx + vx * scale;
@@ -399,13 +435,39 @@
             v1: {
                 onMonitoringDataUpdate: (data) => {
                     const { cpus, gpus } = data;
+                    
+                    // --- CORREÇÃO DE LEITURA (CPU) ---
                     if (cpus?.length > 0) { 
-                        cpuTemp = Math.round(cpus[0].temperature); 
-                        cpuLoad = Math.round(cpus[0].load <= 1 ? cpus[0].load * 100 : cpus[0].load); 
+                        let maxCpuLoad = 0;
+                        let maxCpuTemp = 0;
+                        
+                        cpus.forEach(cpu => {
+                            let cLoad = cpu.load || 0;
+                            let realLoad = cLoad <= 1 ? cLoad * 100 : cLoad;
+                            if (realLoad > maxCpuLoad) maxCpuLoad = realLoad;
+                            if (cpu.temperature > maxCpuTemp) maxCpuTemp = cpu.temperature;
+                        });
+                        
+                        cpuTemp = Math.round(maxCpuTemp); 
+                        cpuLoad = Math.round(maxCpuLoad); 
                     }
+                    
+                    // --- CORREÇÃO DE LEITURA (GPU: APU + DEDICADA) ---
+                    // Varre todas as placas simultaneamente para achar a que está rodando o jogo
                     if (gpus?.length > 0) { 
-                        gpuTemp = Math.round(gpus[0].temperature); 
-                        gpuLoad = Math.round(gpus[0].load <= 1 ? gpus[0].load * 100 : gpus[0].load); 
+                        let maxGpuLoad = 0;
+                        let maxGpuTemp = 0;
+                        
+                        gpus.forEach(gpu => {
+                            let gLoad = gpu.load || 0;
+                            let realLoad = gLoad <= 1 ? gLoad * 100 : gLoad;
+                            
+                            if (realLoad > maxGpuLoad) maxGpuLoad = realLoad;
+                            if (gpu.temperature > maxGpuTemp) maxGpuTemp = gpu.temperature;
+                        });
+
+                        gpuTemp = Math.round(maxGpuTemp);
+                        gpuLoad = Math.round(maxGpuLoad);
                     }
                     
                     let mx = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
@@ -425,54 +487,78 @@
                         cache.glassClass = newGlassClass;
                     }
 
-                    // Atualizando CPU
+                    // --- ATUALIZANDO CPU ---
                     if (cache.cpuT !== cpuTemp || cache.cpuL !== cpuLoad) {
                         document.getElementById('cpu-t').innerText = cpuTemp; 
                         document.getElementById('cpu-emoji').innerText = getCpuIcon(cpuTemp);
+                        document.getElementById('cpu-l').innerText = cpuLoad; 
                         
-                        if (cpuTemp !== '--' && cpuLoad !== '--') { 
-                            let color = getBarColor(cpuTemp);
-                            
-                            // BARRA = Indica o USO (cpuLoad)
-                            document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuLoad, 100) / 100); 
-                            // COR DA BARRA = Indica a Temperatura
-                            document.getElementById('cpu-bar-fill').style.stroke = color; 
+                        if (cpuTemp !== '--') { 
+                            let tempColor = getBarColor(cpuTemp);
+                            document.getElementById('cpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(cpuTemp, 100) / 100); 
+                            document.getElementById('cpu-bar-fill').style.stroke = tempColor; 
                             
                             const elCpuMin = document.getElementById('cpu-minimal');
-                            elCpuMin.style.color = color;
+                            elCpuMin.style.color = tempColor;
                             elCpuMin.style.display = 'flex';
                             
-                            // O bloco viaja pela borda seguindo o USO
-                            updateTempPosition('cpu-bar-fill', 'cpu-minimal', cpuLoad);
+                            updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 204, 509); 
                         } else {
                             document.getElementById('cpu-minimal').style.display = 'none';
                         }
+                        
+                        if (cpuLoad !== '--') {
+                            let loadColor = getBarColor(cpuLoad);
+                            document.getElementById('cpu-load-fill').style.strokeDashoffset = 471 - (471 * Math.min(cpuLoad, 100) / 100); 
+                            document.getElementById('cpu-load-fill').style.stroke = loadColor; 
+                            
+                            const elCpuLoad = document.getElementById('cpu-load-minimal');
+                            elCpuLoad.style.color = loadColor;
+                            elCpuLoad.style.display = 'flex';
+                            
+                            updateTrackPosition('cpu-load-fill', 'cpu-load-minimal', cpuLoad, 130, 471); 
+                        } else {
+                            document.getElementById('cpu-load-minimal').style.display = 'none';
+                        }
+
                         cache.cpuT = cpuTemp;
                         cache.cpuL = cpuLoad;
                     }
 
-                    // Atualizando GPU
+                    // --- ATUALIZANDO GPU ---
                     if (cache.gpuT !== gpuTemp || cache.gpuL !== gpuLoad) {
                         document.getElementById('gpu-t').innerText = gpuTemp;
                         document.getElementById('gpu-emoji').innerText = getGpuIcon(gpuTemp); 
+                        document.getElementById('gpu-l').innerText = gpuLoad; 
                         
-                        if (gpuTemp !== '--' && gpuLoad !== '--') { 
-                            let color = getBarColor(gpuTemp);
-                            
-                            // BARRA = Indica o USO (gpuLoad)
-                            document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuLoad, 100) / 100); 
-                            // COR DA BARRA = Indica a Temperatura
-                            document.getElementById('gpu-bar-fill').style.stroke = color; 
+                        if (gpuTemp !== '--') { 
+                            let tempColor = getBarColor(gpuTemp);
+                            document.getElementById('gpu-bar-fill').style.strokeDashoffset = 509 - (509 * Math.min(gpuTemp, 100) / 100); 
+                            document.getElementById('gpu-bar-fill').style.stroke = tempColor; 
                             
                             const elGpuMin = document.getElementById('gpu-minimal');
-                            elGpuMin.style.color = color;
+                            elGpuMin.style.color = tempColor;
                             elGpuMin.style.display = 'flex';
                             
-                            // O bloco viaja pela borda seguindo o USO
-                            updateTempPosition('gpu-bar-fill', 'gpu-minimal', gpuLoad);
+                            updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 204, 509); 
                         } else {
                             document.getElementById('gpu-minimal').style.display = 'none';
                         }
+                        
+                        if (gpuLoad !== '--') {
+                            let loadColor = getBarColor(gpuLoad);
+                            document.getElementById('gpu-load-fill').style.strokeDashoffset = 471 - (471 * Math.min(gpuLoad, 100) / 100); 
+                            document.getElementById('gpu-load-fill').style.stroke = loadColor;
+                            
+                            const elGpuLoad = document.getElementById('gpu-load-minimal');
+                            elGpuLoad.style.color = loadColor;
+                            elGpuLoad.style.display = 'flex';
+                            
+                            updateTrackPosition('gpu-load-fill', 'gpu-load-minimal', gpuLoad, 130, 471); 
+                        } else {
+                            document.getElementById('gpu-load-minimal').style.display = 'none';
+                        }
+
                         cache.gpuT = gpuTemp;
                         cache.gpuL = gpuLoad;
                     }
@@ -579,7 +665,7 @@
             if (newsInterval) { clearInterval(newsInterval); newsInterval = null; }
         }
 
-        // --- SISTEMA DE PROGRESSO ---
+        // --- SISTEMA DE PROGRESSO MUSICAL ---
         setInterval(() => {
             const bgRing = document.getElementById('music-bg-ring');
             const progRing = document.getElementById('music-progress');
@@ -591,7 +677,7 @@
                 progRing.style.display = 'block'; 
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
-                let o = 459 - (459 * (pTracker.posSec / pTracker.durSec));
+                let o = 434 - (434 * (pTracker.posSec / pTracker.durSec));
                 
                 if (cache.musicOffset !== o) {
                     progLeft.style.strokeDashoffset = o; 
@@ -715,8 +801,10 @@
                         elWidget.style.opacity = 1; 
                         elWidget.style.transform = 'scale(1)';
                         
-                        updateTempPosition('cpu-bar-fill', 'cpu-minimal', cpuLoad);
-                        updateTempPosition('gpu-bar-fill', 'gpu-minimal', gpuLoad);
+                        updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 204, 509);
+                        updateTrackPosition('cpu-load-fill', 'cpu-load-minimal', cpuLoad, 130, 471);
+                        updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 204, 509);
+                        updateTrackPosition('gpu-load-fill', 'gpu-load-minimal', gpuLoad, 130, 471);
                     });
                 }
             } else { 

@@ -274,6 +274,7 @@
                         <g id="music-progress" style="display: none;">
                             <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
                             <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="4" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
+                            <text id="progress-text" x="170" y="176" text-anchor="middle" style="font-family: sans-serif; font-size: 14px; fill: white; pointer-events: none; opacity: 0.6; font-weight: bold;">0%</text>
                         </g>
                     </g>
                 </svg>
@@ -469,7 +470,6 @@
         }
 
         function showNextNews() {
-            // Se chegou ao fim da lista de notícias, encerra o ciclo e volta pro repouso
             if (currentNewsIndex >= newsList.length) {
                 stopNewsCycle();
                 elWidget.style.opacity = 0; 
@@ -509,7 +509,7 @@
                 if(newsList.length > 0) {
                     currentNewsIndex = 0;
                     showNextNews();
-                    newsInterval = setInterval(showNextNews, 6000); 
+                    newsInterval = setInterval(showNextNews, 60000); 
                 } else {
                     showSilenceState();
                 }
@@ -526,6 +526,7 @@
             const progRing = document.getElementById('music-progress');
             const progLeft = document.getElementById('music-progress-left');
             const progRight = document.getElementById('music-progress-right');
+            const progText = document.getElementById('progress-text');
 
             if (pTracker.active && pTracker.durSec > 0) {
                 bgRing.style.display = 'block'; 
@@ -533,6 +534,9 @@
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
                 let o = 459 - (459 * (pTracker.posSec / pTracker.durSec));
+                
+                let percentage = Math.round((pTracker.posSec / pTracker.durSec) * 100);
+                progText.innerText = `${percentage}%`;
                 
                 if (cache.musicOffset !== o) {
                     progLeft.style.strokeDashoffset = o; 
@@ -542,6 +546,7 @@
             } else { 
                 bgRing.style.display = 'none'; 
                 progRing.style.display = 'none'; 
+                progText.innerText = '';
                 cache.musicOffset = null; 
             }
         }, 1000);
@@ -556,7 +561,6 @@
         async function fetchItunesCover(query) {
             if (!query) return '';
             try {
-                // Modificado para buscar até 5 capas e sortear aleatoriamente entre as 3 melhores
                 let res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=5`);
                 let data = await res.json();
                 if (data.results && data.results.length > 0) {
@@ -670,7 +674,6 @@
                         elWidget.style.opacity = 1; 
                         elWidget.style.transform = 'scale(1)';
                         
-                        // Inicia o ciclo de notícias. Assim que acabar, ele voltará para o Só silencio...
                         startNewsCycle();
                     }, 500);
                 } 

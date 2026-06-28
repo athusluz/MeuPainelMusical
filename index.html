@@ -98,8 +98,54 @@
             z-index: 10;
         }
 
-        /* --- PADRONIZAÇÃO: PÍLULAS DE HARDWARE (Temp e Uso) --- */
-        .minimal-hw-pill {
+        /* --- TEMPERATURAS (Lado de FORA, sem pílula, número grande e colorido) --- */
+        .minimal-temp {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transform: translate(-50%, -50%);
+            transition: left 0.5s ease-out, top 0.5s ease-out, color 0.5s ease;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+            line-height: 1;
+        }
+
+        .minimal-temp .hw-val-container {
+            font-size: 34px; 
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+        }
+
+        .minimal-temp .hw-label {
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+            color: #ffffff;
+        }
+
+        .minimal-temp .hw-bar-unit { 
+            font-size: 16px;
+            opacity: 0.9; 
+            margin-left: 2px; 
+            font-weight: 700;
+        }
+
+        /* --- ÍCONE DE TEMPERATURA AUMENTADO --- */
+        .hw-emoji {
+            font-size: 24px; 
+            margin-left: 6px;
+            vertical-align: middle;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
+        }
+
+        /* --- USO (Lado de DENTRO, formato pílula discreta) --- */
+        .minimal-load-pill {
             position: absolute;
             display: flex;
             flex-direction: column;
@@ -109,42 +155,31 @@
             background: rgba(0, 0, 0, 0.65);
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 6px 12px;
-            border-radius: 12px;
+            padding: 5px 10px;
+            border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             transform: translate(-50%, -50%); 
-            transition: left 0.5s ease-out, top 0.5s ease-out, color 0.5s ease;
+            transition: left 0.5s ease-out, top 0.5s ease-out;
             line-height: 1.1;
         }
 
-        .minimal-hw-pill .hw-val-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: 800;
-        }
-
-        .minimal-hw-pill .hw-label {
-            font-size: 9px;
+        .minimal-load-pill .hw-label {
+            font-size: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
             opacity: 0.7;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
-        .minimal-hw-pill .hw-bar-unit { 
-            font-size: 11px;
+        .minimal-load-pill .hw-val-container {
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .minimal-load-pill .hw-bar-unit { 
+            font-size: 9px;
             opacity: 0.8; 
-            margin-left: 2px; 
-        }
-
-        /* --- ÍCONE AUMENTADO --- */
-        .hw-emoji {
-            font-size: 22px; /* Aumentado */
-            margin-left: 6px;
-            vertical-align: -2px;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+            margin-left: 1px; 
         }
 
         #center-visual-container {
@@ -284,17 +319,17 @@
 
                 <div id="hardware-layer">
                     
-                    <div id="cpu-minimal" class="minimal-hw-pill" style="display: none;">
-                        <div class="hw-label">Temp CPU</div>
+                    <div id="cpu-minimal" class="minimal-temp" style="display: none;">
+                        <div class="hw-label">CPU</div>
                         <div class="hw-val-container"><span id="cpu-t">--</span><span class="hw-bar-unit">°C</span><span id="cpu-emoji" class="hw-emoji"></span></div>
                     </div>
 
-                    <div id="cpu-load-minimal" class="minimal-hw-pill" style="display: none;">
+                    <div id="cpu-load-minimal" class="minimal-load-pill" style="display: none;">
                         <div class="hw-label">Uso CPU</div>
                         <div class="hw-val-container"><span id="cpu-l">--</span><span class="hw-bar-unit">%</span></div>
                     </div>
 
-                    <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1;">
+                    <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
                         <g transform="rotate(90, 170, 170)">
                             <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                             <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
@@ -314,12 +349,12 @@
                         </g>
                     </svg>
 
-                    <div id="gpu-minimal" class="minimal-hw-pill" style="display: none;">
-                        <div class="hw-label">Temp GPU</div>
+                    <div id="gpu-minimal" class="minimal-temp" style="display: none;">
+                        <div class="hw-label">GPU</div>
                         <div class="hw-val-container"><span id="gpu-t">--</span><span class="hw-bar-unit">°C</span><span id="gpu-emoji" class="hw-emoji"></span></div>
                     </div>
 
-                    <div id="gpu-load-minimal" class="minimal-hw-pill" style="display: none;">
+                    <div id="gpu-load-minimal" class="minimal-load-pill" style="display: none;">
                         <div class="hw-label">Uso GPU</div>
                         <div class="hw-val-container"><span id="gpu-l">--</span><span class="hw-bar-unit">%</span></div>
                     </div>
@@ -356,7 +391,7 @@
             cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null, musicOffset: null
         };
         const elWidget = document.getElementById('music-widget');
-        const elHwLayer = document.getElementById('hardware-layer'); // Nova referência
+        const elHwLayer = document.getElementById('hardware-layer'); 
         const elBgLayer = document.getElementById('bg-layer');
         const elCenterVisual = document.getElementById('center-visual-container');
         const elTitle = document.getElementById('info-title');
@@ -454,7 +489,6 @@
                     }
                     
                     if (gpus?.length > 0) { 
-                        // FIX DA RTX 4060: Puxa a GPU 1 (dedicada) caso exista. A GPU 0 é o vídeo integrado do Ryzen 8600G.
                         let targetGpu = gpus.length > 1 ? gpus[1] : gpus[0];
                         gpuTemp = Math.round(targetGpu.temperature);
                         
@@ -491,6 +525,7 @@
                             document.getElementById('cpu-bar-fill').style.stroke = color; 
                             
                             const elCpuMin = document.getElementById('cpu-minimal');
+                            elCpuMin.style.color = color;
                             elCpuMin.style.display = 'flex';
                             
                             updateTrackPosition('cpu-bar-fill', 'cpu-minimal', cpuTemp, 218); 
@@ -521,6 +556,7 @@
                             document.getElementById('gpu-bar-fill').style.stroke = color; 
                             
                             const elGpuMin = document.getElementById('gpu-minimal');
+                            elGpuMin.style.color = color;
                             elGpuMin.style.display = 'flex';
                             
                             updateTrackPosition('gpu-bar-fill', 'gpu-minimal', gpuTemp, 218); 
@@ -586,7 +622,7 @@
             elBgLayer.style.backgroundImage = 'none'; 
             elBgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
             elCenterVisual.innerHTML = fallbackBarsFlatHTML;
-            elHwLayer.style.opacity = 0; // Esconde hardware no repouso
+            elHwLayer.style.opacity = 0; 
         }
 
         function showNextNews() {
@@ -747,7 +783,6 @@
                     currentStatus = 'playing';
                     stopNewsCycle();
                     
-                    // Esconde widget E hardware durante a transição
                     elWidget.style.opacity = 0; 
                     elHwLayer.style.opacity = 0; 
                     elWidget.style.transform = 'scale(0.95)';
@@ -785,7 +820,6 @@
                             elAlbum.style.display = 'none';
                         }
 
-                        // Mostra widget E hardware novamente
                         elWidget.style.opacity = 1;
                         elHwLayer.style.opacity = 1; 
                         elWidget.style.transform = 'scale(1)';
@@ -796,7 +830,6 @@
                     currentStatus = 'paused';
                     currentTrackUrl = ''; pTracker.active = false; 
                     
-                    // Esconde widget E hardware 
                     elWidget.style.opacity = 0; 
                     elHwLayer.style.opacity = 0;
                     elWidget.style.transform = 'scale(0.95)';

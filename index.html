@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Kraken V6 (Arcos & Roleta de Capas)</title>
+    <title>Tocando Agora - Kraken V6 (Arcos, Notícias & Capas Aleatórias)</title>
 
     <style>
         * {
@@ -27,10 +27,10 @@
 
         #bg-layer {
             position: absolute;
-            top: 0; 
-            left: 0;
-            width: 100%; 
-            height: 100%;
+            top: -10%; 
+            left: -10%;
+            width: 120%; 
+            height: 120%;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -38,7 +38,7 @@
             transition: background-image 0.5s ease-in-out;
         }
 
-        .aurora-bg { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); }
+        .aurora-bg { background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #fecfef, #ff9a9e); }
         .dark-bg { background-color: #050505; background-image: none; }
 
         #glass-overlay {
@@ -61,6 +61,8 @@
             align-items: center;
             text-align: center;
             width: 85%;
+            transform: scale(1);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
         }
 
         .dashboard-container {
@@ -99,13 +101,14 @@
         }
 
         .hw-load-row {
-            font-size: 20px; 
-            font-weight: 700;
-            color: #b0c4de;
-            margin-top: 2px;
+            font-size: 24px; 
+            font-weight: 800;
+            color: #c2e9fb;
+            margin-top: 4px;
             margin-bottom: 12px;
             display: flex;
             align-items: baseline;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
         }
 
         .hw-bar-unit { 
@@ -200,6 +203,15 @@
             text-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
 
+        .title.news-mode {
+            white-space: normal;
+            font-size: 26px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
         .artist { 
             color: #ffffff; 
             font-size: 26px; 
@@ -210,6 +222,11 @@
             text-overflow: ellipsis; 
             width: 100%;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .artist.news-mode {
+            font-size: 18px;
+            color: #ccc;
         }
 
         .album {
@@ -230,6 +247,7 @@
     <div id="glass-overlay"></div>
 
     <div id="music-widget">
+        
         <div class="dashboard-container">
             
             <div class="hw-side-panel">
@@ -241,7 +259,6 @@
             
             <div class="cover-wrapper">
                 <svg width="340" height="340" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; pointer-events: none;">
-                    
                     <g transform="rotate(90, 170, 170)">
                         <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                         <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
@@ -261,7 +278,9 @@
                     </g>
                 </svg>
 
-                <div id="center-visual-container"></div>
+                <div id="center-visual-container">
+                    <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+                </div>
             </div>
             
             <div class="hw-side-panel">
@@ -281,6 +300,18 @@
         const USERNAME = 'athusluz'; 
         const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b'; 
 
+        const RSS_FEEDS = {
+            'g1': { url: 'https://g1.globo.com/rss/g1/', name: 'G1' },
+            'esports': { url: 'https://ge.globo.com/rss/esports/', name: 'e-Sports' },
+            'tecnologia': { url: 'https://g1.globo.com/rss/g1/tecnologia/', name: 'Tecnologia' },
+            'pop': { url: 'https://g1.globo.com/rss/g1/pop-arte/', name: 'Pop & Arte' }
+        };
+        let activeSources = Object.keys(RSS_FEEDS);
+        let newsList = [];
+        let currentNewsIndex = 0;
+        let newsInterval = null;
+        let lastNewsFetchTime = 0;
+
         let currentTrackUrl = ''; let currentStatus = ''; 
         let cpuTemp = '--'; let cpuLoad = '--'; let gpuTemp = '--'; let gpuLoad = '--';
 
@@ -288,6 +319,7 @@
             cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null, musicOffset: null
         };
 
+        const elWidget = document.getElementById('music-widget');
         const elBgLayer = document.getElementById('bg-layer');
         const elCenterVisual = document.getElementById('center-visual-container');
         const elTitle = document.getElementById('info-title');
@@ -388,21 +420,107 @@
             }
         };
 
-        function updateUI(bg, t, a, al, isPlaying) {
-            if (bg) { 
-                elBgLayer.className = ''; elBgLayer.style.backgroundImage = `url('${bg}')`; 
-                elCenterVisual.innerHTML = `<img class="cover-circle" src="${bg}">`; 
-            } else { 
-                elBgLayer.style.backgroundImage = 'none'; 
-                elBgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
-                elCenterVisual.innerHTML = isPlaying ? fallbackBarsAnimatedHTML : fallbackBarsFlatHTML; 
+        function preloadImageAndUpdate(imageUrl, updateCallback) {
+            const fadeDuration = 500; 
+            const startTime = Date.now();
+            const triggerUpdate = () => {
+                const elapsed = Date.now() - startTime;
+                const remainingDelay = Math.max(0, fadeDuration - elapsed);
+                setTimeout(updateCallback, remainingDelay);
+            };
+
+            if (imageUrl) {
+                const img = new Image();
+                img.onload = triggerUpdate;
+                img.onerror = triggerUpdate; 
+                img.src = imageUrl;
+            } else {
+                triggerUpdate();
             }
-            
-            elTitle.innerText = t; 
-            elArtist.innerText = a;
-            if(al) { elAlbum.style.display = 'block'; elAlbum.innerText = al; } else { elAlbum.style.display = 'none'; }
         }
 
+        // --- SISTEMA DE NOTÍCIAS & REPOUSO ---
+        async function fetchNews() {
+            const now = Date.now();
+            if (now - lastNewsFetchTime < 120000) return; 
+            lastNewsFetchTime = now;
+            try {
+                newsList = [];
+                for (let k of activeSources) {
+                    let response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${RSS_FEEDS[k].url}`);
+                    let data = await response.json();
+                    if (data.items) {
+                        data.items.forEach(item => {
+                            let imgUrl = item.enclosure?.link || item.thumbnail || (item.description.match(/<img[^>]+src="([^">]+)"/) || [])[1] || '';
+                            if (imgUrl) newsList.push({ title: item.title, source: RSS_FEEDS[k].name, image: imgUrl });
+                        });
+                    }
+                }
+                newsList.sort(() => Math.random() - 0.5);
+            } catch (error) { }
+        }
+
+        function showSilenceState() {
+            elTitle.className = 'title'; elArtist.className = 'artist'; elAlbum.style.display = 'none';
+            elTitle.innerText = 'Só silencio...'; elArtist.innerText = '';
+            elBgLayer.style.backgroundImage = 'none'; 
+            elBgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
+            elCenterVisual.innerHTML = fallbackBarsFlatHTML;
+        }
+
+        function showNextNews() {
+            // Se chegou ao fim da lista de notícias, encerra o ciclo e volta pro repouso
+            if (currentNewsIndex >= newsList.length) {
+                stopNewsCycle();
+                elWidget.style.opacity = 0; 
+                elWidget.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    showSilenceState();
+                    elWidget.style.opacity = 1; 
+                    elWidget.style.transform = 'scale(1)';
+                }, 500);
+                return;
+            }
+
+            const newsItem = newsList[currentNewsIndex];
+            
+            elBgLayer.style.backgroundImage = 'none'; 
+            elBgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
+            
+            if (newsItem.image) {
+                elCenterVisual.innerHTML = `<img class="cover-circle" src="${newsItem.image}">`;
+            } else {
+                elCenterVisual.innerHTML = fallbackBarsFlatHTML;
+            }
+
+            elTitle.className = 'title news-mode';
+            elArtist.className = 'artist news-mode';
+            elAlbum.style.display = 'none';
+
+            elTitle.innerText = newsItem.title;
+            elArtist.innerText = newsItem.source;
+
+            currentNewsIndex++;
+        }
+
+        function startNewsCycle() {
+            if (newsInterval) return;
+            fetchNews().then(() => {
+                if(newsList.length > 0) {
+                    currentNewsIndex = 0;
+                    showNextNews();
+                    newsInterval = setInterval(showNextNews, 60000); 
+                } else {
+                    showSilenceState();
+                }
+            });
+        }
+
+        function stopNewsCycle() {
+            if (newsInterval) { clearInterval(newsInterval); newsInterval = null; }
+        }
+
+        // --- SISTEMA DE PROGRESSO ---
         setInterval(() => {
             const bgRing = document.getElementById('music-bg-ring');
             const progRing = document.getElementById('music-progress');
@@ -428,16 +546,37 @@
             }
         }, 1000);
 
+        function cleanStringForSearch(str) {
+            if (!str) return '';
+            return str.replace(/\(.*?\)/g, ' ').replace(/\[.*?\]/g, ' ').replace(/[-_]/g, ' ')
+                .replace(/(ft\.|feat\.|prod\.|remix|official|video|audio|lyrics).*$/i, ' ')
+                .replace(/[^a-zA-Z0-9À-ÿ\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        async function fetchItunesCover(query) {
+            if (!query) return '';
+            try {
+                // Modificado para buscar até 5 capas e sortear aleatoriamente entre as 3 melhores
+                let res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=5`);
+                let data = await res.json();
+                if (data.results && data.results.length > 0) {
+                    let maxIdx = Math.min(data.results.length, 3);
+                    let randomIdx = Math.floor(Math.random() * maxIdx);
+                    return data.results[randomIdx].artworkUrl100.replace('100x100bb', '600x600bb');
+                }
+            } catch (e) { }
+            return '';
+        }
+
+        // --- NÚCLEO MUSICAL ---
         async function getNowPlaying() {
             let isP = false; let sn = ''; let an = ''; let al = ''; let dc = ''; let hasP = false; let tp = 0; let td = 0;
             
-            // 1. WebNowPlaying
             if (wnpConnected && wnpState.state === 1) { 
                 isP = true; sn = wnpState.title; an = wnpState.artist; al = wnpState.album; dc = wnpState.coverUrl; 
                 if (wnpState.durationSec > 0) { hasP = true; tp = wnpState.positionSec; td = wnpState.durationSec; } 
             }
             
-            // 2. MPC-HC
             if (!isP) {
                 try {
                     const mpcRes = await fetch('http://localhost:13579/variables.html');
@@ -466,7 +605,6 @@
                 } catch (e) {}
             }
 
-            // 3. Last.fm
             if (!isP) {
                 try {
                     const lfm = await (await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`)).json();
@@ -481,50 +619,60 @@
                 const tId = `${sn}-${an}`;
                 if (currentTrackUrl !== tId || currentStatus !== 'playing') {
                     currentTrackUrl = tId; currentStatus = 'playing';
+                    stopNewsCycle();
                     
-                    // --- ROLETA DE CAPAS (Fallback Aleatório) ---
-                    let coverFetchers = [
-                        async () => { // Fonte 1: WNP Local ou Last.fm padrão
-                            return dc || null; 
-                        },
-                        async () => { // Fonte 2: iTunes (Variação de capas)
-                            const clean = encodeURIComponent((sn + ' ' + an).replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim());
-                            try { 
-                                let data = await (await fetch(`https://itunes.apple.com/search?term=${clean}&media=music&entity=song&limit=5`)).json(); 
-                                if (data.results?.length > 0) {
-                                    return data.results[Math.floor(Math.random() * Math.min(data.results.length, 3))].artworkUrl100.replace('100x100bb', '600x600bb'); 
-                                }
-                            } catch(e){} 
-                            return null;
-                        },
-                        async () => { // Fonte 3: Last.fm API Direta (Track.getInfo)
-                            try {
-                                let data = await (await fetch(`https://ws.audioscrobbler.com/2.0/?method=track.getinfo&api_key=${API_KEY}&artist=${encodeURIComponent(an)}&track=${encodeURIComponent(sn)}&format=json`)).json();
-                                let img = data.track?.album?.image?.[3]?.['#text'];
-                                return img ? img.replace('http://', 'https://') : null;
-                            } catch(e){}
-                            return null;
-                        }
-                    ];
+                    elWidget.style.opacity = 0; 
+                    elWidget.style.transform = 'scale(0.95)';
 
-                    // Embaralha a ordem das fontes para garantir aleatoriedade
-                    coverFetchers = coverFetchers.sort(() => Math.random() - 0.5);
-
-                    let cv = null;
-                    for (let fetcher of coverFetchers) {
-                        cv = await fetcher();
-                        if (cv && cv !== '') break; // Se achou a capa, para o loop e usa ela!
+                    const cleanArtist = cleanStringForSearch(an).normalize('NFKC');
+                    const cleanSong = cleanStringForSearch(sn).normalize('NFKC');
+                    
+                    let coverUrl = '';
+                    let exactCover = await fetchItunesCover(encodeURIComponent(`${cleanArtist} ${cleanSong}`));
+                    
+                    if (exactCover) {
+                        coverUrl = exactCover;
+                    } else if (dc) {
+                        coverUrl = dc;
+                    } else if (cleanSong.length > 0) {
+                        coverUrl = await fetchItunesCover(encodeURIComponent(cleanSong));
                     }
-                    
-                    const img = new Image(); 
-                    img.onload = () => updateUI(cv, sn, an, al, true); 
-                    img.onerror = () => updateUI('', sn, an, al, true); 
-                    img.src = cv || 'empty';
+
+                    preloadImageAndUpdate(coverUrl, () => {
+                        elTitle.className = 'title'; elArtist.className = 'artist';
+                        
+                        if (coverUrl !== '') {
+                            elBgLayer.className = ''; elBgLayer.style.backgroundImage = `url('${coverUrl}')`;
+                            elCenterVisual.innerHTML = `<img class="cover-circle" src="${coverUrl}">`;
+                        } else {
+                            elBgLayer.style.backgroundImage = 'none'; 
+                            elBgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
+                            elCenterVisual.innerHTML = fallbackBarsAnimatedHTML;
+                        }
+
+                        elTitle.innerText = sn;
+                        elArtist.innerText = an;
+                        if(al) { elAlbum.style.display = 'block'; elAlbum.innerText = al; } else { elAlbum.style.display = 'none'; }
+
+                        elWidget.style.opacity = 1; 
+                        elWidget.style.transform = 'scale(1)';
+                    });
                 }
             } else { 
                 if (currentStatus !== 'paused') { 
                     currentStatus = 'paused'; currentTrackUrl = ''; pTracker.active = false; 
-                    updateUI('', 'O silêncio..', '', '', false);
+                    
+                    elWidget.style.opacity = 0; 
+                    elWidget.style.transform = 'scale(0.95)';
+                    
+                    setTimeout(() => {
+                        showSilenceState();
+                        elWidget.style.opacity = 1; 
+                        elWidget.style.transform = 'scale(1)';
+                        
+                        // Inicia o ciclo de notícias. Assim que acabar, ele voltará para o Só silencio...
+                        startNewsCycle();
+                    }, 500);
                 } 
             }
         }

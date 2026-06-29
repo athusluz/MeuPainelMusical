@@ -460,8 +460,8 @@
                             elCpuT.style.display = 'flex';
                             document.getElementById('cpu-t').innerText = cpuTemp;
                             
-                            // Acompanha por fora da barra (raio da barra=162, raio do texto=185)
-                            updateTrackPosition('cpu-bar-fill', 'cpu-t-num', cpuTemp, 185, 162); 
+                            // Temperatura acompanha por fora (raio 180)
+                            updateTrackPosition('cpu-bar-fill', 'cpu-t-num', cpuTemp, 180, 162); 
                         } else {
                             elCpuT.style.display = 'none';
                         }
@@ -478,8 +478,8 @@
                             elCpuL.style.display = 'flex';
                             document.getElementById('cpu-l').innerText = cpuLoad;
                             
-                            // Acompanha por dentro da barra de load (raio da barra=146, raio do texto=123)
-                            updateTrackPosition('cpu-load-fill', 'cpu-l-num', cpuLoad, 123, 146); 
+                            // Load acompanha por fora, levemente além da temperatura (raio 200)
+                            updateTrackPosition('cpu-load-fill', 'cpu-l-num', cpuLoad, 200, 146); 
                         } else {
                             elCpuL.style.display = 'none';
                         }
@@ -496,7 +496,8 @@
                             elGpuT.style.display = 'flex';
                             document.getElementById('gpu-t').innerText = gpuTemp;
                             
-                            updateTrackPosition('gpu-bar-fill', 'gpu-t-num', gpuTemp, 185, 162); 
+                            // Temperatura acompanha por fora (raio 180)
+                            updateTrackPosition('gpu-bar-fill', 'gpu-t-num', gpuTemp, 180, 162); 
                         } else {
                             elGpuT.style.display = 'none';
                         }
@@ -513,7 +514,8 @@
                             elGpuL.style.display = 'flex';
                             document.getElementById('gpu-l').innerText = gpuLoad;
                             
-                            updateTrackPosition('gpu-load-fill', 'gpu-l-num', gpuLoad, 123, 146); 
+                            // Load acompanha por fora, levemente além da temperatura (raio 200)
+                            updateTrackPosition('gpu-load-fill', 'gpu-l-num', gpuLoad, 200, 146); 
                         } else {
                             elGpuL.style.display = 'none';
                         }
@@ -634,7 +636,7 @@
                 progRing.style.display = 'block'; 
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
-                let o = 409 - (409 * (pTracker.posSec / pTracker.durSec)); // Atualizado comprimento de música para 409
+                let o = 409 - (409 * (pTracker.posSec / pTracker.durSec)); 
                 
                 if (cache.musicOffset !== o) {
                     progLeft.style.strokeDashoffset = o; 

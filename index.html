@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Kraken V6</title>
+    <title>Tocando Agora - Kraken V6.1 Smart HUD</title>
 
     <style>
         * {
@@ -85,7 +85,7 @@
             justify-content: center;
         }
 
-        /* --- HARDWARE LAYER --- */
+        /* --- HARDWARE LAYER (Existente) --- */
         #hardware-layer {
             position: absolute;
             top: 0;
@@ -98,7 +98,6 @@
             z-index: 10;
         }
 
-        /* --- NÚMEROS LIMPOS E DINÂMICOS --- */
         .hw-number {
             position: absolute;
             display: flex;
@@ -118,6 +117,53 @@
             opacity: 0.85;
             font-weight: 600;
         }
+
+        /* --- SMART HUD LAYER (NOVO) --- */
+        #smart-hud-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .hud-badge, .hud-badge-side {
+            background: rgba(15, 15, 15, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .badge-unit {
+            font-size: 0.7em;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        /* Posicionamento do HUD */
+        .hud-badge.top-center { position: absolute; top: 40px; left: 50%; transform: translateX(-50%) scale(0.8); }
+        .hud-badge.top-center.show { opacity: 1; transform: translateX(-50%) scale(1); }
+
+        .hud-badge.bottom-center { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%) scale(0.8); }
+        .hud-badge.bottom-center.show { opacity: 1; transform: translateX(-50%) scale(1); }
+
+        .left-stack { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; }
+        .left-stack .hud-badge-side { transform: translateX(-15px) scale(0.9); }
+        .left-stack .hud-badge-side.show { opacity: 1; transform: translateX(0) scale(1); }
+
+        .right-stack { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; }
+        .right-stack .hud-badge-side { transform: translateX(15px) scale(0.9); }
+        .right-stack .hud-badge-side.show { opacity: 1; transform: translateX(0) scale(1); }
+
 
         #center-visual-container {
             z-index: 2;
@@ -266,7 +312,6 @@
 
                     <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
                         <g transform="rotate(90, 170, 170)">
-                            
                             <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                             <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                             
@@ -298,8 +343,24 @@
                     <div id="gpu-l-num" class="hw-number" style="display: none;">
                         <span id="gpu-l">--</span><span class="unit">%</span>
                     </div>
-
                 </div>
+
+                <div id="smart-hud-layer">
+                    <div id="alert-cpu-clock" class="hud-badge top-center">⚡ <span id="val-cpu-clock">--</span></div>
+                    <div id="alert-gpu-clock" class="hud-badge bottom-center">🚀 <span id="val-gpu-clock">--</span></div>
+                    
+                    <div class="left-stack">
+                        <div id="alert-ram" class="hud-badge-side">🧠 <span id="val-ram">--</span></div>
+                        <div id="alert-vram" class="hud-badge-side">🎮 <span id="val-vram">--</span></div>
+                    </div>
+
+                    <div class="right-stack">
+                        <div id="alert-liquid" class="hud-badge-side">💧 <span id="val-liquid">--</span></div>
+                        <div id="alert-net" class="hud-badge-side" style="display:none;">🌐 <span id="val-net">--</span></div>
+                        <div id="alert-ssd" class="hud-badge-side" style="display:none;">💾 <span id="val-ssd">--</span></div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -367,7 +428,6 @@
         }
         connectWNP();
 
-        // Sistema universal de Cores para Temp e Load
         function getProgressColor(value) {
             if (value === '--') return 'transparent';
             if (value <= 40) return '#00d2ff'; 
@@ -376,7 +436,6 @@
             return '#ff416c';
         }
 
-        // Função responsável por atualizar as barras e mover/aumentar os números
         function updateTrackPosition(pathId, elementId, value, targetRadius, pathRadius) {
             const path = document.getElementById(pathId);
             const element = document.getElementById(elementId);
@@ -386,11 +445,9 @@
             const numericValue = Math.min(value, 100);
             const currentLength = (numericValue / 100) * totalLength;
             
-            // Atualiza o progresso visual da linha do SVG
             path.style.strokeDasharray = totalLength;
             path.style.strokeDashoffset = totalLength - currentLength;
 
-            // Encontra a coordenada X,Y atual da ponta da linha preenchida
             const pt = path.getPointAtLength(currentLength);
             
             const cx = 170;
@@ -398,27 +455,40 @@
             const vx = pt.x - cx;
             const vy = pt.y - cy;
             
-            // Ajusta a distância do texto para o centro baseado no "targetRadius"
             const scaleFactor = targetRadius / pathRadius;
             const outerX = cx + vx * scaleFactor;
             const outerY = cy + vy * scaleFactor;
             
-            // Compensação pela rotação de 90 graus no container `<g>` do SVG
             const finalX = cx - (outerY - cy);
             const finalY = cy + (outerX - cx);
             
             element.style.left = `${finalX}px`;
             element.style.top = `${finalY}px`;
 
-            // Lógica de Escala Dinâmica do Texto: Aumenta até 1.8x baseado no percentual (0 a 100)
             const dynamicScale = 1 + (numericValue / 100) * 0.8;
             element.style.transform = `translate(-50%, -50%) scale(${dynamicScale})`;
+        }
+
+        // Função para ativar as badges do Smart HUD
+        function toggleHudBadge(id, valId, condition, text, unit) {
+            const el = document.getElementById(id);
+            const valEl = document.getElementById(valId);
+            if(!el || !valEl) return;
+            
+            if (condition) {
+                // Se foi configurado para esconder no inline style, removemos
+                if(el.style.display === 'none') el.style.display = 'flex';
+                valEl.innerHTML = `${text}<span class="badge-unit">${unit}</span>`;
+                el.classList.add('show');
+            } else {
+                el.classList.remove('show');
+            }
         }
 
         window.nzxt = {
             v1: {
                 onMonitoringDataUpdate: (data) => {
-                    const { cpus, gpus } = data;
+                    const { cpus, gpus, ram, kraken, network, drives, storage } = data;
                     
                     if (cpus?.length > 0) { 
                         cpuTemp = Math.round(cpus[0].temperature);
@@ -426,8 +496,8 @@
                         cpuLoad = Math.round(cLoad <= 1 && cLoad > 0 ? cLoad * 100 : cLoad);
                     }
                     
-                    if (gpus?.length > 0) { 
-                        let targetGpu = gpus.length > 1 ? gpus[1] : gpus[0];
+                    let targetGpu = gpus?.length > 1 ? gpus[1] : (gpus?.length > 0 ? gpus[0] : null);
+                    if (targetGpu) { 
                         gpuTemp = Math.round(targetGpu.temperature);
                         let gLoad = targetGpu.load !== undefined ? targetGpu.load : (targetGpu.usage !== undefined ? targetGpu.usage : 0);
                         gpuLoad = Math.round(gLoad <= 1 && gLoad > 0 ? gLoad * 100 : gLoad);
@@ -450,7 +520,38 @@
                         cache.glassClass = newGlassClass;
                     }
 
-                    // --- ATUALIZANDO CPU TEMP ---
+                    // --- ATUALIZANDO SMART HUD ---
+                    const cpuFreq = cpus?.[0]?.frequency || cpus?.[0]?.clockSpeed || 0;
+                    const gpuFreq = targetGpu?.frequency || targetGpu?.clockSpeed || 0;
+                    
+                    const ramInUse = ram?.inUse || 0;
+                    const ramTotal = ram?.total || 1;
+                    const ramPct = (ramInUse / ramTotal) * 100;
+                    
+                    const vramInUse = targetGpu?.memory?.inUse || 0;
+                    const vramTotal = targetGpu?.memory?.total || 1;
+                    const vramPct = (vramInUse / vramTotal) * 100;
+                    
+                    const liqTemp = kraken?.liquidTemperature || 0;
+
+                    const netDown = network?.download || 0; 
+                    const netUp = network?.upload || 0;
+                    const isNetActive = (netDown + netUp) > (1024 * 1024 * 2); // > 2MB/s
+
+                    const ssdRead = storage?.[0]?.read || drives?.[0]?.read || 0;
+                    const ssdWrite = storage?.[0]?.write || drives?.[0]?.write || 0;
+                    const isSsdActive = (ssdRead + ssdWrite) > (1024 * 1024 * 10); // > 10MB/s
+
+                    // Lógicas de gatilho que você definiu:
+                    toggleHudBadge('alert-cpu-clock', 'val-cpu-clock', (cpuFreq > 4800 || cpuLoad > 80), `${Math.round(cpuFreq)}`, 'MHz');
+                    toggleHudBadge('alert-gpu-clock', 'val-gpu-clock', (gpuFreq > 2400 || gpuLoad > 80), `${Math.round(gpuFreq)}`, 'MHz');
+                    toggleHudBadge('alert-ram', 'val-ram', (ramPct > 75), `${Math.round(ramPct)}`, '%');
+                    toggleHudBadge('alert-vram', 'val-vram', (vramPct > 80), `${Math.round(vramPct)}`, '%');
+                    toggleHudBadge('alert-liquid', 'val-liquid', (liqTemp > 40), `${Math.round(liqTemp)}`, '°C');
+                    toggleHudBadge('alert-net', 'val-net', isNetActive, `Usando`, '');
+                    toggleHudBadge('alert-ssd', 'val-ssd', isSsdActive, `Lendo/Grav.`, '');
+
+                    // --- BARRAS RADIAIS ORIGINAIS ---
                     if (cache.cpuT !== cpuTemp) {
                         const elCpuT = document.getElementById('cpu-t-num');
                         if (cpuTemp !== '--') { 
@@ -459,8 +560,6 @@
                             elCpuT.style.color = color;
                             elCpuT.style.display = 'flex';
                             document.getElementById('cpu-t').innerText = cpuTemp;
-                            
-                            // Temperatura acompanha por fora (raio 180)
                             updateTrackPosition('cpu-bar-fill', 'cpu-t-num', cpuTemp, 180, 162); 
                         } else {
                             elCpuT.style.display = 'none';
@@ -468,7 +567,6 @@
                         cache.cpuT = cpuTemp;
                     }
 
-                    // --- ATUALIZANDO CPU LOAD ---
                     if (cache.cpuL !== cpuLoad) {
                         const elCpuL = document.getElementById('cpu-l-num');
                         if (cpuLoad !== '--') {
@@ -477,8 +575,6 @@
                             elCpuL.style.color = color;
                             elCpuL.style.display = 'flex';
                             document.getElementById('cpu-l').innerText = cpuLoad;
-                            
-                            // Load acompanha por fora, levemente além da temperatura (raio 200)
                             updateTrackPosition('cpu-load-fill', 'cpu-l-num', cpuLoad, 200, 146); 
                         } else {
                             elCpuL.style.display = 'none';
@@ -486,7 +582,6 @@
                         cache.cpuL = cpuLoad;
                     }
 
-                    // --- ATUALIZANDO GPU TEMP ---
                     if (cache.gpuT !== gpuTemp) {
                         const elGpuT = document.getElementById('gpu-t-num');
                         if (gpuTemp !== '--') { 
@@ -495,8 +590,6 @@
                             elGpuT.style.color = color;
                             elGpuT.style.display = 'flex';
                             document.getElementById('gpu-t').innerText = gpuTemp;
-                            
-                            // Temperatura acompanha por fora (raio 180)
                             updateTrackPosition('gpu-bar-fill', 'gpu-t-num', gpuTemp, 180, 162); 
                         } else {
                             elGpuT.style.display = 'none';
@@ -504,7 +597,6 @@
                         cache.gpuT = gpuTemp;
                     }
 
-                    // --- ATUALIZANDO GPU LOAD ---
                     if (cache.gpuL !== gpuLoad) {
                         const elGpuL = document.getElementById('gpu-l-num');
                         if (gpuLoad !== '--') {
@@ -513,8 +605,6 @@
                             elGpuL.style.color = color;
                             elGpuL.style.display = 'flex';
                             document.getElementById('gpu-l').innerText = gpuLoad;
-                            
-                            // Load acompanha por fora, levemente além da temperatura (raio 200)
                             updateTrackPosition('gpu-load-fill', 'gpu-l-num', gpuLoad, 200, 146); 
                         } else {
                             elGpuL.style.display = 'none';

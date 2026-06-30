@@ -248,41 +248,34 @@
                         <span id="cpu-t">--</span><span class="unit">°C</span><span id="cpu-fire" style="font-size: 14px; margin-left: 3px;"></span>
                     </div>
 
-                    <div id="cpu-l-num" class="hw-number" style="display: none;">
+                    <div id="cpu-l-num" class="hw-number" style="display: none; opacity: 0;">
                         <span id="cpu-l">--</span><span class="unit">%</span>
                     </div>
 
                     <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
                         <g transform="rotate(90, 170, 170)">
                             
-                            <!-- ANEL INTERNO: TEMPERATURA (Raio: 130) -->
                             <path d="M 170,300 A 130 130 0 0 1 170 40" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="round"/>
                             <path d="M 170,300 A 130 130 0 0 0 170 40" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="round"/>
 
-                            <!-- ANEL DO MEIO: MÚSICA (Raio: 146) -->
                             <g id="music-bg-ring" style="display: none;">
                                 <path d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
                                 <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
                             </g>
 
-                            <!-- ANEL EXTERNO: LOAD/USO (Raio: 162) -->
                             <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                             <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                             
-                            <!-- PREENCHIMENTOS DINÂMICOS -->
-                            <!-- Temp Fills (Raio 130, Dash 409) -->
-                            <path id="cpu-bar-fill" d="M 170,300 A 130 130 0 0 1 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                            <path id="gpu-bar-fill" d="M 170,300 A 130 130 0 0 0 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="cpu-load-fill" d="M 170,300 A 130 130 0 0 1 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
+                            <path id="gpu-load-fill" d="M 170,300 A 130 130 0 0 0 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
                             
-                            <!-- Music Progress (Raio 146, Dash 459) -->
                             <g id="music-progress" style="display: none;">
                                 <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="6" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
                                 <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="6" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
                             </g>
 
-                            <!-- Load Fills (Raio 162, Dash 509) -->
-                            <path id="cpu-load-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease;"/>
-                            <path id="gpu-load-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease;"/>
+                            <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
 
                         </g>
                     </svg>
@@ -291,7 +284,7 @@
                         <span id="gpu-t">--</span><span class="unit">°C</span><span id="gpu-fire" style="font-size: 14px; margin-left: 3px;"></span>
                     </div>
 
-                    <div id="gpu-l-num" class="hw-number" style="display: none;">
+                    <div id="gpu-l-num" class="hw-number" style="display: none; opacity: 0;">
                         <span id="gpu-l">--</span><span class="unit">%</span>
                     </div>
 
@@ -321,9 +314,6 @@
         let currentTrackUrl = ''; let currentStatus = ''; 
         let cpuTemp = '--'; let cpuLoad = '--';
         let gpuTemp = '--'; let gpuLoad = '--';
-
-        let cpuLoadTimer = null;
-        let gpuLoadTimer = null;
 
         const cache = {
             cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null, musicOffset: null
@@ -459,8 +449,8 @@
                             document.getElementById('cpu-t').innerText = cpuTemp;
                             document.getElementById('cpu-fire').innerText = cpuTemp > 50 ? '🔥' : '';
                             
-                            // Temp agora é o anel interno (Raio 130). O texto flutua por fora de todas as barras (Raio 196) para evitar sobreposição
-                            updateTrackPosition('cpu-bar-fill', 'cpu-t-num', cpuTemp, 196, 130); 
+                            // Temp agora é o anel externo (Raio 162). Texto acompanha fora da barra (Raio 180)
+                            updateTrackPosition('cpu-bar-fill', 'cpu-t-num', cpuTemp, 180, 162); 
                         } else {
                             elCpuT.style.display = 'none';
                         }
@@ -478,24 +468,16 @@
                             elCpuL.style.display = 'flex';
                             document.getElementById('cpu-l').innerText = cpuLoad;
                             
-                            // Load agora é o anel externo (Raio 162). Texto acompanha com folga simétrica (Raio 180)
-                            updateTrackPosition('cpu-load-fill', 'cpu-l-num', cpuLoad, 180, 162); 
+                            // Load agora é o anel interno (Raio 130). Texto flutua além de todas as barras (Raio 196) para evitar sobreposição
+                            updateTrackPosition('cpu-load-fill', 'cpu-l-num', cpuLoad, 196, 130); 
 
-                            // Lógica 25% por 5 segundos
-                            if (cpuLoad < 25) {
-                                if (!cpuLoadTimer) {
-                                    cpuLoadTimer = setTimeout(() => {
-                                        elCpuL.style.opacity = '0';
-                                        pathCpuL.style.opacity = '0';
-                                    }, 5000);
-                                }
-                            } else {
-                                if (cpuLoadTimer) {
-                                    clearTimeout(cpuLoadTimer);
-                                    cpuLoadTimer = null;
-                                }
+                            // Lógica Limpa: Maior que 50%
+                            if (cpuLoad > 50) {
                                 elCpuL.style.opacity = '1';
                                 pathCpuL.style.opacity = '1';
+                            } else {
+                                elCpuL.style.opacity = '0';
+                                pathCpuL.style.opacity = '0';
                             }
                         } else {
                             elCpuL.style.display = 'none';
@@ -514,8 +496,8 @@
                             document.getElementById('gpu-t').innerText = gpuTemp;
                             document.getElementById('gpu-fire').innerText = gpuTemp > 50 ? '🔥' : '';
                             
-                            // Temp agora é o anel interno (Raio 130). O texto flutua por fora (Raio 196)
-                            updateTrackPosition('gpu-bar-fill', 'gpu-t-num', gpuTemp, 196, 130); 
+                            // Temp agora é o anel externo (Raio 162). Texto flutua logo fora (Raio 180)
+                            updateTrackPosition('gpu-bar-fill', 'gpu-t-num', gpuTemp, 180, 162); 
                         } else {
                             elGpuT.style.display = 'none';
                         }
@@ -533,24 +515,16 @@
                             elGpuL.style.display = 'flex';
                             document.getElementById('gpu-l').innerText = gpuLoad;
                             
-                            // Load agora é o anel externo (Raio 162). Texto acompanha (Raio 180)
-                            updateTrackPosition('gpu-load-fill', 'gpu-l-num', gpuLoad, 180, 162); 
+                            // Load agora é o anel interno (Raio 130). Texto flutua longe (Raio 196)
+                            updateTrackPosition('gpu-load-fill', 'gpu-l-num', gpuLoad, 196, 130); 
 
-                            // Lógica 25% por 5 segundos
-                            if (gpuLoad < 25) {
-                                if (!gpuLoadTimer) {
-                                    gpuLoadTimer = setTimeout(() => {
-                                        elGpuL.style.opacity = '0';
-                                        pathGpuL.style.opacity = '0';
-                                    }, 5000);
-                                }
-                            } else {
-                                if (gpuLoadTimer) {
-                                    clearTimeout(gpuLoadTimer);
-                                    gpuLoadTimer = null;
-                                }
+                            // Lógica Limpa: Maior que 50%
+                            if (gpuLoad > 50) {
                                 elGpuL.style.opacity = '1';
                                 pathGpuL.style.opacity = '1';
+                            } else {
+                                elGpuL.style.opacity = '0';
+                                pathGpuL.style.opacity = '0';
                             }
                         } else {
                             elGpuL.style.display = 'none';
@@ -679,7 +653,6 @@
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
                 
-                // Novo cálculo para a barra de música (Raio 146 -> Total Dash = 459)
                 let o = 459 - (459 * (pTracker.posSec / pTracker.durSec)); 
                 
                 if (cache.musicOffset !== o) {

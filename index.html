@@ -109,7 +109,6 @@
             transform: translate(-50%, -50%) scale(1); 
             transition: left 0.3s ease-out, top 0.3s ease-out, color 0.5s ease, transform 0.3s ease-out, opacity 0.5s ease;
             z-index: 10;
-            /* Joga a renderização de posição direto para a GPU */
             will-change: transform, left, top;
         }
 
@@ -133,9 +132,10 @@
             will-change: transform, opacity;
         }
 
+        /* CAPA GIGANTE */
         .cover-circle { 
-            width: 272px;
-            height: 272px; 
+            width: 310px;
+            height: 310px; 
             border-radius: 50%; 
             border: 4px solid rgba(255, 255, 255, 0.8); 
             object-fit: cover;
@@ -144,8 +144,8 @@
         }
 
         .bars-container {
-            width: 272px;
-            height: 272px;
+            width: 310px;
+            height: 310px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -231,8 +231,28 @@
             transition: opacity 0.5s ease-in-out;
         }
 
+        /* NOVA BARRA DE PROGRESSO LINEAR */
+        .linear-progress-container {
+            width: 90%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin: 15px auto 0 auto;
+            display: none;
+            overflow: hidden;
+        }
+
+        .linear-progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #ff9a9e;
+            border-radius: 2px;
+            transition: width 1s linear;
+            will-change: width;
+        }
+
         svg path {
-            will-change: stroke-dashoffset, stroke, opacity;
+            will-change: stroke-dashoffset, stroke;
         }
     </style>
 </head>
@@ -264,24 +284,13 @@
                     <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
                         <g transform="rotate(90, 170, 170)">
                             
-                            <path d="M 170,300 A 130 130 0 0 1 170 40" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="round"/>
-                            <path d="M 170,300 A 130 130 0 0 0 170 40" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="round"/>
-
-                            <g id="music-bg-ring" style="display: none;">
-                                <path d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
-                                <path d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-linecap="round"/>
-                            </g>
-
+                            <!-- BARRAS DE USO (LOAD) FIXAS (Opacity removida do JS e do style) -->
+                            <path id="cpu-load-fill" d="M 170,300 A 130 130 0 0 1 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="gpu-load-fill" d="M 170,300 A 130 130 0 0 0 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            
+                            <!-- BARRAS DE TEMPERATURA EXTERNAS -->
                             <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                             <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                            
-                            <path id="cpu-load-fill" d="M 170,300 A 130 130 0 0 1 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
-                            <path id="gpu-load-fill" d="M 170,300 A 130 130 0 0 0 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
-                            
-                            <g id="music-progress" style="display: none;">
-                                <path id="music-progress-left" d="M 170,316 A 146 146 0 0 1 170 24" fill="none" stroke="#ff9a9e" stroke-width="6" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
-                                <path id="music-progress-right" d="M 170,316 A 146 146 0 0 0 170 24" fill="none" stroke="#ff9a9e" stroke-width="6" stroke-dasharray="459" stroke-dashoffset="459" stroke-linecap="round" style="transition: stroke-dashoffset 1s linear;" />
-                            </g>
 
                             <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                             <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
@@ -304,6 +313,11 @@
         <div id="info-title" class="title">Loading...</div>
         <div id="info-artist" class="artist"></div>
         <div id="info-album" class="album"></div>
+        
+        <!-- BARRA LINEAR DE PROGRESSO MUSICAL AQUI -->
+        <div id="linear-music-progress" class="linear-progress-container">
+            <div id="linear-music-fill" class="linear-progress-fill"></div>
+        </div>
     </div>
 
     <script>
@@ -325,10 +339,9 @@
         let gpuTemp = '--'; let gpuLoad = '--';
 
         const cache = {
-            cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null, musicOffset: null
+            cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null
         };
         
-        // CACHE DE DOM: Evita buscar elementos toda hora
         const DOM = {
             hwLayer: document.getElementById('hardware-layer'),
             bgLayer: document.getElementById('bg-layer'),
@@ -394,29 +407,25 @@
             return '#ff416c';
         }
 
-        // --- NOVA LÓGICA DE POSICIONAMENTO: 0 Custo de DOM, Trigonometria Pura ---
+        // --- MATEMÁTICA CORRIGIDA (Eixo Y invertido corretamente) ---
         function updateTrackPositionOpt(pathElement, textElement, value, targetRadius, totalLength, isCpu) {
             if (!pathElement || !textElement || value === '--') return;
 
             const numericValue = Math.min(value, 100);
             const p = numericValue / 100;
             
-            // 1. Atualiza a barra do SVG
             const currentLength = p * totalLength;
             pathElement.style.strokeDashoffset = totalLength - currentLength;
 
-            // 2. Calcula X e Y usando Matemática (Sen/Cos) ao invés de getPointAtLength
             const cx = 170;
             const cy = 170;
             
-            // Lógica do Arco: CPU subtrai ângulo (Sweep 1), GPU soma ângulo (Sweep 0)
             const alpha = Math.PI / 2 + (isCpu ? -1 : 1) * (p * Math.PI);
             
-            // Rotação de 90 graus compensada
+            // Subtrair Math.cos(alpha) corrige a inversão na tela! (CPU = Cima, GPU = Baixo)
             const finalX = cx - targetRadius * Math.sin(alpha);
-            const finalY = cy + targetRadius * Math.cos(alpha);
+            const finalY = cy - targetRadius * Math.cos(alpha);
 
-            // 3. Aplica estilos de Posição e Escala
             textElement.style.left = `${finalX}px`;
             textElement.style.top = `${finalY}px`;
 
@@ -459,7 +468,7 @@
                         cache.glassClass = newGlassClass;
                     }
 
-                    // --- ATUALIZANDO CPU TEMP ---
+                    // --- CPU TEMP ---
                     if (cache.cpuT !== cpuTemp) {
                         if (cpuTemp !== '--') { 
                             let color = getProgressColor(cpuTemp);
@@ -469,7 +478,6 @@
                             DOM.cpuTText.innerText = cpuTemp;
                             DOM.cpuTFire.innerText = cpuTemp > 50 ? '🔥' : '';
                             
-                            // 509 é o totalLength cacheado (Raio 162 * Pi)
                             updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 180, 509, true); 
                         } else {
                             DOM.cpuTNum.style.display = 'none';
@@ -477,32 +485,30 @@
                         cache.cpuT = cpuTemp;
                     }
 
-                    // --- ATUALIZANDO CPU LOAD ---
+                    // --- CPU LOAD (Barra sempre visível, número após 50%) ---
                     if (cache.cpuL !== cpuLoad) {
                         if (cpuLoad !== '--') {
                             let color = getProgressColor(cpuLoad);
                             DOM.cpuLoadFill.style.stroke = color; 
                             DOM.cpuLNum.style.color = color;
-                            DOM.cpuLNum.style.display = 'flex';
                             DOM.cpuLText.innerText = cpuLoad;
                             
-                            // 409 é o totalLength cacheado (Raio 130 * Pi)
                             updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 409, true); 
 
+                            DOM.cpuLNum.style.display = 'flex'; 
                             if (cpuLoad > 50) {
                                 DOM.cpuLNum.style.opacity = '1';
-                                DOM.cpuLoadFill.style.opacity = '1';
                             } else {
-                                DOM.cpuLNum.style.opacity = '0';
-                                DOM.cpuLoadFill.style.opacity = '0';
+                                DOM.cpuLNum.style.opacity = '0'; // Apenas o texto some!
                             }
                         } else {
                             DOM.cpuLNum.style.display = 'none';
+                            DOM.cpuLoadFill.style.stroke = 'transparent';
                         }
                         cache.cpuL = cpuLoad;
                     }
 
-                    // --- ATUALIZANDO GPU TEMP ---
+                    // --- GPU TEMP ---
                     if (cache.gpuT !== gpuTemp) {
                         if (gpuTemp !== '--') { 
                             let color = getProgressColor(gpuTemp);
@@ -519,26 +525,25 @@
                         cache.gpuT = gpuTemp;
                     }
 
-                    // --- ATUALIZANDO GPU LOAD ---
+                    // --- GPU LOAD (Barra sempre visível, número após 50%) ---
                     if (cache.gpuL !== gpuLoad) {
                         if (gpuLoad !== '--') {
                             let color = getProgressColor(gpuLoad);
                             DOM.gpuLoadFill.style.stroke = color; 
                             DOM.gpuLNum.style.color = color;
-                            DOM.gpuLNum.style.display = 'flex';
                             DOM.gpuLText.innerText = gpuLoad;
                             
                             updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 409, false); 
 
+                            DOM.gpuLNum.style.display = 'flex';
                             if (gpuLoad > 50) {
                                 DOM.gpuLNum.style.opacity = '1';
-                                DOM.gpuLoadFill.style.opacity = '1';
                             } else {
-                                DOM.gpuLNum.style.opacity = '0';
-                                DOM.gpuLoadFill.style.opacity = '0';
+                                DOM.gpuLNum.style.opacity = '0'; // Apenas o texto some!
                             }
                         } else {
                             DOM.gpuLNum.style.display = 'none';
+                            DOM.gpuLoadFill.style.stroke = 'transparent';
                         }
                         cache.gpuL = gpuLoad;
                     }
@@ -652,27 +657,20 @@
             newsInterval = null; }
         }
 
+        // --- ATUALIZAÇÃO DA NOVA BARRA DE PROGRESSO LINEAR ---
         setInterval(() => {
-            const bgRing = document.getElementById('music-bg-ring');
-            const progRing = document.getElementById('music-progress');
-            const progLeft = document.getElementById('music-progress-left');
-            const progRight = document.getElementById('music-progress-right');
+            const progContainer = document.getElementById('linear-music-progress');
+            const progFill = document.getElementById('linear-music-fill');
 
             if (pTracker.active && pTracker.durSec > 0) {
-                if (bgRing && progRing) { bgRing.style.display = 'block'; progRing.style.display = 'block'; }
+                if (progContainer) progContainer.style.display = 'block';
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
+                let percent = (pTracker.posSec / pTracker.durSec) * 100;
                 
-                let o = 459 - (459 * (pTracker.posSec / pTracker.durSec)); 
-                
-                if (cache.musicOffset !== o && progLeft && progRight) {
-                    progLeft.style.strokeDashoffset = o; 
-                    progRight.style.strokeDashoffset = o; 
-                    cache.musicOffset = o;
-                }
+                if (progFill) progFill.style.width = `${percent}%`;
             } else { 
-                if (bgRing && progRing) { bgRing.style.display = 'none'; progRing.style.display = 'none'; }
-                cache.musicOffset = null; 
+                if (progContainer) progContainer.style.display = 'none';
             }
         }, 1000);
         

@@ -84,7 +84,6 @@
             justify-content: center;
         }
 
-        /* --- HARDWARE LAYER --- */
         #hardware-layer {
             position: absolute;
             top: 0;
@@ -97,7 +96,6 @@
             z-index: 10;
         }
 
-        /* --- NÚMEROS LIMPOS E DINÂMICOS --- */
         .hw-number {
             position: absolute;
             display: flex;
@@ -132,10 +130,10 @@
             will-change: transform, opacity;
         }
 
-        /* CAPA GIGANTE */
+        /* CAPA REDUZIDA PARA AS BARRAS FICAREM EM VOLTA */
         .cover-circle { 
-            width: 310px;
-            height: 310px; 
+            width: 280px;
+            height: 280px; 
             border-radius: 50%; 
             border: 4px solid rgba(255, 255, 255, 0.8); 
             object-fit: cover;
@@ -144,8 +142,8 @@
         }
 
         .bars-container {
-            width: 310px;
-            height: 310px;
+            width: 280px;
+            height: 280px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -231,10 +229,10 @@
             transition: opacity 0.5s ease-in-out;
         }
 
-        /* NOVA BARRA DE PROGRESSO LINEAR */
+        /* BARRA LINEAR OTIMIZADA PARA A PLACA DE VÍDEO */
         .linear-progress-container {
-            width: 90%;
-            height: 4px;
+            width: 60%; /* Mais curta */
+            height: 3px; /* Mais fina */
             background: rgba(255, 255, 255, 0.2);
             border-radius: 2px;
             margin: 15px auto 0 auto;
@@ -243,12 +241,14 @@
         }
 
         .linear-progress-fill {
-            width: 0%;
+            width: 100%;
             height: 100%;
             background: #ff9a9e;
             border-radius: 2px;
-            transition: width 1s linear;
-            will-change: width;
+            transform-origin: left center; /* A animação cresce da esquerda pra direita */
+            transform: scaleX(0); /* Zero uso de Layout, só GPU */
+            transition: transform 1s linear;
+            will-change: transform;
         }
 
         svg path {
@@ -284,16 +284,14 @@
                     <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
                         <g transform="rotate(90, 170, 170)">
                             
-                            <!-- BARRAS DE USO (LOAD) FIXAS (Opacity removida do JS e do style) -->
-                            <path id="cpu-load-fill" d="M 170,300 A 130 130 0 0 1 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                            <path id="gpu-load-fill" d="M 170,300 A 130 130 0 0 0 170 40" fill="none" stroke="transparent" stroke-width="6" stroke-dasharray="409" stroke-dashoffset="409" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="cpu-load-fill" d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="gpu-load-fill" d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                             
-                            <!-- BARRAS DE TEMPERATURA EXTERNAS -->
-                            <path d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M 170,330 A 160 160 0 0 1 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M 170,330 A 160 160 0 0 0 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
 
-                            <path id="cpu-bar-fill" d="M 170,332 A 162 162 0 0 1 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                            <path id="gpu-bar-fill" d="M 170,332 A 162 162 0 0 0 170 8" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="509" stroke-dashoffset="509" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="cpu-bar-fill" d="M 170,330 A 160 160 0 0 1 170 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="503" stroke-dashoffset="503" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="gpu-bar-fill" d="M 170,330 A 160 160 0 0 0 170 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="503" stroke-dashoffset="503" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
 
                         </g>
                     </svg>
@@ -314,7 +312,6 @@
         <div id="info-artist" class="artist"></div>
         <div id="info-album" class="album"></div>
         
-        <!-- BARRA LINEAR DE PROGRESSO MUSICAL AQUI -->
         <div id="linear-music-progress" class="linear-progress-container">
             <div id="linear-music-fill" class="linear-progress-fill"></div>
         </div>
@@ -407,7 +404,6 @@
             return '#ff416c';
         }
 
-        // --- MATEMÁTICA CORRIGIDA (Eixo Y invertido corretamente) ---
         function updateTrackPositionOpt(pathElement, textElement, value, targetRadius, totalLength, isCpu) {
             if (!pathElement || !textElement || value === '--') return;
 
@@ -422,7 +418,6 @@
             
             const alpha = Math.PI / 2 + (isCpu ? -1 : 1) * (p * Math.PI);
             
-            // Subtrair Math.cos(alpha) corrige a inversão na tela! (CPU = Cima, GPU = Baixo)
             const finalX = cx - targetRadius * Math.sin(alpha);
             const finalY = cy - targetRadius * Math.cos(alpha);
 
@@ -478,14 +473,15 @@
                             DOM.cpuTText.innerText = cpuTemp;
                             DOM.cpuTFire.innerText = cpuTemp > 50 ? '🔥' : '';
                             
-                            updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 180, 509, true); 
+                            // Temperatura: Texto no raio 174, Comprimento 503 (Raio SVG 160)
+                            updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 174, 503, true); 
                         } else {
                             DOM.cpuTNum.style.display = 'none';
                         }
                         cache.cpuT = cpuTemp;
                     }
 
-                    // --- CPU LOAD (Barra sempre visível, número após 50%) ---
+                    // --- CPU LOAD ---
                     if (cache.cpuL !== cpuLoad) {
                         if (cpuLoad !== '--') {
                             let color = getProgressColor(cpuLoad);
@@ -493,13 +489,14 @@
                             DOM.cpuLNum.style.color = color;
                             DOM.cpuLText.innerText = cpuLoad;
                             
-                            updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 409, true); 
+                            // Load: Texto no raio 196, Comprimento 471 (Raio SVG 150)
+                            updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 471, true); 
 
                             DOM.cpuLNum.style.display = 'flex'; 
                             if (cpuLoad > 50) {
                                 DOM.cpuLNum.style.opacity = '1';
                             } else {
-                                DOM.cpuLNum.style.opacity = '0'; // Apenas o texto some!
+                                DOM.cpuLNum.style.opacity = '0';
                             }
                         } else {
                             DOM.cpuLNum.style.display = 'none';
@@ -518,14 +515,14 @@
                             DOM.gpuTText.innerText = gpuTemp;
                             DOM.gpuTFire.innerText = gpuTemp > 50 ? '🔥' : '';
                             
-                            updateTrackPositionOpt(DOM.gpuBarFill, DOM.gpuTNum, gpuTemp, 180, 509, false); 
+                            updateTrackPositionOpt(DOM.gpuBarFill, DOM.gpuTNum, gpuTemp, 174, 503, false); 
                         } else {
                             DOM.gpuTNum.style.display = 'none';
                         }
                         cache.gpuT = gpuTemp;
                     }
 
-                    // --- GPU LOAD (Barra sempre visível, número após 50%) ---
+                    // --- GPU LOAD ---
                     if (cache.gpuL !== gpuLoad) {
                         if (gpuLoad !== '--') {
                             let color = getProgressColor(gpuLoad);
@@ -533,13 +530,13 @@
                             DOM.gpuLNum.style.color = color;
                             DOM.gpuLText.innerText = gpuLoad;
                             
-                            updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 409, false); 
+                            updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 471, false); 
 
                             DOM.gpuLNum.style.display = 'flex';
                             if (gpuLoad > 50) {
                                 DOM.gpuLNum.style.opacity = '1';
                             } else {
-                                DOM.gpuLNum.style.opacity = '0'; // Apenas o texto some!
+                                DOM.gpuLNum.style.opacity = '0';
                             }
                         } else {
                             DOM.gpuLNum.style.display = 'none';
@@ -657,7 +654,7 @@
             newsInterval = null; }
         }
 
-        // --- ATUALIZAÇÃO DA NOVA BARRA DE PROGRESSO LINEAR ---
+        // --- BARRA DE PROGRESSO USANDO SCALEX PARA POUPAR CPU ---
         setInterval(() => {
             const progContainer = document.getElementById('linear-music-progress');
             const progFill = document.getElementById('linear-music-fill');
@@ -666,9 +663,10 @@
                 if (progContainer) progContainer.style.display = 'block';
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
-                let percent = (pTracker.posSec / pTracker.durSec) * 100;
+                let percent = pTracker.posSec / pTracker.durSec;
                 
-                if (progFill) progFill.style.width = `${percent}%`;
+                // ScaleX aceita valores de 0 a 1, sem forçar renderização pesada
+                if (progFill) progFill.style.transform = `scaleX(${percent})`;
             } else { 
                 if (progContainer) progContainer.style.display = 'none';
             }

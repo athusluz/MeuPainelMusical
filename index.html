@@ -130,7 +130,7 @@
             will-change: transform, opacity;
         }
 
-        /* CAPA REDUZIDA PARA AS BARRAS FICAREM EM VOLTA */
+        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Transição suave) */
         .cover-circle { 
             width: 280px;
             height: 280px; 
@@ -139,6 +139,7 @@
             object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
+            transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
         }
 
         .bars-container {
@@ -151,6 +152,14 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
+        }
+
+        /* CLASSE DE EXPANSÃO (Quando as barras de Load somem) */
+        #center-visual-container.expanded .cover-circle,
+        #center-visual-container.expanded .bars-container {
+            width: 310px;
+            height: 310px;
         }
 
         .bar {
@@ -229,10 +238,10 @@
             transition: opacity 0.5s ease-in-out;
         }
 
-        /* BARRA LINEAR OTIMIZADA PARA A PLACA DE VÍDEO */
+        /* BARRA LINEAR MENOR */
         .linear-progress-container {
-            width: 60%; /* Mais curta */
-            height: 3px; /* Mais fina */
+            width: 40%; /* Reduzido de 60% para 40% */
+            height: 3px; 
             background: rgba(255, 255, 255, 0.2);
             border-radius: 2px;
             margin: 15px auto 0 auto;
@@ -245,8 +254,8 @@
             height: 100%;
             background: #ff9a9e;
             border-radius: 2px;
-            transform-origin: left center; /* A animação cresce da esquerda pra direita */
-            transform: scaleX(0); /* Zero uso de Layout, só GPU */
+            transform-origin: left center; 
+            transform: scaleX(0); 
             transition: transform 1s linear;
             will-change: transform;
         }
@@ -267,7 +276,7 @@
             
             <div class="cover-wrapper">
                 
-                <div id="center-visual-container">
+                <div id="center-visual-container" class="expanded">
                     <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
 
@@ -336,7 +345,6 @@
         let cpuTemp = '--'; let cpuLoad = '--';
         let gpuTemp = '--'; let gpuLoad = '--';
 
-        // --- Variáveis de controle de Timer para o Load ---
         let cpuLoadTimer = null; let gpuLoadTimer = null;
         let cpuLoadVisible = false; let gpuLoadVisible = false;
 
@@ -433,6 +441,15 @@
             textElement.style.transform = `translate(-50%, -50%) scale(${dynamicScale})`;
         }
 
+        // Função para avaliar se a capa deve crescer ou encolher
+        function updateCoverState() {
+            if (!cpuLoadVisible && !gpuLoadVisible) {
+                DOM.centerVisual.classList.add('expanded');
+            } else {
+                DOM.centerVisual.classList.remove('expanded');
+            }
+        }
+
         window.nzxt = {
             v1: {
                 onMonitoringDataUpdate: (data) => {
@@ -468,7 +485,6 @@
                         cache.glassClass = newGlassClass;
                     }
 
-                    // --- CPU TEMP ---
                     if (cache.cpuT !== cpuTemp) {
                         if (cpuTemp !== '--') { 
                             let color = getProgressColor(cpuTemp);
@@ -485,7 +501,7 @@
                         cache.cpuT = cpuTemp;
                     }
 
-                    // --- Lógica de Visibilidade: CPU LOAD ---
+                    // CPU LOAD
                     if (cpuLoad !== '--') {
                         if (cpuLoad >= 40) {
                             if (cpuLoadTimer) { clearTimeout(cpuLoadTimer); cpuLoadTimer = null; }
@@ -493,6 +509,7 @@
                                 cpuLoadVisible = true;
                                 DOM.cpuLNum.style.opacity = '1';
                                 DOM.cpuLoadFill.style.opacity = '1';
+                                updateCoverState(); // Atualiza a capa
                             }
                         } else {
                             if (cpuLoadVisible && !cpuLoadTimer) {
@@ -501,12 +518,12 @@
                                     cpuLoadTimer = null;
                                     DOM.cpuLNum.style.opacity = '0';
                                     DOM.cpuLoadFill.style.opacity = '0';
+                                    updateCoverState(); // Atualiza a capa após 60s
                                 }, 60000);
                             }
                         }
                     }
 
-                    // --- Renderização: CPU LOAD ---
                     if (cache.cpuL !== cpuLoad) {
                         if (cpuLoad !== '--') {
                             let color = getProgressColor(cpuLoad);
@@ -523,7 +540,6 @@
                         cache.cpuL = cpuLoad;
                     }
 
-                    // --- GPU TEMP ---
                     if (cache.gpuT !== gpuTemp) {
                         if (gpuTemp !== '--') { 
                             let color = getProgressColor(gpuTemp);
@@ -540,7 +556,7 @@
                         cache.gpuT = gpuTemp;
                     }
 
-                    // --- Lógica de Visibilidade: GPU LOAD ---
+                    // GPU LOAD
                     if (gpuLoad !== '--') {
                         if (gpuLoad >= 40) {
                             if (gpuLoadTimer) { clearTimeout(gpuLoadTimer); gpuLoadTimer = null; }
@@ -548,6 +564,7 @@
                                 gpuLoadVisible = true;
                                 DOM.gpuLNum.style.opacity = '1';
                                 DOM.gpuLoadFill.style.opacity = '1';
+                                updateCoverState(); // Atualiza a capa
                             }
                         } else {
                             if (gpuLoadVisible && !gpuLoadTimer) {
@@ -556,12 +573,12 @@
                                     gpuLoadTimer = null;
                                     DOM.gpuLNum.style.opacity = '0';
                                     DOM.gpuLoadFill.style.opacity = '0';
+                                    updateCoverState(); // Atualiza a capa após 60s
                                 }, 60000);
                             }
                         }
                     }
 
-                    // --- Renderização: GPU LOAD ---
                     if (cache.gpuL !== gpuLoad) {
                         if (gpuLoad !== '--') {
                             let color = getProgressColor(gpuLoad);
@@ -687,7 +704,6 @@
             newsInterval = null; }
         }
 
-        // --- BARRA DE PROGRESSO USANDO SCALEX PARA POUPAR CPU ---
         setInterval(() => {
             const progContainer = document.getElementById('linear-music-progress');
             const progFill = document.getElementById('linear-music-fill');
@@ -698,7 +714,6 @@
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
                 let percent = pTracker.posSec / pTracker.durSec;
                 
-                // ScaleX aceita valores de 0 a 1, sem forçar renderização pesada
                 if (progFill) progFill.style.transform = `scaleX(${percent})`;
             } else { 
                 if (progContainer) progContainer.style.display = 'none';

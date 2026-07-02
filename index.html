@@ -284,8 +284,8 @@
                     <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
                         <g transform="rotate(90, 170, 170)">
                             
-                            <path id="cpu-load-fill" d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                            <path id="gpu-load-fill" d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="cpu-load-fill" d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
+                            <path id="gpu-load-fill" d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
                             
                             <path d="M 170,330 A 160 160 0 0 1 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                             <path d="M 170,330 A 160 160 0 0 0 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
@@ -332,8 +332,13 @@
         let newsInterval = null;
         let lastNewsFetchTime = 0;
         let currentTrackUrl = ''; let currentStatus = ''; 
+        
         let cpuTemp = '--'; let cpuLoad = '--';
         let gpuTemp = '--'; let gpuLoad = '--';
+
+        // --- Variáveis de controle de Timer para o Load ---
+        let cpuLoadTimer = null; let gpuLoadTimer = null;
+        let cpuLoadVisible = false; let gpuLoadVisible = false;
 
         const cache = {
             cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null
@@ -473,7 +478,6 @@
                             DOM.cpuTText.innerText = cpuTemp;
                             DOM.cpuTFire.innerText = cpuTemp > 50 ? '🔥' : '';
                             
-                            // Temperatura: Texto no raio 174, Comprimento 503 (Raio SVG 160)
                             updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 174, 503, true); 
                         } else {
                             DOM.cpuTNum.style.display = 'none';
@@ -481,7 +485,28 @@
                         cache.cpuT = cpuTemp;
                     }
 
-                    // --- CPU LOAD ---
+                    // --- Lógica de Visibilidade: CPU LOAD ---
+                    if (cpuLoad !== '--') {
+                        if (cpuLoad >= 40) {
+                            if (cpuLoadTimer) { clearTimeout(cpuLoadTimer); cpuLoadTimer = null; }
+                            if (!cpuLoadVisible) {
+                                cpuLoadVisible = true;
+                                DOM.cpuLNum.style.opacity = '1';
+                                DOM.cpuLoadFill.style.opacity = '1';
+                            }
+                        } else {
+                            if (cpuLoadVisible && !cpuLoadTimer) {
+                                cpuLoadTimer = setTimeout(() => {
+                                    cpuLoadVisible = false;
+                                    cpuLoadTimer = null;
+                                    DOM.cpuLNum.style.opacity = '0';
+                                    DOM.cpuLoadFill.style.opacity = '0';
+                                }, 60000);
+                            }
+                        }
+                    }
+
+                    // --- Renderização: CPU LOAD ---
                     if (cache.cpuL !== cpuLoad) {
                         if (cpuLoad !== '--') {
                             let color = getProgressColor(cpuLoad);
@@ -489,15 +514,8 @@
                             DOM.cpuLNum.style.color = color;
                             DOM.cpuLText.innerText = cpuLoad;
                             
-                            // Load: Texto no raio 196, Comprimento 471 (Raio SVG 150)
                             updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 471, true); 
-
                             DOM.cpuLNum.style.display = 'flex'; 
-                            if (cpuLoad > 50) {
-                                DOM.cpuLNum.style.opacity = '1';
-                            } else {
-                                DOM.cpuLNum.style.opacity = '0';
-                            }
                         } else {
                             DOM.cpuLNum.style.display = 'none';
                             DOM.cpuLoadFill.style.stroke = 'transparent';
@@ -522,7 +540,28 @@
                         cache.gpuT = gpuTemp;
                     }
 
-                    // --- GPU LOAD ---
+                    // --- Lógica de Visibilidade: GPU LOAD ---
+                    if (gpuLoad !== '--') {
+                        if (gpuLoad >= 40) {
+                            if (gpuLoadTimer) { clearTimeout(gpuLoadTimer); gpuLoadTimer = null; }
+                            if (!gpuLoadVisible) {
+                                gpuLoadVisible = true;
+                                DOM.gpuLNum.style.opacity = '1';
+                                DOM.gpuLoadFill.style.opacity = '1';
+                            }
+                        } else {
+                            if (gpuLoadVisible && !gpuLoadTimer) {
+                                gpuLoadTimer = setTimeout(() => {
+                                    gpuLoadVisible = false;
+                                    gpuLoadTimer = null;
+                                    DOM.gpuLNum.style.opacity = '0';
+                                    DOM.gpuLoadFill.style.opacity = '0';
+                                }, 60000);
+                            }
+                        }
+                    }
+
+                    // --- Renderização: GPU LOAD ---
                     if (cache.gpuL !== gpuLoad) {
                         if (gpuLoad !== '--') {
                             let color = getProgressColor(gpuLoad);
@@ -531,13 +570,7 @@
                             DOM.gpuLText.innerText = gpuLoad;
                             
                             updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 471, false); 
-
                             DOM.gpuLNum.style.display = 'flex';
-                            if (gpuLoad > 50) {
-                                DOM.gpuLNum.style.opacity = '1';
-                            } else {
-                                DOM.gpuLNum.style.opacity = '0';
-                            }
                         } else {
                             DOM.gpuLNum.style.display = 'none';
                             DOM.gpuLoadFill.style.stroke = 'transparent';

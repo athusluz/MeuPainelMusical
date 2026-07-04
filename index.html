@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Kraken V6 Liquid Cover</title>
+    <title>Tocando Agora - Kraken V6 Estável com Efeito Líquido</title>
 
     <style>
         * {
@@ -26,87 +26,243 @@
         }
 
         #bg-layer {
-            position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
-            background-size: cover; background-position: center; background-repeat: no-repeat;
-            z-index: 1; transition: background-image 0.5s ease-in-out;
+            position: absolute;
+            top: -10%; 
+            left: -10%;
+            width: 120%; 
+            height: 120%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 1;
+            transition: background-image 0.5s ease-in-out;
+            will-change: background-image;
         }
 
         .aurora-bg { background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #fecfef, #ff9a9e); }
         .dark-bg { background-color: #050505; background-image: none; }
 
         #glass-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(20px); 
-            z-index: 2; transition: background 1s ease;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); 
+            backdrop-filter: blur(20px); 
+            z-index: 2;
+            transition: background 1s ease;
         }
 
         #glass-overlay.fire-tint { background: rgba(180, 20, 50, 0.45) !important; }
         #glass-overlay.ice-tint { background: rgba(0, 100, 150, 0.45) !important; }
 
-        #music-widget { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; text-align: center; width: 85%; }
-        .dashboard-container { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 25px; position: relative; }
-        .cover-wrapper { display: flex; flex-direction: column; align-items: center; z-index: 5; position: relative; width: 340px; height: 340px; justify-content: center; }
+        #music-widget { 
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 85%;
+        }
+
+        .dashboard-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .cover-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 5; 
+            position: relative;
+            width: 340px;
+            height: 340px;
+            justify-content: center;
+        }
 
         #hardware-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; transition: opacity 0.5s ease-in-out; pointer-events: none; z-index: 10;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none;
+            z-index: 10;
         }
 
         .hw-number {
-            position: absolute; display: flex; align-items: baseline; justify-content: center;
-            font-size: 16px; font-weight: 800; text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5);
+            position: absolute;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 800;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5);
             transform: translate(-50%, -50%) scale(1); 
-            transition: left 0.3s ease-out, top 0.3s ease-out, color 0.5s ease, opacity 0.5s ease;
-            z-index: 10; will-change: transform, left, top;
+            transition: left 0.3s ease-out, top 0.3s ease-out, color 0.5s ease, transform 0.3s ease-out, opacity 0.5s ease;
+            z-index: 10;
+            will-change: transform, left, top;
         }
 
-        .hw-number .unit { font-size: 0.65em; margin-left: 2px; opacity: 0.85; font-weight: 600; }
+        .hw-number .unit {
+            font-size: 0.65em;
+            margin-left: 2px;
+            opacity: 0.85;
+            font-weight: 600;
+        }
 
         #center-visual-container {
-            z-index: 2; display: flex; justify-content: center; align-items: center;
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1);
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
             transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            will-change: transform, opacity;
         }
 
-        /* CAPA LÍQUIDA (LIQUID COVER) */
+        /* CAPA COM EFEITO LÍQUIDO OTIMIZADO */
         .cover-circle { 
-            width: 280px; 
+            width: 280px;
             height: 280px; 
-            border-radius: 50%; /* Círculo base que será deformado via JS */
-            border: 3px solid rgba(255, 255, 255, 0.4); 
-            object-fit: cover; 
+            border-radius: 50%; 
+            border: 4px solid rgba(255, 255, 255, 0.8); 
+            object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-            /* Transição ultrarrápida linear para o fluido não parecer travado */
-            transition: border-radius 0.08s linear, transform 0.08s linear, box-shadow 0.08s linear, width 0.6s ease-in-out, height 0.6s ease-in-out;
-            will-change: border-radius, transform, box-shadow, width, height;
+            /* Junção da transição de redimensionamento da versão estável com o equalizador */
+            transition: width 0.6s ease-in-out, height 0.6s ease-in-out, border-radius 0.08s linear, transform 0.08s linear, box-shadow 0.08s linear;
+            will-change: width, height, border-radius, transform, box-shadow;
         }
 
-        /* ANIMAÇÃO FALLBACK (Quando não tem música tocando, mas o layout está visível) */
-        @keyframes liquid-morph {
-            0% { border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; }
-            33% { border-radius: 55% 45% 53% 47% / 52% 48% 56% 44%; }
-            66% { border-radius: 45% 55% 48% 52% / 48% 52% 45% 55%; }
-            100% { border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; }
-        }
-        .fallback-liquid { animation: liquid-morph 4s ease-in-out infinite; }
-
-        /* CLASSE DE EXPANSÃO (Quando as barras de Load somem) */
-        #center-visual-container.expanded .cover-circle { 
-            width: 310px; 
-            height: 310px; 
+        .bars-container {
+            width: 280px;
+            height: 280px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
         }
 
-        .title { font-size: 40px; font-weight: 800; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-shadow: 0 2px 8px rgba(0,0,0,0.5); transition: opacity 0.5s ease-in-out; }
-        .title.news-mode { white-space: normal; font-size: 26px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-        .artist { color: #ffffff; font-size: 26px; font-weight: 600; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-shadow: 0 2px 4px rgba(0,0,0,0.5); transition: opacity 0.5s ease-in-out; }
-        .artist.news-mode { font-size: 18px; color: #ccc; }
-        .album { color: #e0e0e0; font-size: 20px; font-weight: 400; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; transition: opacity 0.5s ease-in-out; }
+        #center-visual-container.expanded .cover-circle,
+        #center-visual-container.expanded .bars-container {
+            width: 310px;
+            height: 310px;
+        }
 
-        .linear-progress-container { width: 40%; height: 3px; background: rgba(255, 255, 255, 0.2); border-radius: 2px; margin: 15px auto 0 auto; display: none; overflow: hidden; }
-        .linear-progress-fill { width: 100%; height: 100%; background: #ff9a9e; border-radius: 2px; transform-origin: left center; transform: scaleX(0); transition: transform 1s linear; will-change: transform; }
-        svg path { will-change: stroke-dashoffset, stroke; }
+        .bar {
+            width: 12px;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
+            transform-origin: center;
+            transform: scaleY(0.1); 
+            transition: transform 0.5s ease;
+            will-change: transform;
+        }
+
+        .bar.animated { animation: bounce-opt 1s ease-in-out infinite alternate; }
+        .bar.animated:nth-child(1) { animation-duration: 0.6s; animation-delay: 0.1s; }
+        .bar.animated:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.4s; }
+        .bar.animated:nth-child(3) { animation-duration: 0.5s; animation-delay: 0.2s; }
+        .bar.animated:nth-child(4) { animation-duration: 0.7s; animation-delay: 0.5s; }
+        .bar.animated:nth-child(5) { animation-duration: 0.9s; animation-delay: 0.3s; }
+
+        @keyframes bounce-opt {
+            0% { transform: scaleY(0.2); }
+            100% { transform: scaleY(1.2); }
+        }
+
+        .title { 
+            font-size: 40px;
+            font-weight: 800; 
+            margin-bottom: 8px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            width: 100%;
+            letter-spacing: 1px;
+            padding: 0 15px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .title.news-mode {
+            white-space: normal;
+            font-size: 26px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .artist { 
+            color: #ffffff;
+            font-size: 26px; 
+            font-weight: 600;
+            margin-bottom: 5px;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            width: 100%;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .artist.news-mode {
+            font-size: 18px;
+            color: #ccc;
+        }
+
+        .album {
+            color: #e0e0e0;
+            font-size: 20px;
+            font-weight: 400;
+            font-style: italic;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            width: 100%;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .linear-progress-container {
+            width: 40%;
+            height: 3px; 
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin: 15px auto 0 auto;
+            display: none;
+            overflow: hidden;
+        }
+
+        .linear-progress-fill {
+            width: 100%;
+            height: 100%;
+            background: #ff9a9e;
+            border-radius: 2px;
+            transform-origin: left center; 
+            transform: scaleX(0); 
+            transition: transform 1s linear;
+            will-change: transform;
+        }
+
+        svg path {
+            will-change: stroke-dashoffset, stroke;
+        }
     </style>
 </head>
 <body>
@@ -115,31 +271,48 @@
     <div id="glass-overlay"></div>
 
     <div id="music-widget">
+        
         <div class="dashboard-container">
+            
             <div class="cover-wrapper">
                 
                 <div id="center-visual-container" class="expanded">
-                    <!-- Substituímos as barras por apenas a imagem que fará o morphing -->
-                    <img id="album-cover-img" class="cover-circle fallback-liquid" src="" style="display: none;">
+                    <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
 
                 <div id="hardware-layer">
-                    <div id="cpu-t-num" class="hw-number" style="display: none;"><span id="cpu-t">--</span><span class="unit">°C</span><span id="cpu-fire" style="font-size: 14px; margin-left: 3px;"></span></div>
-                    <div id="cpu-l-num" class="hw-number" style="display: none; opacity: 0;"><span id="cpu-l">--</span><span class="unit">%</span></div>
+                    
+                    <div id="cpu-t-num" class="hw-number" style="display: none;">
+                        <span id="cpu-t">--</span><span class="unit">°C</span><span id="cpu-fire" style="font-size: 14px; margin-left: 3px;"></span>
+                    </div>
+
+                    <div id="cpu-l-num" class="hw-number" style="display: none; opacity: 0;">
+                        <span id="cpu-l">--</span><span class="unit">%</span>
+                    </div>
 
                     <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
                         <g transform="rotate(90, 170, 170)">
+                            
                             <path id="cpu-load-fill" d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
                             <path id="gpu-load-fill" d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
+                            
                             <path d="M 170,330 A 160 160 0 0 1 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                             <path d="M 170,330 A 160 160 0 0 0 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+
                             <path id="cpu-bar-fill" d="M 170,330 A 160 160 0 0 1 170 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="503" stroke-dashoffset="503" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                             <path id="gpu-bar-fill" d="M 170,330 A 160 160 0 0 0 170 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="503" stroke-dashoffset="503" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+
                         </g>
                     </svg>
 
-                    <div id="gpu-t-num" class="hw-number" style="display: none;"><span id="gpu-t">--</span><span class="unit">°C</span><span id="gpu-fire" style="font-size: 14px; margin-left: 3px;"></span></div>
-                    <div id="gpu-l-num" class="hw-number" style="display: none; opacity: 0;"><span id="gpu-l">--</span><span class="unit">%</span></div>
+                    <div id="gpu-t-num" class="hw-number" style="display: none;">
+                        <span id="gpu-t">--</span><span class="unit">°C</span><span id="gpu-fire" style="font-size: 14px; margin-left: 3px;"></span>
+                    </div>
+
+                    <div id="gpu-l-num" class="hw-number" style="display: none; opacity: 0;">
+                        <span id="gpu-l">--</span><span class="unit">%</span>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -147,32 +320,68 @@
         <div id="info-title" class="title">Loading...</div>
         <div id="info-artist" class="artist"></div>
         <div id="info-album" class="album"></div>
-        <div id="linear-music-progress" class="linear-progress-container"><div id="linear-music-fill" class="linear-progress-fill"></div></div>
+        
+        <div id="linear-music-progress" class="linear-progress-container">
+            <div id="linear-music-fill" class="linear-progress-fill"></div>
+        </div>
     </div>
 
     <script>
         const USERNAME = 'athusluz'; 
         const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b';
-        let currentStatus = ''; 
+        const RSS_FEEDS = {
+            'g1': { url: 'https://g1.globo.com/rss/g1/', name: 'G1' },
+            'esports': { url: 'https://ge.globo.com/rss/esports/', name: 'e-Sports' },
+            'tecnologia': { url: 'https://g1.globo.com/rss/g1/tecnologia/', name: 'Tecnologia' },
+            'pop': { url: 'https://g1.globo.com/rss/g1/pop-arte/', name: 'Pop & Arte' }
+        };
+        let activeSources = Object.keys(RSS_FEEDS);
+        let newsList = [];
+        let currentNewsIndex = 0;
+        let newsInterval = null;
+        let lastNewsFetchTime = 0;
+        let currentTrackUrl = ''; let currentStatus = ''; 
         
-        let cpuTemp = '--'; let cpuLoad = '--'; let gpuTemp = '--'; let gpuLoad = '--';
-        let cpuLoadTimer = null; let gpuLoadTimer = null; let cpuLoadVisible = false; let gpuLoadVisible = false;
+        let cpuTemp = '--'; let cpuLoad = '--';
+        let gpuTemp = '--'; let gpuLoad = '--';
 
-        const cache = { cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null };
+        let cpuLoadTimer = null; let gpuLoadTimer = null;
+        let cpuLoadVisible = false; let gpuLoadVisible = false;
+
+        const cache = {
+            cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null
+        };
         
         const DOM = {
-            hwLayer: document.getElementById('hardware-layer'), bgLayer: document.getElementById('bg-layer'),
-            centerVisual: document.getElementById('center-visual-container'), coverImg: document.getElementById('album-cover-img'),
-            title: document.getElementById('info-title'), artist: document.getElementById('info-artist'), album: document.getElementById('info-album'), glass: document.getElementById('glass-overlay'),
-            cpuBarFill: document.getElementById('cpu-bar-fill'), cpuTNum: document.getElementById('cpu-t-num'), cpuTText: document.getElementById('cpu-t'), cpuTFire: document.getElementById('cpu-fire'),
-            cpuLoadFill: document.getElementById('cpu-load-fill'), cpuLNum: document.getElementById('cpu-l-num'), cpuLText: document.getElementById('cpu-l'),
-            gpuBarFill: document.getElementById('gpu-bar-fill'), gpuTNum: document.getElementById('gpu-t-num'), gpuTText: document.getElementById('gpu-t'), gpuTFire: document.getElementById('gpu-fire'),
-            gpuLoadFill: document.getElementById('gpu-load-fill'), gpuLNum: document.getElementById('gpu-l-num'), gpuLText: document.getElementById('gpu-l')
+            hwLayer: document.getElementById('hardware-layer'),
+            bgLayer: document.getElementById('bg-layer'),
+            centerVisual: document.getElementById('center-visual-container'),
+            title: document.getElementById('info-title'),
+            artist: document.getElementById('info-artist'),
+            album: document.getElementById('info-album'),
+            glass: document.getElementById('glass-overlay'),
+            
+            cpuBarFill: document.getElementById('cpu-bar-fill'),
+            cpuTNum: document.getElementById('cpu-t-num'),
+            cpuTText: document.getElementById('cpu-t'),
+            cpuTFire: document.getElementById('cpu-fire'),
+            
+            cpuLoadFill: document.getElementById('cpu-load-fill'),
+            cpuLNum: document.getElementById('cpu-l-num'),
+            cpuLText: document.getElementById('cpu-l'),
+            
+            gpuBarFill: document.getElementById('gpu-bar-fill'),
+            gpuTNum: document.getElementById('gpu-t-num'),
+            gpuTText: document.getElementById('gpu-t'),
+            gpuTFire: document.getElementById('gpu-fire'),
+            
+            gpuLoadFill: document.getElementById('gpu-load-fill'),
+            gpuLNum: document.getElementById('gpu-l-num'),
+            gpuLText: document.getElementById('gpu-l')
         };
 
-        // ==========================================
-        // PONTE 1: WEBSOCKET DO WEB NOW PLAYING (8999)
-        // ==========================================
+        const fallbackBarsAnimatedHTML = `<div class="bars-container"><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div></div>`;
+        const fallbackBarsFlatHTML = `<div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>`;
         let pTracker = { active: false, posSec: 0, durSec: 0 };
         let wnpConnected = false;
         let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0 };
@@ -188,118 +397,429 @@
                 else if (d.startsWith('ARTIST:')) wnpState.artist = d.substring(7);
                 else if (d.startsWith('ALBUM:')) wnpState.album = d.substring(6);
                 else if (d.startsWith('COVER:')) wnpState.coverUrl = d.substring(6);
-                else if (d.startsWith('POSITION:')) { let p = d.substring(9).split(':'); wnpState.positionSec = p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]); }
-                else if (d.startsWith('DURATION:')) { let p = d.substring(9).split(':'); wnpState.durationSec = p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]); }
+                else if (d.startsWith('POSITION:')) {
+                    let p = d.substring(9).split(':');
+                    wnpState.positionSec = p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]);
+                }
+                else if (d.startsWith('DURATION:')) {
+                    let p = d.substring(9).split(':');
+                    wnpState.durationSec = p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]);
+                }
             };
         }
         connectWNP();
 
         // ==========================================
-        // PONTE 2: LÓGICA DO EQUALIZADOR LÍQUIDO (9000)
+        // PONTE 2: EQUALIZADOR LÍQUIDO CONECTANDO NA CAPA
         // ==========================================
         let eqConnected = false;
         function connectEQ() {
             let ws = new WebSocket('ws://127.0.0.1:9000');
-            ws.onopen = () => { eqConnected = true; setFallbackAnimation(false); };
-            ws.onclose = () => { eqConnected = false; setFallbackAnimation(true); setTimeout(connectEQ, 3000); };
+            ws.onopen = () => { eqConnected = true; };
+            ws.onclose = () => { eqConnected = false; setTimeout(connectEQ, 3000); };
             ws.onmessage = (e) => {
                 if (e.data.startsWith('EQ:')) {
-                    let vals = e.data.substring(3).split(',');
+                    // Busca a imagem diretamente na tela
+                    let img = document.getElementById('liquid-cover');
+                    if (!img) return; // Se não houver capa na tela (tela de silêncio ou barras), não faz nada.
                     
-                    // Capta a força de cada banda (0 a ~25)
-                    let v1 = Math.min(25, parseFloat(vals[0])); // Graves (bate forte)
+                    let vals = e.data.substring(3).split(',');
+                    let v1 = Math.min(25, parseFloat(vals[0])); // Graves
                     let v2 = Math.min(20, parseFloat(vals[1])); // Médio-graves
                     let v3 = Math.min(18, parseFloat(vals[2])); // Médios
                     let v4 = Math.min(15, parseFloat(vals[3])); // Médio-agudos
                     let v5 = Math.min(15, parseFloat(vals[4])); // Agudos
 
-                    // Matemática do formato Fluido (border-radius em 8 eixos deformando a partir de 50%)
+                    // Deformação assimétrica das bordas
                     let tlX = 50 - v1; let trX = 50 + v2; let brX = 50 - v3; let blX = 50 + v4;
                     let tlY = 50 + v5; let trY = 50 - v1; let brY = 50 + v2; let blY = 50 - v3;
 
-                    // Aplica a distorção da onda e um pulso de brilho nos graves diretamente na imagem
-                    DOM.coverImg.style.borderRadius = `${tlX}% ${trX}% ${brX}% ${blX}% / ${tlY}% ${trY}% ${brY}% ${blY}%`;
-                    DOM.coverImg.style.boxShadow = `0 0 ${10 + (v1 * 2)}px rgba(255, 255, 255, ${0.1 + (v1/100)})`;
-                    
-                    // Um pulso minúsculo e suave de expansão quando o grave bate muito forte
-                    let scaleImpact = 1 + (v1 * 0.003);
-                    DOM.coverImg.style.transform = `scale(${scaleImpact})`;
+                    img.style.borderRadius = `${tlX}% ${trX}% ${brX}% ${blX}% / ${tlY}% ${trY}% ${brY}% ${blY}%`;
+                    img.style.boxShadow = `0 0 ${10 + (v1 * 2)}px rgba(255, 255, 255, ${0.1 + (v1/100)})`;
+                    img.style.transform = `scale(${1 + (v1 * 0.003)})`;
                 }
             };
-        }
-        
-        function setFallbackAnimation(active) {
-            if (active) DOM.coverImg.classList.add('fallback-liquid');
-            else DOM.coverImg.classList.remove('fallback-liquid');
         }
         connectEQ();
         // ==========================================
 
         function getProgressColor(value) {
             if (value === '--') return 'transparent';
-            if (value <= 40) return '#00d2ff'; if (value <= 65) return '#a8e063'; 
-            if (value <= 80) return '#f6d365'; return '#ff416c';
+            if (value <= 40) return '#00d2ff'; 
+            if (value <= 65) return '#a8e063'; 
+            if (value <= 80) return '#f6d365'; 
+            return '#ff416c';
         }
 
         function updateTrackPositionOpt(pathElement, textElement, value, targetRadius, totalLength, isCpu) {
             if (!pathElement || !textElement || value === '--') return;
-            const p = Math.min(value, 100) / 100;
-            pathElement.style.strokeDashoffset = totalLength - (p * totalLength);
+
+            const numericValue = Math.min(value, 100);
+            const p = numericValue / 100;
+            
+            const currentLength = p * totalLength;
+            pathElement.style.strokeDashoffset = totalLength - currentLength;
+
+            const cx = 170;
+            const cy = 170;
+            
             const alpha = Math.PI / 2 + (isCpu ? -1 : 1) * (p * Math.PI);
-            textElement.style.left = `${170 - targetRadius * Math.sin(alpha)}px`;
-            textElement.style.top = `${170 - targetRadius * Math.cos(alpha)}px`;
-            textElement.style.transform = `translate(-50%, -50%) scale(${1 + p * 0.8})`;
+            
+            const finalX = cx - targetRadius * Math.sin(alpha);
+            const finalY = cy - targetRadius * Math.cos(alpha);
+
+            textElement.style.left = `${finalX}px`;
+            textElement.style.top = `${finalY}px`;
+
+            const dynamicScale = 1 + p * 0.8;
+            textElement.style.transform = `translate(-50%, -50%) scale(${dynamicScale})`;
         }
 
         function updateCoverState() {
-            if (!cpuLoadVisible && !gpuLoadVisible) DOM.centerVisual.classList.add('expanded');
-            else DOM.centerVisual.classList.remove('expanded');
+            if (!cpuLoadVisible && !gpuLoadVisible) {
+                DOM.centerVisual.classList.add('expanded');
+            } else {
+                DOM.centerVisual.classList.remove('expanded');
+            }
         }
 
         window.nzxt = {
             v1: {
                 onMonitoringDataUpdate: (data) => {
                     const { cpus, gpus } = data;
-                    if (cpus?.length > 0) { cpuTemp = Math.round(cpus[0].temperature); let cLoad = cpus[0].load || 0; cpuLoad = Math.round(cLoad <= 1 && cLoad > 0 ? cLoad * 100 : cLoad); }
-                    if (gpus?.length > 0) { let targetGpu = gpus.length > 1 ? gpus[1] : gpus[0]; gpuTemp = Math.round(targetGpu.temperature); let gLoad = targetGpu.load || targetGpu.usage || 0; gpuLoad = Math.round(gLoad <= 1 && gLoad > 0 ? gLoad * 100 : gLoad); }
+                    
+                    if (cpus?.length > 0) { 
+                        cpuTemp = Math.round(cpus[0].temperature);
+                        let cLoad = cpus[0].load !== undefined ? cpus[0].load : 0;
+                        cpuLoad = Math.round(cLoad <= 1 && cLoad > 0 ? cLoad * 100 : cLoad);
+                    }
+                    
+                    if (gpus?.length > 0) { 
+                        let targetGpu = gpus.length > 1 ? gpus[1] : gpus[0];
+                        gpuTemp = Math.round(targetGpu.temperature);
+                        let gLoad = targetGpu.load !== undefined ? targetGpu.load : (targetGpu.usage !== undefined ? targetGpu.usage : 0);
+                        gpuLoad = Math.round(gLoad <= 1 && gLoad > 0 ? gLoad * 100 : gLoad);
+                    }
                     
                     let mx = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
                     let newGlassClass = cache.glassClass || '';
-                    if (newGlassClass === 'fire-tint') { if (mx < 60) newGlassClass = ''; } else if (newGlassClass === 'ice-tint') { if (mx > 40) newGlassClass = ''; } else { if (mx >= 68) newGlassClass = 'fire-tint'; else if (mx <= 35 && mx > 0) newGlassClass = 'ice-tint'; }
                     
-                    if (cache.glassClass !== newGlassClass) { DOM.glass.className = newGlassClass; cache.glassClass = newGlassClass; }
+                    if (newGlassClass === 'fire-tint') {
+                        if (mx < 60) newGlassClass = '';
+                    } else if (newGlassClass === 'ice-tint') {
+                        if (mx > 40) newGlassClass = '';
+                    } else {
+                        if (mx >= 68) newGlassClass = 'fire-tint';
+                        else if (mx <= 35 && mx > 0) newGlassClass = 'ice-tint';
+                    }
+                    
+                    if (cache.glassClass !== newGlassClass) {
+                        DOM.glass.className = newGlassClass;
+                        cache.glassClass = newGlassClass;
+                    }
 
-                    if (cache.cpuT !== cpuTemp) { if (cpuTemp !== '--') { let color = getProgressColor(cpuTemp); DOM.cpuBarFill.style.stroke = color; DOM.cpuTNum.style.color = color; DOM.cpuTNum.style.display = 'flex'; DOM.cpuTText.innerText = cpuTemp; DOM.cpuTFire.innerText = cpuTemp > 50 ? '🔥' : ''; updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 174, 503, true); } else { DOM.cpuTNum.style.display = 'none'; } cache.cpuT = cpuTemp; }
-                    if (cpuLoad !== '--') { if (cpuLoad >= 40) { if (cpuLoadTimer) { clearTimeout(cpuLoadTimer); cpuLoadTimer = null; } if (!cpuLoadVisible) { cpuLoadVisible = true; DOM.cpuLNum.style.opacity = '1'; DOM.cpuLoadFill.style.opacity = '1'; updateCoverState(); } } else { if (cpuLoadVisible && !cpuLoadTimer) { cpuLoadTimer = setTimeout(() => { cpuLoadVisible = false; cpuLoadTimer = null; DOM.cpuLNum.style.opacity = '0'; DOM.cpuLoadFill.style.opacity = '0'; updateCoverState(); }, 60000); } } }
-                    if (cache.cpuL !== cpuLoad) { if (cpuLoad !== '--') { let color = getProgressColor(cpuLoad); DOM.cpuLoadFill.style.stroke = color; DOM.cpuLNum.style.color = color; DOM.cpuLText.innerText = cpuLoad; updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 471, true); DOM.cpuLNum.style.display = 'flex'; } else { DOM.cpuLNum.style.display = 'none'; DOM.cpuLoadFill.style.stroke = 'transparent'; } cache.cpuL = cpuLoad; }
-                    if (cache.gpuT !== gpuTemp) { if (gpuTemp !== '--') { let color = getProgressColor(gpuTemp); DOM.gpuBarFill.style.stroke = color; DOM.gpuTNum.style.color = color; DOM.gpuTNum.style.display = 'flex'; DOM.gpuTText.innerText = gpuTemp; DOM.gpuTFire.innerText = gpuTemp > 50 ? '🔥' : ''; updateTrackPositionOpt(DOM.gpuBarFill, DOM.gpuTNum, gpuTemp, 174, 503, false); } else { DOM.gpuTNum.style.display = 'none'; } cache.gpuT = gpuTemp; }
-                    if (gpuLoad !== '--') { if (gpuLoad >= 40) { if (gpuLoadTimer) { clearTimeout(gpuLoadTimer); gpuLoadTimer = null; } if (!gpuLoadVisible) { gpuLoadVisible = true; DOM.gpuLNum.style.opacity = '1'; DOM.gpuLoadFill.style.opacity = '1'; updateCoverState(); } } else { if (gpuLoadVisible && !gpuLoadTimer) { gpuLoadTimer = setTimeout(() => { gpuLoadVisible = false; gpuLoadTimer = null; DOM.gpuLNum.style.opacity = '0'; DOM.gpuLoadFill.style.opacity = '0'; updateCoverState(); }, 60000); } } }
-                    if (cache.gpuL !== gpuLoad) { if (gpuLoad !== '--') { let color = getProgressColor(gpuLoad); DOM.gpuLoadFill.style.stroke = color; DOM.gpuLNum.style.color = color; DOM.gpuLText.innerText = gpuLoad; updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 471, false); DOM.gpuLNum.style.display = 'flex'; } else { DOM.gpuLNum.style.display = 'none'; DOM.gpuLoadFill.style.stroke = 'transparent'; } cache.gpuL = gpuLoad; }
+                    if (cache.cpuT !== cpuTemp) {
+                        if (cpuTemp !== '--') { 
+                            let color = getProgressColor(cpuTemp);
+                            DOM.cpuBarFill.style.stroke = color; 
+                            DOM.cpuTNum.style.color = color;
+                            DOM.cpuTNum.style.display = 'flex';
+                            DOM.cpuTText.innerText = cpuTemp;
+                            DOM.cpuTFire.innerText = cpuTemp > 50 ? '🔥' : '';
+                            
+                            updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 174, 503, true); 
+                        } else {
+                            DOM.cpuTNum.style.display = 'none';
+                        }
+                        cache.cpuT = cpuTemp;
+                    }
+
+                    if (cpuLoad !== '--') {
+                        if (cpuLoad >= 40) {
+                            if (cpuLoadTimer) { clearTimeout(cpuLoadTimer); cpuLoadTimer = null; }
+                            if (!cpuLoadVisible) {
+                                cpuLoadVisible = true;
+                                DOM.cpuLNum.style.opacity = '1';
+                                DOM.cpuLoadFill.style.opacity = '1';
+                                updateCoverState(); 
+                            }
+                        } else {
+                            if (cpuLoadVisible && !cpuLoadTimer) {
+                                cpuLoadTimer = setTimeout(() => {
+                                    cpuLoadVisible = false;
+                                    cpuLoadTimer = null;
+                                    DOM.cpuLNum.style.opacity = '0';
+                                    DOM.cpuLoadFill.style.opacity = '0';
+                                    updateCoverState(); 
+                                }, 60000);
+                            }
+                        }
+                    }
+
+                    if (cache.cpuL !== cpuLoad) {
+                        if (cpuLoad !== '--') {
+                            let color = getProgressColor(cpuLoad);
+                            DOM.cpuLoadFill.style.stroke = color; 
+                            DOM.cpuLNum.style.color = color;
+                            DOM.cpuLText.innerText = cpuLoad;
+                            
+                            updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 471, true); 
+                            DOM.cpuLNum.style.display = 'flex'; 
+                        } else {
+                            DOM.cpuLNum.style.display = 'none';
+                            DOM.cpuLoadFill.style.stroke = 'transparent';
+                        }
+                        cache.cpuL = cpuLoad;
+                    }
+
+                    if (cache.gpuT !== gpuTemp) {
+                        if (gpuTemp !== '--') { 
+                            let color = getProgressColor(gpuTemp);
+                            DOM.gpuBarFill.style.stroke = color; 
+                            DOM.gpuTNum.style.color = color;
+                            DOM.gpuTNum.style.display = 'flex';
+                            DOM.gpuTText.innerText = gpuTemp;
+                            DOM.gpuTFire.innerText = gpuTemp > 50 ? '🔥' : '';
+                            
+                            updateTrackPositionOpt(DOM.gpuBarFill, DOM.gpuTNum, gpuTemp, 174, 503, false); 
+                        } else {
+                            DOM.gpuTNum.style.display = 'none';
+                        }
+                        cache.gpuT = gpuTemp;
+                    }
+
+                    if (gpuLoad !== '--') {
+                        if (gpuLoad >= 40) {
+                            if (gpuLoadTimer) { clearTimeout(gpuLoadTimer); gpuLoadTimer = null; }
+                            if (!gpuLoadVisible) {
+                                gpuLoadVisible = true;
+                                DOM.gpuLNum.style.opacity = '1';
+                                DOM.gpuLoadFill.style.opacity = '1';
+                                updateCoverState();
+                            }
+                        } else {
+                            if (gpuLoadVisible && !gpuLoadTimer) {
+                                gpuLoadTimer = setTimeout(() => {
+                                    gpuLoadVisible = false;
+                                    gpuLoadTimer = null;
+                                    DOM.gpuLNum.style.opacity = '0';
+                                    DOM.gpuLoadFill.style.opacity = '0';
+                                    updateCoverState();
+                                }, 60000);
+                            }
+                        }
+                    }
+
+                    if (cache.gpuL !== gpuLoad) {
+                        if (gpuLoad !== '--') {
+                            let color = getProgressColor(gpuLoad);
+                            DOM.gpuLoadFill.style.stroke = color; 
+                            DOM.gpuLNum.style.color = color;
+                            DOM.gpuLText.innerText = gpuLoad;
+                            
+                            updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 471, false); 
+                            DOM.gpuLNum.style.display = 'flex';
+                        } else {
+                            DOM.gpuLNum.style.display = 'none';
+                            DOM.gpuLoadFill.style.stroke = 'transparent';
+                        }
+                        cache.gpuL = gpuLoad;
+                    }
                 }
             }
         };
-
+        
         function preloadImageAndUpdate(imageUrl, updateCallback) {
-            const fadeDuration = 500; const startTime = Date.now();
-            const triggerUpdate = () => { const elapsed = Date.now() - startTime; setTimeout(updateCallback, Math.max(0, fadeDuration - elapsed)); };
-            if (imageUrl) { const img = new Image(); img.onload = triggerUpdate; img.onerror = triggerUpdate; img.src = imageUrl; } else { triggerUpdate(); }
+            const fadeDuration = 500;
+            const startTime = Date.now();
+            const triggerUpdate = () => {
+                const elapsed = Date.now() - startTime;
+                const remainingDelay = Math.max(0, fadeDuration - elapsed);
+                setTimeout(updateCallback, remainingDelay);
+            };
+            if (imageUrl) {
+                const img = new Image();
+                img.onload = triggerUpdate;
+                img.onerror = triggerUpdate; 
+                img.src = imageUrl;
+            } else {
+                triggerUpdate();
+            }
         }
 
-        function cleanStringForSearch(str) { return str ? str.replace(/\(.*?\)/g, ' ').replace(/\[.*?\]/g, ' ').replace(/[-_]/g, ' ').replace(/(ft\.|feat\.|prod\.|remix|official|video|audio|lyrics).*$/i, ' ').replace(/[^a-zA-Z0-9À-ÿ\s]/g, ' ').replace(/\s+/g, ' ').trim() : ''; }
+        async function fetchNews() {
+            const now = Date.now();
+            if (now - lastNewsFetchTime < 120000) return; 
+            lastNewsFetchTime = now;
+            try {
+                newsList = [];
+                for (let k of activeSources) {
+                    let response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${RSS_FEEDS[k].url}`);
+                    let data = await response.json();
+                    if (data.items) {
+                        data.items.forEach(item => {
+                            let imgUrl = item.enclosure?.link || item.thumbnail || (item.description.match(/<img[^>]+src="([^">]+)"/) || [])[1] || '';
+                            if (imgUrl) newsList.push({ title: item.title, source: RSS_FEEDS[k].name, image: imgUrl });
+                        });
+                    }
+                }
+                newsList.sort(() => Math.random() - 0.5);
+            } catch (error) { }
+        }
+
+        function showSilenceState() {
+            DOM.title.className = 'title'; DOM.artist.className = 'artist'; DOM.album.style.display = 'none';
+            DOM.title.innerText = 'Só silencio...'; DOM.artist.innerText = '';
+            DOM.bgLayer.style.backgroundImage = 'none'; 
+            DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
+            DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
+            DOM.hwLayer.style.opacity = 0; 
+        }
+
+        function showNextNews() {
+            if (currentNewsIndex >= newsList.length) {
+                stopNewsCycle();
+                DOM.centerVisual.style.opacity = 0;
+                DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                DOM.title.style.opacity = 0;
+                DOM.artist.style.opacity = 0;
+                DOM.album.style.opacity = 0;
+
+                setTimeout(() => {
+                    showSilenceState();
+                    DOM.centerVisual.style.opacity = 1;
+                    DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
+                    DOM.title.style.opacity = 1;
+                    DOM.artist.style.opacity = 1;
+                    DOM.album.style.opacity = 1;
+                }, 500);
+                return;
+            }
+
+            const newsItem = newsList[currentNewsIndex];
+            
+            DOM.bgLayer.style.backgroundImage = 'none';
+            DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg';
+            
+            if (newsItem.image) {
+                // Adicionado ID para o equalizador encontrar a capa da notícia!
+                DOM.centerVisual.innerHTML = `<img id="liquid-cover" class="cover-circle" src="${newsItem.image}">`;
+            } else {
+                DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
+            }
+
+            DOM.title.className = 'title news-mode';
+            DOM.artist.className = 'artist news-mode';
+            DOM.album.style.display = 'none';
+
+            DOM.title.innerText = newsItem.title;
+            DOM.artist.innerText = newsItem.source;
+
+            currentNewsIndex++;
+        }
+
+        function startNewsCycle() {
+            if (newsInterval) return;
+            fetchNews().then(() => {
+                if(newsList.length > 0) {
+                    currentNewsIndex = 0;
+                    showNextNews();
+                    newsInterval = setInterval(showNextNews, 15000); 
+                } else {
+                    showSilenceState();
+                }
+            });
+        }
+
+        function stopNewsCycle() {
+            if (newsInterval) { clearInterval(newsInterval);
+            newsInterval = null; }
+        }
+
+        setInterval(() => {
+            const progContainer = document.getElementById('linear-music-progress');
+            const progFill = document.getElementById('linear-music-fill');
+
+            if (pTracker.active && pTracker.durSec > 0) {
+                if (progContainer) progContainer.style.display = 'block';
+                
+                pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
+                let percent = pTracker.posSec / pTracker.durSec;
+                
+                if (progFill) progFill.style.transform = `scaleX(${percent})`;
+            } else { 
+                if (progContainer) progContainer.style.display = 'none';
+            }
+        }, 1000);
+        
+        function cleanStringForSearch(str) {
+            if (!str) return '';
+            return str.replace(/\(.*?\)/g, ' ').replace(/\[.*?\]/g, ' ').replace(/[-_]/g, ' ')
+                .replace(/(ft\.|feat\.|prod\.|remix|official|video|audio|lyrics).*$/i, ' ')
+                .replace(/[^a-zA-Z0-9À-ÿ\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
         async function fetchItunesCover(query) {
             if (!query) return '';
-            try { let res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=5`); let data = await res.json(); if (data.results && data.results.length > 0) return data.results[Math.floor(Math.random() * Math.min(data.results.length, 3))].artworkUrl100.replace('100x100bb', '600x600bb'); } catch (e) { } return '';
+            try {
+                let res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=5`);
+                let data = await res.json();
+                if (data.results && data.results.length > 0) {
+                    let maxIdx = Math.min(data.results.length, 3);
+                    let randomIdx = Math.floor(Math.random() * maxIdx);
+                    return data.results[randomIdx].artworkUrl100.replace('100x100bb', '600x600bb');
+                }
+            } catch (e) { }
+            return '';
         }
 
         async function getNowPlaying() {
-            let isP = false; let sn = ''; let an = ''; let al = ''; let dc = ''; let hasP = false; let tp = 0; let td = 0;
-            if (wnpConnected && wnpState.state === 1) { isP = true; sn = wnpState.title; an = wnpState.artist; al = wnpState.album; dc = wnpState.coverUrl; if (wnpState.durationSec > 0) { hasP = true; tp = wnpState.positionSec; td = wnpState.durationSec; } }
+            let isP = false;
+            let sn = ''; let an = ''; let al = ''; let dc = ''; let hasP = false;
+            let tp = 0; let td = 0;
             
+            if (wnpConnected && wnpState.state === 1) { 
+                isP = true;
+                sn = wnpState.title; an = wnpState.artist; al = wnpState.album; dc = wnpState.coverUrl; 
+                if (wnpState.durationSec > 0) { hasP = true;
+                tp = wnpState.positionSec; td = wnpState.durationSec; } 
+            }
+            
+            if (!isP) {
+                try {
+                    const mpcRes = await fetch('http://localhost:13579/variables.html');
+                    const text = await mpcRes.text();
+                    const doc = new DOMParser().parseFromString(text, "text/html");
+                    if (doc.getElementById('state')?.innerText === '2') { 
+                        isP = true;
+                        let cleanName = (doc.getElementById('file')?.innerText || '').replace(/\.[^/.]+$/, ""); 
+                        an = "Desconhecido"; sn = cleanName;
+                        if (cleanName.includes(" - ")) {
+                            const parts = cleanName.split(" - ");
+                            an = parts[0].trim(); sn = parts.slice(1).join(" - ").trim();
+                        }
+                        const posStr = doc.getElementById('positionstring')?.innerText;
+                        const durStr = doc.getElementById('durationstring')?.innerText;
+                        if (durStr && durStr !== '00:00:00') { 
+                            hasP = true;
+                            const parseTime = (s) => {
+                                if (!s) return 0;
+                                let p = s.split(':');
+                                return p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : (p.length === 3 ? parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]) : 0);
+                            };
+                            tp = parseTime(posStr); td = parseTime(durStr); 
+                        }
+                    }
+                } catch (e) {}
+            }
+
             if (!isP) {
                 try {
                     const lfm = await (await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`)).json();
                     const tr = lfm.recenttracks.track[0];
-                    if (tr && tr['@attr'] && tr['@attr'].nowplaying) { isP = true; sn = tr.name; an = tr.artist['#text']; al = tr.album['#text']; dc = tr.image[tr.image.length - 1]['#text']; }
+                    if (tr && tr['@attr'] && tr['@attr'].nowplaying) {
+                        isP = true; sn = tr.name; an = tr.artist['#text']; al = tr.album['#text']; dc = tr.image[tr.image.length - 1]['#text'];
+                    }
                 } catch(e){}
             }
 
@@ -307,53 +827,62 @@
             
             if (!isP) {
                 if (currentStatus !== 'NOT_PLAYING') {
-                    currentStatus = 'NOT_PLAYING'; pTracker.active = false;
-                    DOM.title.innerText = 'Só silencio...'; DOM.artist.innerText = ''; DOM.album.style.display = 'none';
-                    DOM.bgLayer.style.backgroundImage = 'none'; DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
-                    DOM.coverImg.style.display = 'none'; DOM.hwLayer.style.opacity = 0; 
+                    currentStatus = 'NOT_PLAYING';
+                    pTracker.active = false;
+                    startNewsCycle();
                 }
                 return;
             }
 
-            if (hasP) { pTracker.active = true; pTracker.posSec = tp; pTracker.durSec = td; } else { pTracker.active = false; }
+            stopNewsCycle();
+            
+            if (hasP) { pTracker.active = true; pTracker.posSec = tp; pTracker.durSec = td; } 
+            else { pTracker.active = false; }
+            
             DOM.hwLayer.style.opacity = 1;
 
             if (currentStatus !== status) {
                 currentStatus = status;
-                DOM.centerVisual.style.opacity = 0; DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
-                DOM.title.style.opacity = 0; DOM.artist.style.opacity = 0; DOM.album.style.opacity = 0;
+                DOM.centerVisual.style.opacity = 0;
+                DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                DOM.title.style.opacity = 0;
+                DOM.artist.style.opacity = 0;
+                DOM.album.style.opacity = 0;
 
                 let coverUrl = dc;
-                if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) coverUrl = await fetchItunesCover(cleanStringForSearch(`${sn} ${an}`));
+                if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
+                    let q = cleanStringForSearch(`${sn} ${an}`);
+                    coverUrl = await fetchItunesCover(q);
+                }
 
                 preloadImageAndUpdate(coverUrl, () => {
                     if (coverUrl) {
-                        DOM.bgLayer.style.backgroundImage = `url('${coverUrl}')`; DOM.bgLayer.className = '';
-                        DOM.coverImg.src = coverUrl; DOM.coverImg.style.display = 'block';
+                        DOM.bgLayer.style.backgroundImage = `url('${coverUrl}')`;
+                        DOM.bgLayer.className = '';
+                        // Adicionado ID para o equalizador encontrar a capa da música!
+                        DOM.centerVisual.innerHTML = `<img id="liquid-cover" class="cover-circle" src="${coverUrl}">`;
                     } else {
-                        DOM.bgLayer.style.backgroundImage = 'none'; DOM.bgLayer.className = 'dark-bg';
-                        DOM.coverImg.style.display = 'none';
+                        DOM.bgLayer.style.backgroundImage = 'none';
+                        DOM.bgLayer.className = 'dark-bg';
+                        DOM.centerVisual.innerHTML = fallbackBarsAnimatedHTML;
                     }
 
-                    DOM.title.innerText = sn || 'Desconhecido'; DOM.artist.innerText = an || 'Desconhecido';
-                    DOM.album.innerText = al || ''; DOM.album.style.display = 'block';
+                    DOM.title.className = 'title'; DOM.artist.className = 'artist'; DOM.album.style.display = 'block';
+                    DOM.title.innerText = sn || 'Desconhecido';
+                    DOM.artist.innerText = an || 'Desconhecido';
+                    DOM.album.innerText = al || '';
                     
-                    DOM.centerVisual.style.opacity = 1; DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
-                    DOM.title.style.opacity = 1; DOM.artist.style.opacity = 1; DOM.album.style.opacity = 1;
+                    DOM.centerVisual.style.opacity = 1;
+                    DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
+                    DOM.title.style.opacity = 1;
+                    DOM.artist.style.opacity = 1;
+                    DOM.album.style.opacity = 1;
                 });
             }
         }
 
-        setInterval(getNowPlaying, 3000); getNowPlaying();
-
-        setInterval(() => {
-            const progContainer = document.getElementById('linear-music-progress'); const progFill = document.getElementById('linear-music-fill');
-            if (pTracker.active && pTracker.durSec > 0) {
-                if (progContainer) progContainer.style.display = 'block';
-                pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
-                if (progFill) progFill.style.transform = `scaleX(${pTracker.posSec / pTracker.durSec})`;
-            } else { if (progContainer) progContainer.style.display = 'none'; }
-        }, 1000);
+        setInterval(getNowPlaying, 3000);
+        getNowPlaying();
     </script>
 </body>
 </html>

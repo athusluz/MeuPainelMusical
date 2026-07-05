@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocando Agora - Kraken V6 Estável com Efeito Líquido</title>
+    <title>Tocando Agora - Kraken V6 Otimizado</title>
 
     <style>
         * {
@@ -130,7 +130,7 @@
             will-change: transform, opacity;
         }
 
-        /* CAPA COM EFEITO LÍQUIDO OTIMIZADO */
+        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Transição suave adaptada para EQ) */
         .cover-circle { 
             width: 280px;
             height: 280px; 
@@ -139,9 +139,9 @@
             object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
-            /* Junção da transição de redimensionamento da versão estável com o equalizador */
-            transition: width 0.6s ease-in-out, height 0.6s ease-in-out, border-radius 0.08s linear, transform 0.08s linear, box-shadow 0.08s linear;
-            will-change: width, height, border-radius, transform, box-shadow;
+            /* transição de transform rápida para o pulso, width/height mais lento para UI */
+            transition: transform 0.08s ease-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
+            will-change: transform, width, height;
         }
 
         .bars-container {
@@ -157,6 +157,7 @@
             transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
         }
 
+        /* CLASSE DE EXPANSÃO (Quando as barras de Load somem) */
         #center-visual-container.expanded .cover-circle,
         #center-visual-container.expanded .bars-container {
             width: 310px;
@@ -170,10 +171,11 @@
             border-radius: 6px;
             transform-origin: center;
             transform: scaleY(0.1); 
-            transition: transform 0.5s ease;
+            transition: transform 0.08s ease-out; /* Transição rápida para bater com o socket */
             will-change: transform;
         }
 
+        /* A classe animated original mantida apenas como fallback se o servidor EQ estiver offline */
         .bar.animated { animation: bounce-opt 1s ease-in-out infinite alternate; }
         .bar.animated:nth-child(1) { animation-duration: 0.6s; animation-delay: 0.1s; }
         .bar.animated:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.4s; }
@@ -292,7 +294,6 @@
 
                     <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
                         <g transform="rotate(90, 170, 170)">
-                            
                             <path id="cpu-load-fill" d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
                             <path id="gpu-load-fill" d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
                             
@@ -301,7 +302,6 @@
 
                             <path id="cpu-bar-fill" d="M 170,330 A 160 160 0 0 1 170 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="503" stroke-dashoffset="503" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                             <path id="gpu-bar-fill" d="M 170,330 A 160 160 0 0 0 170 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="503" stroke-dashoffset="503" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-
                         </g>
                     </svg>
 
@@ -386,6 +386,7 @@
         let wnpConnected = false;
         let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0 };
         
+        // --- WEB NOW PLAYING ---
         function connectWNP() {
             let ws = new WebSocket('ws://127.0.0.1:8999');
             ws.onopen = () => wnpConnected = true;
@@ -409,39 +410,46 @@
         }
         connectWNP();
 
-        // ==========================================
-        // PONTE 2: EQUALIZADOR LÍQUIDO CONECTANDO NA CAPA
-        // ==========================================
+        // --- EQUALIZADOR MICROSERVIÇO (Pulsar da Capa / Barras) ---
         let eqConnected = false;
         function connectEQ() {
             let ws = new WebSocket('ws://127.0.0.1:9000');
-            ws.onopen = () => { eqConnected = true; };
-            ws.onclose = () => { eqConnected = false; setTimeout(connectEQ, 3000); };
+            ws.onopen = () => { console.log('EQ conectado'); eqConnected = true; };
+            ws.onclose = () => { eqConnected = false; setTimeout(connectEQ, 5000); };
             ws.onmessage = (e) => {
                 if (e.data.startsWith('EQ:')) {
-                    // Busca a imagem diretamente na tela
-                    let img = document.getElementById('liquid-cover');
-                    if (!img) return; // Se não houver capa na tela (tela de silêncio ou barras), não faz nada.
+                    let vals = e.data.substring(3).split(',').map(parseFloat);
                     
-                    let vals = e.data.substring(3).split(',');
-                    let v1 = Math.min(25, parseFloat(vals[0])); // Graves
-                    let v2 = Math.min(20, parseFloat(vals[1])); // Médio-graves
-                    let v3 = Math.min(18, parseFloat(vals[2])); // Médios
-                    let v4 = Math.min(15, parseFloat(vals[3])); // Médio-agudos
-                    let v5 = Math.min(15, parseFloat(vals[4])); // Agudos
+                    if (vals.length === 5) {
+                        let bass = vals[0]; // Frequência do grave
+                        
+                        // 1. Lógica para pulsar a capa
+                        let cover = document.querySelector('.cover-circle');
+                        if (cover) {
+                            // bass médio é entre 0 a 5 com seu multiplicador de x10.0
+                            // Limitamos o crescimento extra em max 15% (0.15) para não estourar.
+                            let scaleAmount = 1 + Math.min(bass * 0.03, 0.15); 
+                            cover.style.transform = `scale(${scaleAmount})`;
+                        }
 
-                    // Deformação assimétrica das bordas
-                    let tlX = 50 - v1; let trX = 50 + v2; let brX = 50 - v3; let blX = 50 + v4;
-                    let tlY = 50 + v5; let trY = 50 - v1; let brY = 50 + v2; let blY = 50 - v3;
-
-                    img.style.borderRadius = `${tlX}% ${trX}% ${brX}% ${blX}% / ${tlY}% ${trY}% ${brY}% ${blY}%`;
-                    img.style.boxShadow = `0 0 ${10 + (v1 * 2)}px rgba(255, 255, 255, ${0.1 + (v1/100)})`;
-                    img.style.transform = `scale(${1 + (v1 * 0.003)})`;
+                        // 2. Lógica para animar as barras (se a música estiver sem capa)
+                        let bars = document.querySelectorAll('.bars-container .bar');
+                        if (bars.length === 5 && !cover) {
+                            bars.forEach((bar, idx) => {
+                                // Se houver conexão real com EQ, removemos a animação fantasma do CSS
+                                if (bar.classList.contains('animated')) {
+                                    bar.classList.remove('animated');
+                                }
+                                // Escala vertical baseada nas bandas do seu eq-server
+                                let scaleY = 0.1 + Math.min(vals[idx] * 0.4, 1.6);
+                                bar.style.transform = `scaleY(${scaleY})`;
+                            });
+                        }
+                    }
                 }
             };
         }
         connectEQ();
-        // ==========================================
 
         function getProgressColor(value) {
             if (value === '--') return 'transparent';
@@ -595,7 +603,7 @@
                                 gpuLoadVisible = true;
                                 DOM.gpuLNum.style.opacity = '1';
                                 DOM.gpuLoadFill.style.opacity = '1';
-                                updateCoverState();
+                                updateCoverState(); 
                             }
                         } else {
                             if (gpuLoadVisible && !gpuLoadTimer) {
@@ -604,7 +612,7 @@
                                     gpuLoadTimer = null;
                                     DOM.gpuLNum.style.opacity = '0';
                                     DOM.gpuLoadFill.style.opacity = '0';
-                                    updateCoverState();
+                                    updateCoverState(); 
                                 }, 60000);
                             }
                         }
@@ -702,8 +710,7 @@
             DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg';
             
             if (newsItem.image) {
-                // Adicionado ID para o equalizador encontrar a capa da notícia!
-                DOM.centerVisual.innerHTML = `<img id="liquid-cover" class="cover-circle" src="${newsItem.image}">`;
+                DOM.centerVisual.innerHTML = `<img class="cover-circle" src="${newsItem.image}">`;
             } else {
                 DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
             }
@@ -859,8 +866,7 @@
                     if (coverUrl) {
                         DOM.bgLayer.style.backgroundImage = `url('${coverUrl}')`;
                         DOM.bgLayer.className = '';
-                        // Adicionado ID para o equalizador encontrar a capa da música!
-                        DOM.centerVisual.innerHTML = `<img id="liquid-cover" class="cover-circle" src="${coverUrl}">`;
+                        DOM.centerVisual.innerHTML = `<img class="cover-circle" src="${coverUrl}">`;
                     } else {
                         DOM.bgLayer.style.backgroundImage = 'none';
                         DOM.bgLayer.className = 'dark-bg';

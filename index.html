@@ -130,7 +130,7 @@
             will-change: transform, opacity;
         }
 
-        /* ANIMAÇÃO DA CAPA MAIS AGRESSIVA E COM GLOW */
+        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Transição suave adaptada para EQ) */
         .cover-circle { 
             width: 280px;
             height: 280px; 
@@ -139,9 +139,9 @@
             object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
-            /* Transição muito rápida para acompanhar a batida sem delay */
-            transition: transform 0.05s ease-out, box-shadow 0.05s ease-out;
-            will-change: transform, box-shadow;
+            /* transição de transform rápida para o pulso, width/height mais lento para UI */
+            transition: transform 0.08s ease-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
+            will-change: transform, width, height;
         }
 
         .bars-container {
@@ -157,10 +157,8 @@
             transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
         }
 
-        #center-visual-container.expanded .cover-circle {
-            width: 310px;
-            height: 310px;
-        }
+        /* CLASSE DE EXPANSÃO (Quando as barras de Load somem) */
+        #center-visual-container.expanded .cover-circle,
         #center-visual-container.expanded .bars-container {
             width: 310px;
             height: 310px;
@@ -173,10 +171,11 @@
             border-radius: 6px;
             transform-origin: center;
             transform: scaleY(0.1); 
-            transition: transform 0.06s ease-out; /* Fica mais "snappy" */
+            transition: transform 0.08s ease-out; /* Transição rápida para bater com o socket */
             will-change: transform;
         }
 
+        /* A classe animated original mantida apenas como fallback se o servidor EQ estiver offline */
         .bar.animated { animation: bounce-opt 1s ease-in-out infinite alternate; }
         .bar.animated:nth-child(1) { animation-duration: 0.6s; animation-delay: 0.1s; }
         .bar.animated:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.4s; }
@@ -243,8 +242,8 @@
         }
 
         .linear-progress-container {
-            width: 50%; /* Aumentado um pouco para dar destaque */
-            height: 4px; 
+            width: 40%;
+            height: 3px; 
             background: rgba(255, 255, 255, 0.2);
             border-radius: 2px;
             margin: 15px auto 0 auto;
@@ -279,7 +278,7 @@
             
             <div class="cover-wrapper">
                 
-                <div id="center-visual-container">
+                <div id="center-visual-container" class="expanded">
                     <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                 </div>
 
@@ -289,16 +288,14 @@
                         <span id="cpu-t">--</span><span class="unit">°C</span><span id="cpu-fire" style="font-size: 14px; margin-left: 3px;"></span>
                     </div>
 
-                    <!-- Removido o opacity:0 para garantir que apareça -->
-                    <div id="cpu-l-num" class="hw-number" style="display: none;">
+                    <div id="cpu-l-num" class="hw-number" style="display: none; opacity: 0;">
                         <span id="cpu-l">--</span><span class="unit">%</span>
                     </div>
 
                     <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
                         <g transform="rotate(90, 170, 170)">
-                            <!-- Removido o opacity:0 nativo dos anéis de carga -->
-                            <path id="cpu-load-fill" d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                            <path id="gpu-load-fill" d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="cpu-load-fill" d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
+                            <path id="gpu-load-fill" d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
                             
                             <path d="M 170,330 A 160 160 0 0 1 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
                             <path d="M 170,330 A 160 160 0 0 0 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
@@ -312,8 +309,7 @@
                         <span id="gpu-t">--</span><span class="unit">°C</span><span id="gpu-fire" style="font-size: 14px; margin-left: 3px;"></span>
                     </div>
 
-                    <!-- Removido o opacity:0 -->
-                    <div id="gpu-l-num" class="hw-number" style="display: none;">
+                    <div id="gpu-l-num" class="hw-number" style="display: none; opacity: 0;">
                         <span id="gpu-l">--</span><span class="unit">%</span>
                     </div>
 
@@ -348,6 +344,9 @@
         
         let cpuTemp = '--'; let cpuLoad = '--';
         let gpuTemp = '--'; let gpuLoad = '--';
+
+        let cpuLoadTimer = null; let gpuLoadTimer = null;
+        let cpuLoadVisible = false; let gpuLoadVisible = false;
 
         const cache = {
             cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null
@@ -422,40 +421,27 @@
                     let vals = e.data.substring(3).split(',').map(parseFloat);
                     
                     if (vals.length === 5) {
-                        let cover = document.querySelector('.cover-circle');
+                        let bass = vals[0]; // Frequência do grave
                         
-                        // 1. Lógica para pulsar a capa (PHONK MODE)
+                        // 1. Lógica para pulsar a capa
+                        let cover = document.querySelector('.cover-circle');
                         if (cover) {
-                            let bass = vals[0];
-                            // Curva exponencial: Batidas fracas afetam pouco, batidas fortes explodem
-                            let punch = Math.pow(bass, 1.4); 
-                            
-                            // Aumenta o cap para a capa crescer mais (até 40% a mais)
-                            let scaleAmount = 1 + Math.min(punch * 0.08, 0.4); 
-                            
-                            // Sombra dinâmica (Glow) que acende junto com o grave
-                            let glowSize = Math.min(punch * 15, 50);
-                            let glowAlpha = Math.min(punch * 0.08, 0.8);
-                            
+                            // bass médio é entre 0 a 5 com seu multiplicador de x10.0
+                            // Limitamos o crescimento extra em max 15% (0.15) para não estourar.
+                            let scaleAmount = 1 + Math.min(bass * 0.03, 0.15); 
                             cover.style.transform = `scale(${scaleAmount})`;
-                            cover.style.boxShadow = `0 0 ${glowSize}px rgba(255, 255, 255, ${glowAlpha})`;
                         }
 
-                        // 2. Lógica para animar as barras independentes
+                        // 2. Lógica para animar as barras (se a música estiver sem capa)
                         let bars = document.querySelectorAll('.bars-container .bar');
                         if (bars.length === 5 && !cover) {
-                            // Multiplicadores para compensar a falta de ganho natural nas frequências mais altas
-                            const bandMultipliers = [1.0, 1.3, 1.6, 2.2, 3.5]; 
-                            
                             bars.forEach((bar, idx) => {
+                                // Se houver conexão real com EQ, removemos a animação fantasma do CSS
                                 if (bar.classList.contains('animated')) {
                                     bar.classList.remove('animated');
                                 }
-                                
-                                let adjustedVal = vals[idx] * bandMultipliers[idx];
-                                
-                                // Escala vertical baseada na banda individual (todas podem chegar ao maximo, mas reagem separadas)
-                                let scaleY = 0.2 + Math.min(adjustedVal * 0.45, 2.5);
+                                // Escala vertical baseada nas bandas do seu eq-server
+                                let scaleY = 0.1 + Math.min(vals[idx] * 0.4, 1.6);
                                 bar.style.transform = `scaleY(${scaleY})`;
                             });
                         }
@@ -497,10 +483,8 @@
             textElement.style.transform = `translate(-50%, -50%) scale(${dynamicScale})`;
         }
 
-        // Função removida a necessidade de expand/shrink baseado no load,
-        // pois agora os loads estarão sempre lá se houver leitura.
         function updateCoverState() {
-            if (cpuLoad === '--' && gpuLoad === '--') {
+            if (!cpuLoadVisible && !gpuLoadVisible) {
                 DOM.centerVisual.classList.add('expanded');
             } else {
                 DOM.centerVisual.classList.remove('expanded');
@@ -558,7 +542,28 @@
                         cache.cpuT = cpuTemp;
                     }
 
-                    // CPU LOAD (Sempre visível se existir leitura)
+                    if (cpuLoad !== '--') {
+                        if (cpuLoad >= 40) {
+                            if (cpuLoadTimer) { clearTimeout(cpuLoadTimer); cpuLoadTimer = null; }
+                            if (!cpuLoadVisible) {
+                                cpuLoadVisible = true;
+                                DOM.cpuLNum.style.opacity = '1';
+                                DOM.cpuLoadFill.style.opacity = '1';
+                                updateCoverState(); 
+                            }
+                        } else {
+                            if (cpuLoadVisible && !cpuLoadTimer) {
+                                cpuLoadTimer = setTimeout(() => {
+                                    cpuLoadVisible = false;
+                                    cpuLoadTimer = null;
+                                    DOM.cpuLNum.style.opacity = '0';
+                                    DOM.cpuLoadFill.style.opacity = '0';
+                                    updateCoverState(); 
+                                }, 60000);
+                            }
+                        }
+                    }
+
                     if (cache.cpuL !== cpuLoad) {
                         if (cpuLoad !== '--') {
                             let color = getProgressColor(cpuLoad);
@@ -573,7 +578,6 @@
                             DOM.cpuLoadFill.style.stroke = 'transparent';
                         }
                         cache.cpuL = cpuLoad;
-                        updateCoverState();
                     }
 
                     if (cache.gpuT !== gpuTemp) {
@@ -592,7 +596,28 @@
                         cache.gpuT = gpuTemp;
                     }
 
-                    // GPU LOAD (Sempre visível se existir leitura)
+                    if (gpuLoad !== '--') {
+                        if (gpuLoad >= 40) {
+                            if (gpuLoadTimer) { clearTimeout(gpuLoadTimer); gpuLoadTimer = null; }
+                            if (!gpuLoadVisible) {
+                                gpuLoadVisible = true;
+                                DOM.gpuLNum.style.opacity = '1';
+                                DOM.gpuLoadFill.style.opacity = '1';
+                                updateCoverState(); 
+                            }
+                        } else {
+                            if (gpuLoadVisible && !gpuLoadTimer) {
+                                gpuLoadTimer = setTimeout(() => {
+                                    gpuLoadVisible = false;
+                                    gpuLoadTimer = null;
+                                    DOM.gpuLNum.style.opacity = '0';
+                                    DOM.gpuLoadFill.style.opacity = '0';
+                                    updateCoverState(); 
+                                }, 60000);
+                            }
+                        }
+                    }
+
                     if (cache.gpuL !== gpuLoad) {
                         if (gpuLoad !== '--') {
                             let color = getProgressColor(gpuLoad);
@@ -607,7 +632,6 @@
                             DOM.gpuLoadFill.style.stroke = 'transparent';
                         }
                         cache.gpuL = gpuLoad;
-                        updateCoverState();
                     }
                 }
             }
@@ -719,18 +743,17 @@
             newsInterval = null; }
         }
 
-        // Progresso da Música Corrigido
         setInterval(() => {
             const progContainer = document.getElementById('linear-music-progress');
             const progFill = document.getElementById('linear-music-fill');
 
             if (pTracker.active && pTracker.durSec > 0) {
-                progContainer.style.display = 'block'; // Força a exibição
+                if (progContainer) progContainer.style.display = 'block';
                 
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
                 let percent = pTracker.posSec / pTracker.durSec;
                 
-                progFill.style.transform = `scaleX(${percent})`;
+                if (progFill) progFill.style.transform = `scaleX(${percent})`;
             } else { 
                 if (progContainer) progContainer.style.display = 'none';
             }

@@ -130,7 +130,6 @@
             will-change: transform, opacity;
         }
 
-        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Transição suave adaptada para EQ) */
         .cover-circle { 
             width: 280px;
             height: 280px; 
@@ -139,7 +138,6 @@
             object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
-            /* transição de transform rápida para o pulso, width/height mais lento para UI */
             transition: transform 0.08s ease-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
             will-change: transform, width, height;
         }
@@ -157,7 +155,6 @@
             transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
         }
 
-        /* CLASSE DE EXPANSÃO (Quando as barras de Load somem) */
         #center-visual-container.expanded .cover-circle,
         #center-visual-container.expanded .bars-container {
             width: 310px;
@@ -171,17 +168,17 @@
             border-radius: 6px;
             transform-origin: center;
             transform: scaleY(0.1); 
-            transition: transform 0.08s ease-out; /* Transição rápida para bater com o socket */
+            transition: transform 0.08s ease-out; 
             will-change: transform;
         }
 
-        /* A classe animated original mantida apenas como fallback se o servidor EQ estiver offline */
+        /* Animação fluida e orgânica caso o microserviço caia */
         .bar.animated { animation: bounce-opt 1s ease-in-out infinite alternate; }
-        .bar.animated:nth-child(1) { animation-duration: 0.6s; animation-delay: 0.1s; }
-        .bar.animated:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.4s; }
-        .bar.animated:nth-child(3) { animation-duration: 0.5s; animation-delay: 0.2s; }
-        .bar.animated:nth-child(4) { animation-duration: 0.7s; animation-delay: 0.5s; }
-        .bar.animated:nth-child(5) { animation-duration: 0.9s; animation-delay: 0.3s; }
+        .bar.animated:nth-child(1) { animation-duration: 0.62s; animation-delay: 0.0s; }
+        .bar.animated:nth-child(2) { animation-duration: 0.74s; animation-delay: 0.1s; }
+        .bar.animated:nth-child(3) { animation-duration: 0.53s; animation-delay: 0.2s; }
+        .bar.animated:nth-child(4) { animation-duration: 0.68s; animation-delay: 0.3s; }
+        .bar.animated:nth-child(5) { animation-duration: 0.81s; animation-delay: 0.15s; }
 
         @keyframes bounce-opt {
             0% { transform: scaleY(0.2); }
@@ -384,7 +381,9 @@
         const fallbackBarsFlatHTML = `<div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>`;
         let pTracker = { active: false, posSec: 0, durSec: 0 };
         let wnpConnected = false;
-        let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0 };
+        
+        // Estado atualizado para suportar o Volume
+        let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0, volume: 100 };
         
         // --- WEB NOW PLAYING ---
         function connectWNP() {
@@ -398,6 +397,7 @@
                 else if (d.startsWith('ARTIST:')) wnpState.artist = d.substring(7);
                 else if (d.startsWith('ALBUM:')) wnpState.album = d.substring(6);
                 else if (d.startsWith('COVER:')) wnpState.coverUrl = d.substring(6);
+                else if (d.startsWith('VOLUME:')) wnpState.volume = parseInt(d.substring(7)) || 100;
                 else if (d.startsWith('POSITION:')) {
                     let p = d.substring(9).split(':');
                     wnpState.positionSec = p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]);
@@ -410,7 +410,7 @@
         }
         connectWNP();
 
-        // --- EQUALIZADOR MICROSERVIÇO (Pulsar da Capa / Barras) ---
+        // --- EQUALIZADOR MICROSERVIÇO (Pulsar da Capa / Barras / Volume) ---
         let eqConnected = false;
         function connectEQ() {
             let ws = new WebSocket('ws://127.0.0.1:9000');
@@ -421,27 +421,52 @@
                     let vals = e.data.substring(3).split(',').map(parseFloat);
                     
                     if (vals.length === 5) {
-                        let bass = vals[0]; // Frequência do grave
+                        let bass = vals[0];
                         
-                        // 1. Lógica para pulsar a capa
+                        // O fator de volume agora escala toda a UI (0.0 até 1.0)
+                        let volFactor = (wnpState.volume !== undefined ? wnpState.volume : 100) / 100;
+
+                        // 1. Lógica para pulsar e estremecer a capa
                         let cover = document.querySelector('.cover-circle');
                         if (cover) {
-                            // bass médio é entre 0 a 5 com seu multiplicador de x10.0
-                            // Limitamos o crescimento extra em max 15% (0.15) para não estourar.
-                            let scaleAmount = 1 + Math.min(bass * 0.03, 0.15); 
-                            cover.style.transform = `scale(${scaleAmount})`;
+                            let intensity = bass * volFactor;
+                            
+                            // Escala controlada pelo volume + bass
+                            let scaleAmount = 1 + Math.min(intensity * 0.035, 0.18); 
+                            
+                            // Efeito de estremecer mais sensível e agressivo
+                            let tX = 0, tY = 0;
+                            // Diminuí o limite de 2.0 para 1.2 (vai tremer muito mais fácil)
+                            if (intensity > 1.2) { 
+                                // Aumentei o multiplicador de força e o limite de tremor para 15px
+                                let shakePower = Math.min((intensity - 1.0) * 5, 20); 
+                                tX = (Math.random() * 2 - 1) * shakePower;
+                                tY = (Math.random() * 2 - 1) * shakePower;
+                            }
+                            
+                            cover.style.transform = `translate(${tX}px, ${tY}px) scale(${scaleAmount})`;
                         }
 
-                        // 2. Lógica para animar as barras (se a música estiver sem capa)
+                        // 2. Lógica orgânica para animar as barras
                         let bars = document.querySelectorAll('.bars-container .bar');
                         if (bars.length === 5 && !cover) {
                             bars.forEach((bar, idx) => {
-                                // Se houver conexão real com EQ, removemos a animação fantasma do CSS
                                 if (bar.classList.contains('animated')) {
                                     bar.classList.remove('animated');
                                 }
-                                // Escala vertical baseada nas bandas do seu eq-server
-                                let scaleY = 0.1 + Math.min(vals[idx] * 0.4, 1.6);
+                                
+                                let val = vals[idx];
+                                
+                                // Boost extra na última barra (agudos) para ela destravar
+                                if (idx === 4) val *= 1.8; 
+                                
+                                // Fator orgânico para acabar com o "padrão escada"
+                                let organicFactor = 1 + (Math.random() * 0.3 - 0.15); 
+                                
+                                // Altura máxima cortada pelo volume do player
+                                let maxScale = 0.1 + (2.0 * volFactor);
+                                let scaleY = 0.1 + Math.min(val * 0.45 * volFactor * organicFactor, maxScale);
+                                
                                 bar.style.transform = `scaleY(${scaleY})`;
                             });
                         }

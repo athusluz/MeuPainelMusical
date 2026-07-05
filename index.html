@@ -13,22 +13,16 @@
             user-select: none;
         }
 
-        /* FORÇANDO O KRAKEN A RESPEITAR OS LIMITES E REMOVENDO BARRAS DE ROLAGEM FANTASMAS */
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #050505;
-        }
-
         body { 
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            width: 100vw;
+            height: 100vh;
             color: #fff; 
-            /* Trava o body exatamente no tamanho do display */
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden;
+            position: relative;
         }
 
         #bg-layer {
@@ -60,18 +54,14 @@
         #glass-overlay.fire-tint { background: rgba(180, 20, 50, 0.45) !important; }
         #glass-overlay.ice-tint { background: rgba(0, 100, 150, 0.45) !important; }
 
-        /* CENTRALIZAÇÃO ABSOLUTA IGNORANDO AS BORDAS DO NZXT CAM */
         #music-widget { 
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            position: relative;
             z-index: 3;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            width: 90%;
+            width: 85%;
         }
 
         .dashboard-container {
@@ -140,6 +130,7 @@
             will-change: transform, opacity;
         }
 
+        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Transição suave adaptada para EQ) */
         .cover-circle { 
             width: 280px;
             height: 280px; 
@@ -148,6 +139,7 @@
             object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
+            /* transição de transform rápida para o pulso, width/height mais lento para UI */
             transition: transform 0.08s ease-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
             will-change: transform, width, height;
         }
@@ -165,6 +157,7 @@
             transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
         }
 
+        /* CLASSE DE EXPANSÃO (Quando as barras de Load somem) */
         #center-visual-container.expanded .cover-circle,
         #center-visual-container.expanded .bars-container {
             width: 310px;
@@ -178,10 +171,11 @@
             border-radius: 6px;
             transform-origin: center;
             transform: scaleY(0.1); 
-            transition: transform 0.08s ease-out; 
+            transition: transform 0.08s ease-out; /* Transição rápida para bater com o socket */
             will-change: transform;
         }
 
+        /* A classe animated original mantida apenas como fallback se o servidor EQ estiver offline */
         .bar.animated { animation: bounce-opt 1s ease-in-out infinite alternate; }
         .bar.animated:nth-child(1) { animation-duration: 0.6s; animation-delay: 0.1s; }
         .bar.animated:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.4s; }
@@ -230,7 +224,10 @@
             transition: opacity 0.5s ease-in-out;
         }
 
-        .artist.news-mode { font-size: 18px; color: #ccc; }
+        .artist.news-mode {
+            font-size: 18px;
+            color: #ccc;
+        }
 
         .album {
             color: #e0e0e0;
@@ -389,6 +386,7 @@
         let wnpConnected = false;
         let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0 };
         
+        // --- WEB NOW PLAYING ---
         function connectWNP() {
             let ws = new WebSocket('ws://127.0.0.1:8999');
             ws.onopen = () => wnpConnected = true;
@@ -412,6 +410,7 @@
         }
         connectWNP();
 
+        // --- EQUALIZADOR MICROSERVIÇO (Pulsar da Capa / Barras) ---
         let eqConnected = false;
         function connectEQ() {
             let ws = new WebSocket('ws://127.0.0.1:9000');
@@ -422,25 +421,28 @@
                     let vals = e.data.substring(3).split(',').map(parseFloat);
                     
                     if (vals.length === 5) {
-                        let bass = vals[0]; 
+                        let bass = vals[0]; // Frequência do grave
                         
+                        // 1. Lógica para pulsar a capa
                         let cover = document.querySelector('.cover-circle');
                         if (cover) {
-                            // REDUZIDO: Sensibilidade de crescimento da capa do disco.
-                            // Agora o multiplicador é 0.015 em vez de 0.03, e o limite máximo de expansão é de 8% (0.08)
-                            let scaleAmount = 1 + Math.min(bass * 1.0, 0.08); 
+                            // APLICADO O AJUSTE PARA QUEM ESCUTA BAIXO:
+                            // Multiplicador em 0.015 e limite de expansão máximo em 8% (0.08)
+                            let scaleAmount = 1 + Math.min(bass * 0.015, 0.08); 
                             cover.style.transform = `scale(${scaleAmount})`;
                         }
 
+                        // 2. Lógica para animar as barras (se a música estiver sem capa)
                         let bars = document.querySelectorAll('.bars-container .bar');
                         if (bars.length === 5 && !cover) {
                             bars.forEach((bar, idx) => {
+                                // Se houver conexão real com EQ, removemos a animação fantasma do CSS
                                 if (bar.classList.contains('animated')) {
                                     bar.classList.remove('animated');
                                 }
-                                // REDUZIDO: Sensibilidade de altura das 5 barras na tela de descanso.
-                                // Agora o multiplicador é 0.15 (menos da metade anterior) e a altura máxima contida em 1.2
-                                let scaleY = 0.1 + Math.min(vals[idx] * 1.1, 1.2);
+                                // APLICADO O AJUSTE PARA QUEM ESCUTA BAIXO NAS BARRAS:
+                                // Multiplicador base e teto de altura reduzidos
+                                let scaleY = 0.1 + Math.min(vals[idx] * 0.15, 1.2);
                                 bar.style.transform = `scaleY(${scaleY})`;
                             });
                         }
@@ -502,6 +504,7 @@
                     }
                     
                     if (gpus?.length > 0) { 
+                        // ISOLANDO A PLACA DEDICADA 
                         let targetGpu = gpus.find(g => g.name.toLowerCase().includes("4060")) || gpus[gpus.length - 1];
                         gpuTemp = Math.round(targetGpu.temperature);
                         let gLoad = targetGpu.load !== undefined ? targetGpu.load : (targetGpu.usage !== undefined ? targetGpu.usage : 0);

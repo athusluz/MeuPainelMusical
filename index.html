@@ -428,7 +428,7 @@
                         if (cover) {
                             // REDUZIDO: Sensibilidade de crescimento da capa do disco.
                             // Agora o multiplicador é 0.015 em vez de 0.03, e o limite máximo de expansão é de 8% (0.08)
-                            let scaleAmount = 1 + Math.min(bass * 0.015, 0.08); 
+                            let scaleAmount = 1 + Math.min(bass * 0.005, 0.03); 
                             cover.style.transform = `scale(${scaleAmount})`;
                         }
 
@@ -440,7 +440,7 @@
                                 }
                                 // REDUZIDO: Sensibilidade de altura das 5 barras na tela de descanso.
                                 // Agora o multiplicador é 0.15 (menos da metade anterior) e a altura máxima contida em 1.2
-                                let scaleY = 0.1 + Math.min(vals[idx] * 0.15, 1.2);
+                                let scaleY = 0.1 + Math.min(vals[idx] * 0.15, 1.1);
                                 bar.style.transform = `scaleY(${scaleY})`;
                             });
                         }

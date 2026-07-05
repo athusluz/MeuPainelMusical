@@ -1,3 +1,130 @@
+Fico muito feliz que as dicas tenham feito sentido para você! A ideia é justamente deixar o projeto o mais otimizado e profissional possível.
+
+Como você ainda não programa, preparei os dois arquivos completos para você apenas copiar e colar. Eu unifiquei os dois servidores Node em um único arquivo `server.js` (para você não precisar abrir dois terminais) e apliquei todas as correções no HTML, incluindo a regra exata para que o painel mostre o uso e temperatura da sua RTX 4060, ignorando o vídeo integrado.
+
+### Passo 1: Instalar a biblioteca de Matemática (FFT)
+
+Como vamos usar a Transformada de Fourier (FFT) para separar os graves, médios e agudos de verdade, precisamos adicionar uma biblioteca pequena ao seu projeto.
+No terminal, dentro da pasta do seu projeto, rode:
+`npm install fft-js`
+
+---
+
+### Passo 2: O Novo `server.js` (Unificado)
+
+Apague o arquivo antigo do `eq-server.js`. Agora você só precisará rodar este único arquivo `server.js`. Ele sobe as duas portas (8999 e 9000), aplica o limite de 30 FPS para não travar o PC e usa a matemática do FFT.
+
+```javascript
+const WebSocket = require('ws');
+const portAudio = require('naudiodon');
+const fft = require('fft-js').fft;
+const fftUtil = require('fft-js').util;
+
+console.log("=== Iniciando Sistema do Kraken V6 ===");
+
+// ---------------------------------------------------------
+// 1. SERVIDOR WEBNOWPLAYING (Porta 8999)
+// ---------------------------------------------------------
+const wssWnp = new WebSocket.Server({ port: 8999 });
+console.log("[+] Servidor WebNowPlaying aguardando na porta 8999...");
+
+wssWnp.on('connection', ws => {
+    ws.on('message', msg => {
+        const msgStr = msg.toString();
+        wssWnp.clients.forEach(client => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+                client.send(msgStr);
+            }
+        });
+    });
+    ws.on('error', console.error);
+});
+
+// ---------------------------------------------------------
+// 2. SERVIDOR EQUALIZADOR FFT (Porta 9000)
+// ---------------------------------------------------------
+const wssEq = new WebSocket.Server({ port: 9000 });
+console.log("[+] Microserviço Equalizador aguardando na porta 9000...");
+
+// Procura o dispositivo de Loopback (captura do desktop)
+const devices = portAudio.getDevices();
+const targetDevice = devices.find(d => 
+    (d.name.toLowerCase().includes('misturador') || 
+     d.name.toLowerCase().includes('mix') ||
+     d.hostAPIName.includes('WASAPI')) && d.maxInputChannels > 0
+);
+
+console.log(`[EQ] Escutando áudio em: ${targetDevice ? targetDevice.name : 'Padrão do Sistema'}`);
+
+const ai = new portAudio.AudioIO({
+  inOptions: {
+    channelCount: 1, // Transformado em Mono para facilitar o cálculo do FFT
+    sampleFormat: portAudio.SampleFormat16Bit,
+    sampleRate: 44100,
+    deviceId: targetDevice ? targetDevice.id : -1,
+    closeOnError: false
+  }
+});
+
+let lastSendTime = 0;
+const FPS_LIMIT = 1000 / 30; // Limita o envio via WebSocket para ~30 FPS
+
+ai.on('data', buf => {
+    if (wssEq.clients.size === 0) return; // Não processa se o Kraken não estiver conectado
+    
+    const now = Date.now();
+    if (now - lastSendTime < FPS_LIMIT) return; 
+    lastSendTime = now;
+
+    // O FFT exige que a amostra seja potência de 2 (ex: 512)
+    const sampleSize = 512; 
+    if (buf.length < sampleSize * 2) return;
+
+    let signal = [];
+    for (let i = 0; i < sampleSize; i++) {
+        // Converte os bytes do áudio bruto em valores decimais
+        signal.push(buf.readInt16LE(i * 2) / 32768.0);
+    }
+
+    try {
+        const phasors = fft(signal);
+        const magnitudes = fftUtil.fftMag(phasors); // Transforma em frequências (Hz)
+
+        // Função para calcular a média de uma faixa de frequências
+        const getAverage = (startBin, endBin) => {
+            let sum = 0;
+            for (let i = startBin; i <= endBin; i++) sum += magnitudes[i];
+            return sum / (endBin - startBin + 1);
+        };
+
+        // Divide o som em 5 faixas reais e aplica multiplicadores
+        let b1 = getAverage(1, 4) * 8.0;   // Graves (Bumbo)
+        let b2 = getAverage(5, 12) * 12.0; // Médio-Graves
+        let b3 = getAverage(13, 30) * 18.0;// Médios (Voz)
+        let b4 = getAverage(31, 70) * 22.0;// Médio-Agudos
+        let b5 = getAverage(71, 150) * 28.0;// Agudos (Pratos)
+
+        const msg = `EQ:${b1.toFixed(2)},${b2.toFixed(2)},${b3.toFixed(2)},${b4.toFixed(2)},${b5.toFixed(2)}`;
+        
+        wssEq.clients.forEach(c => {
+            if (c.readyState === WebSocket.OPEN) c.send(msg);
+        });
+    } catch(e) {
+        // Ignora erros silenciosos caso o buffer venha quebrado do Windows
+    }
+});
+
+ai.start();
+
+```
+
+---
+
+### Passo 3: O Novo `Index15 com beat - Copia.html`
+
+Aqui, as tags do DOM agora são estáticas, acabando com a perda de performance, e a lógica da API do NZXT busca diretamente a RTX 4060, isolando o vídeo integrado no cálculo.
+
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -86,10 +213,7 @@
 
         #hardware-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
             pointer-events: none;
@@ -123,14 +247,12 @@
             justify-content: center;
             align-items: center;
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(1);
             transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
             will-change: transform, opacity;
         }
 
-        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Transição suave adaptada para EQ) */
         .cover-circle { 
             width: 280px;
             height: 280px; 
@@ -138,8 +260,7 @@
             border: 4px solid rgba(255, 255, 255, 0.8); 
             object-fit: cover;
             aspect-ratio: 1 / 1; 
-            display: block;
-            /* transição de transform rápida para o pulso, width/height mais lento para UI */
+            display: none; /* Controlado via JS agora */
             transition: transform 0.08s ease-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
             will-change: transform, width, height;
         }
@@ -157,7 +278,6 @@
             transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
         }
 
-        /* CLASSE DE EXPANSÃO (Quando as barras de Load somem) */
         #center-visual-container.expanded .cover-circle,
         #center-visual-container.expanded .bars-container {
             width: 310px;
@@ -171,21 +291,8 @@
             border-radius: 6px;
             transform-origin: center;
             transform: scaleY(0.1); 
-            transition: transform 0.08s ease-out; /* Transição rápida para bater com o socket */
+            transition: transform 0.08s ease-out; 
             will-change: transform;
-        }
-
-        /* A classe animated original mantida apenas como fallback se o servidor EQ estiver offline */
-        .bar.animated { animation: bounce-opt 1s ease-in-out infinite alternate; }
-        .bar.animated:nth-child(1) { animation-duration: 0.6s; animation-delay: 0.1s; }
-        .bar.animated:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.4s; }
-        .bar.animated:nth-child(3) { animation-duration: 0.5s; animation-delay: 0.2s; }
-        .bar.animated:nth-child(4) { animation-duration: 0.7s; animation-delay: 0.5s; }
-        .bar.animated:nth-child(5) { animation-duration: 0.9s; animation-delay: 0.3s; }
-
-        @keyframes bounce-opt {
-            0% { transform: scaleY(0.2); }
-            100% { transform: scaleY(1.2); }
         }
 
         .title { 
@@ -224,10 +331,7 @@
             transition: opacity 0.5s ease-in-out;
         }
 
-        .artist.news-mode {
-            font-size: 18px;
-            color: #ccc;
-        }
+        .artist.news-mode { font-size: 18px; color: #ccc; }
 
         .album {
             color: #e0e0e0;
@@ -261,10 +365,6 @@
             transition: transform 1s linear;
             will-change: transform;
         }
-
-        svg path {
-            will-change: stroke-dashoffset, stroke;
-        }
     </style>
 </head>
 <body>
@@ -279,7 +379,11 @@
             <div class="cover-wrapper">
                 
                 <div id="center-visual-container" class="expanded">
-                    <div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+                    <!-- Elementos fixos no DOM para evitar lags -->
+                    <img id="cover-img" class="cover-circle" src="">
+                    <div id="eq-bars" class="bars-container">
+                        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                    </div>
                 </div>
 
                 <div id="hardware-layer">
@@ -356,6 +460,8 @@
             hwLayer: document.getElementById('hardware-layer'),
             bgLayer: document.getElementById('bg-layer'),
             centerVisual: document.getElementById('center-visual-container'),
+            coverImg: document.getElementById('cover-img'),
+            eqBars: document.getElementById('eq-bars'),
             title: document.getElementById('info-title'),
             artist: document.getElementById('info-artist'),
             album: document.getElementById('info-album'),
@@ -380,11 +486,10 @@
             gpuLText: document.getElementById('gpu-l')
         };
 
-        const fallbackBarsAnimatedHTML = `<div class="bars-container"><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div></div>`;
-        const fallbackBarsFlatHTML = `<div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>`;
         let pTracker = { active: false, posSec: 0, durSec: 0 };
         let wnpConnected = false;
         let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0 };
+        let coverIsVisible = false;
         
         // --- WEB NOW PLAYING ---
         function connectWNP() {
@@ -410,7 +515,7 @@
         }
         connectWNP();
 
-        // --- EQUALIZADOR MICROSERVIÇO (Pulsar da Capa / Barras) ---
+        // --- EQUALIZADOR MICROSERVIÇO ---
         let eqConnected = false;
         function connectEQ() {
             let ws = new WebSocket('ws://127.0.0.1:9000');
@@ -421,29 +526,19 @@
                     let vals = e.data.substring(3).split(',').map(parseFloat);
                     
                     if (vals.length === 5) {
-                        let bass = vals[0]; // Frequência do grave
+                        let bass = vals[0]; 
                         
-                        // 1. Lógica para pulsar a capa
-                        let cover = document.querySelector('.cover-circle');
-                        if (cover) {
-                            // bass médio é entre 0 a 5 com seu multiplicador de x10.0
-                            // Limitamos o crescimento extra em max 15% (0.15) para não estourar.
+                        if (coverIsVisible) {
                             let scaleAmount = 1 + Math.min(bass * 0.03, 0.15); 
-                            cover.style.transform = `scale(${scaleAmount})`;
-                        }
-
-                        // 2. Lógica para animar as barras (se a música estiver sem capa)
-                        let bars = document.querySelectorAll('.bars-container .bar');
-                        if (bars.length === 5 && !cover) {
-                            bars.forEach((bar, idx) => {
-                                // Se houver conexão real com EQ, removemos a animação fantasma do CSS
-                                if (bar.classList.contains('animated')) {
-                                    bar.classList.remove('animated');
-                                }
-                                // Escala vertical baseada nas bandas do seu eq-server
-                                let scaleY = 0.1 + Math.min(vals[idx] * 0.4, 1.6);
-                                bar.style.transform = `scaleY(${scaleY})`;
-                            });
+                            DOM.coverImg.style.transform = `scale(${scaleAmount})`;
+                        } else {
+                            let bars = DOM.eqBars.querySelectorAll('.bar');
+                            if (bars.length === 5) {
+                                bars.forEach((bar, idx) => {
+                                    let scaleY = 0.1 + Math.min(vals[idx] * 0.4, 1.6);
+                                    bar.style.transform = `scaleY(${scaleY})`;
+                                });
+                            }
                         }
                     }
                 }
@@ -464,13 +559,10 @@
 
             const numericValue = Math.min(value, 100);
             const p = numericValue / 100;
-            
             const currentLength = p * totalLength;
             pathElement.style.strokeDashoffset = totalLength - currentLength;
 
-            const cx = 170;
-            const cy = 170;
-            
+            const cx = 170; const cy = 170;
             const alpha = Math.PI / 2 + (isCpu ? -1 : 1) * (p * Math.PI);
             
             const finalX = cx - targetRadius * Math.sin(alpha);
@@ -503,7 +595,9 @@
                     }
                     
                     if (gpus?.length > 0) { 
-                        let targetGpu = gpus.length > 1 ? gpus[1] : gpus[0];
+                        // FIX: Garante que o widget leia os dados da RTX 4060, ignorando o vídeo integrado do processador
+                        let targetGpu = gpus.find(g => g.name.toLowerCase().includes("4060")) || gpus[gpus.length - 1];
+                        
                         gpuTemp = Math.round(targetGpu.temperature);
                         let gLoad = targetGpu.load !== undefined ? targetGpu.load : (targetGpu.usage !== undefined ? targetGpu.usage : 0);
                         gpuLoad = Math.round(gLoad <= 1 && gLoad > 0 ? gLoad * 100 : gLoad);
@@ -534,7 +628,6 @@
                             DOM.cpuTNum.style.display = 'flex';
                             DOM.cpuTText.innerText = cpuTemp;
                             DOM.cpuTFire.innerText = cpuTemp > 50 ? '🔥' : '';
-                            
                             updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 174, 503, true); 
                         } else {
                             DOM.cpuTNum.style.display = 'none';
@@ -570,7 +663,6 @@
                             DOM.cpuLoadFill.style.stroke = color; 
                             DOM.cpuLNum.style.color = color;
                             DOM.cpuLText.innerText = cpuLoad;
-                            
                             updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 471, true); 
                             DOM.cpuLNum.style.display = 'flex'; 
                         } else {
@@ -588,7 +680,6 @@
                             DOM.gpuTNum.style.display = 'flex';
                             DOM.gpuTText.innerText = gpuTemp;
                             DOM.gpuTFire.innerText = gpuTemp > 50 ? '🔥' : '';
-                            
                             updateTrackPositionOpt(DOM.gpuBarFill, DOM.gpuTNum, gpuTemp, 174, 503, false); 
                         } else {
                             DOM.gpuTNum.style.display = 'none';
@@ -624,7 +715,6 @@
                             DOM.gpuLoadFill.style.stroke = color; 
                             DOM.gpuLNum.style.color = color;
                             DOM.gpuLText.innerText = gpuLoad;
-                            
                             updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 471, false); 
                             DOM.gpuLNum.style.display = 'flex';
                         } else {
@@ -636,7 +726,7 @@
                 }
             }
         };
-        
+
         function preloadImageAndUpdate(imageUrl, updateCallback) {
             const fadeDuration = 500;
             const startTime = Date.now();
@@ -680,7 +770,11 @@
             DOM.title.innerText = 'Só silencio...'; DOM.artist.innerText = '';
             DOM.bgLayer.style.backgroundImage = 'none'; 
             DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
-            DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
+            
+            DOM.coverImg.style.display = 'none';
+            DOM.eqBars.style.display = 'flex';
+            coverIsVisible = false;
+            
             DOM.hwLayer.style.opacity = 0; 
         }
 
@@ -689,17 +783,13 @@
                 stopNewsCycle();
                 DOM.centerVisual.style.opacity = 0;
                 DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
-                DOM.title.style.opacity = 0;
-                DOM.artist.style.opacity = 0;
-                DOM.album.style.opacity = 0;
+                DOM.title.style.opacity = 0; DOM.artist.style.opacity = 0; DOM.album.style.opacity = 0;
 
                 setTimeout(() => {
                     showSilenceState();
                     DOM.centerVisual.style.opacity = 1;
                     DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
-                    DOM.title.style.opacity = 1;
-                    DOM.artist.style.opacity = 1;
-                    DOM.album.style.opacity = 1;
+                    DOM.title.style.opacity = 1; DOM.artist.style.opacity = 1; DOM.album.style.opacity = 1;
                 }, 500);
                 return;
             }
@@ -710,9 +800,14 @@
             DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg';
             
             if (newsItem.image) {
-                DOM.centerVisual.innerHTML = `<img class="cover-circle" src="${newsItem.image}">`;
+                DOM.coverImg.src = newsItem.image;
+                DOM.coverImg.style.display = 'block';
+                DOM.eqBars.style.display = 'none';
+                coverIsVisible = true;
             } else {
-                DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
+                DOM.coverImg.style.display = 'none';
+                DOM.eqBars.style.display = 'flex';
+                coverIsVisible = false;
             }
 
             DOM.title.className = 'title news-mode';
@@ -739,8 +834,7 @@
         }
 
         function stopNewsCycle() {
-            if (newsInterval) { clearInterval(newsInterval);
-            newsInterval = null; }
+            if (newsInterval) { clearInterval(newsInterval); newsInterval = null; }
         }
 
         setInterval(() => {
@@ -852,9 +946,7 @@
                 currentStatus = status;
                 DOM.centerVisual.style.opacity = 0;
                 DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
-                DOM.title.style.opacity = 0;
-                DOM.artist.style.opacity = 0;
-                DOM.album.style.opacity = 0;
+                DOM.title.style.opacity = 0; DOM.artist.style.opacity = 0; DOM.album.style.opacity = 0;
 
                 let coverUrl = dc;
                 if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
@@ -866,11 +958,16 @@
                     if (coverUrl) {
                         DOM.bgLayer.style.backgroundImage = `url('${coverUrl}')`;
                         DOM.bgLayer.className = '';
-                        DOM.centerVisual.innerHTML = `<img class="cover-circle" src="${coverUrl}">`;
+                        DOM.coverImg.src = coverUrl;
+                        DOM.coverImg.style.display = 'block';
+                        DOM.eqBars.style.display = 'none';
+                        coverIsVisible = true;
                     } else {
                         DOM.bgLayer.style.backgroundImage = 'none';
                         DOM.bgLayer.className = 'dark-bg';
-                        DOM.centerVisual.innerHTML = fallbackBarsAnimatedHTML;
+                        DOM.coverImg.style.display = 'none';
+                        DOM.eqBars.style.display = 'flex';
+                        coverIsVisible = false;
                     }
 
                     DOM.title.className = 'title'; DOM.artist.className = 'artist'; DOM.album.style.display = 'block';
@@ -880,9 +977,7 @@
                     
                     DOM.centerVisual.style.opacity = 1;
                     DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
-                    DOM.title.style.opacity = 1;
-                    DOM.artist.style.opacity = 1;
-                    DOM.album.style.opacity = 1;
+                    DOM.title.style.opacity = 1; DOM.artist.style.opacity = 1; DOM.album.style.opacity = 1;
                 });
             }
         }
@@ -892,3 +987,5 @@
     </script>
 </body>
 </html>
+
+```

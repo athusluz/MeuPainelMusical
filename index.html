@@ -130,6 +130,7 @@
             will-change: transform, opacity;
         }
 
+        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Transição suave adaptada para EQ) */
         .cover-circle { 
             width: 280px;
             height: 280px; 
@@ -138,8 +139,11 @@
             object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
+            /* transição de transform rápida para o pulso, width/height mais lento para UI */
             transition: transform 0.08s ease-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
             will-change: transform, width, height;
+            transform: translateZ(0); /* Otimização GPU */
+            backface-visibility: hidden; /* Otimização GPU */
         }
 
         .bars-container {
@@ -167,9 +171,10 @@
             background-color: rgba(255, 255, 255, 0.7);
             border-radius: 6px;
             transform-origin: center;
-            transform: scaleY(0.1); 
+            transform: scaleY(0.1) translateZ(0); /* Otimização GPU */
             transition: transform 0.08s ease-out; 
             will-change: transform;
+            backface-visibility: hidden;
         }
 
         .bar.animated { animation: bounce-opt 1s ease-in-out infinite alternate; }
@@ -180,8 +185,8 @@
         .bar.animated:nth-child(5) { animation-duration: 0.9s; animation-delay: 0.3s; }
 
         @keyframes bounce-opt {
-            0% { transform: scaleY(0.2); }
-            100% { transform: scaleY(1.2); }
+            0% { transform: scaleY(0.2) translateZ(0); }
+            100% { transform: scaleY(1.2) translateZ(0); }
         }
 
         .title { 
@@ -344,7 +349,6 @@
         let cpuLoadTimer = null; let gpuLoadTimer = null;
         let cpuLoadVisible = false; let gpuLoadVisible = false;
         
-        // Novo timer para evitar que a notícia apareça em pausas rápidas
         let silenceTimer = null; 
 
         const cache = {
@@ -411,7 +415,7 @@
 
         // --- EQUALIZADOR COM GANHO AUTOMÁTICO (Auto-Gain) ---
         let eqConnected = false;
-        let autoGainPeak = [0.001, 0.001, 0.001, 0.001, 0.001]; // Memória de pico de cada banda
+        let autoGainPeak = [0.001, 0.001, 0.001, 0.001, 0.001];
 
         function connectEQ() {
             let ws = new WebSocket('ws://127.0.0.1:9000');
@@ -422,23 +426,17 @@
                     let vals = e.data.substring(3).split(',').map(parseFloat);
                     
                     if (vals.length === 5) {
-                        
-                        // Atualiza a memória de picos dinâmicos (Compressão Dinâmica)
                         for(let i=0; i<5; i++) {
-                            // Reduz a memória aos poucos (98%) para se adaptar a trechos/volumes mais baixos
                             autoGainPeak[i] = autoGainPeak[i] * 0.98; 
-                            // Se o volume atual é maior que a memória, ele se torna o novo pico
                             if(vals[i] > autoGainPeak[i]) autoGainPeak[i] = vals[i];
                         }
                         
                         let cover = document.querySelector('.cover-circle');
                         if (cover) {
-                            // NORMALIZAÇÃO: transforma o valor de grave bruto em uma escala de 0 a 1 em relação ao pico recente.
                             let normBass = vals[0] / autoGainPeak[0];
-                            
-                            // Aplica a escala: Base(1) + (valor de 0 a 1 multiplicado pelo aumento máximo de 8%)
-                            let scaleAmount = 1 + (normBass * 0.08); 
-                            cover.style.transform = `scale(${scaleAmount})`;
+                            // Escala ajustada de 8% para 12% para um pulso mais vísivel + Força uso da GPU
+                            let scaleAmount = 1 + (normBass * 0.12); 
+                            cover.style.transform = `scale(${scaleAmount}) translateZ(0)`;
                         }
 
                         let bars = document.querySelectorAll('.bars-container .bar');
@@ -447,12 +445,9 @@
                                 if (bar.classList.contains('animated')) {
                                     bar.classList.remove('animated');
                                 }
-                                // NORMALIZAÇÃO: O mesmo conceito aplicado a cada barra de forma independente
                                 let normVal = vals[idx] / autoGainPeak[idx];
-                                
-                                // Escala vertical base 0.1, somado à resposta dinâmica até 1.2
                                 let scaleY = 0.1 + (normVal * 1.2);
-                                bar.style.transform = `scaleY(${scaleY})`;
+                                bar.style.transform = `scaleY(${scaleY}) translateZ(0)`;
                             });
                         }
                     }
@@ -513,7 +508,6 @@
                     }
                     
                     if (gpus?.length > 0) { 
-                        // ISOLANDO A PLACA DEDICADA 
                         let targetGpu = gpus.find(g => g.name.toLowerCase().includes("4060")) || gpus[gpus.length - 1];
                         gpuTemp = Math.round(targetGpu.temperature);
                         let gLoad = targetGpu.load !== undefined ? targetGpu.load : (targetGpu.usage !== undefined ? targetGpu.usage : 0);
@@ -877,9 +871,16 @@
                 DOM.album.style.opacity = 0;
 
                 let coverUrl = dc;
-                if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f') || coverUrl.includes('ytimg.com')) {
+                let isYouTube = coverUrl && coverUrl.includes('ytimg.com');
+                
+                // LÓGICA DO SORTEIO (50% de chance de manter YT se for do YouTube)
+                if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f') || (isYouTube && Math.random() > 0.5)) {
                     let q = cleanStringForSearch(`${sn} ${an}`);
-                    coverUrl = await fetchItunesCover(q);
+                    let fetchedCover = await fetchItunesCover(q);
+                    // Só substitui se o iTunes realmente encontrar algo
+                    if (fetchedCover) {
+                        coverUrl = fetchedCover;
+                    }
                 }
 
                 preloadImageAndUpdate(coverUrl, () => {

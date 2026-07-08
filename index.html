@@ -140,8 +140,6 @@
             display: block;
             transition: transform 0.08s ease-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
             will-change: transform, width, height;
-            transform: translateZ(0); /* Força aceleração de hardware pela GPU */
-            backface-visibility: hidden;
         }
 
         .bars-container {
@@ -169,10 +167,9 @@
             background-color: rgba(255, 255, 255, 0.7);
             border-radius: 6px;
             transform-origin: center;
-            transform: scaleY(0.1) translateZ(0); /* Otimizado para GPU */
+            transform: scaleY(0.1); 
             transition: transform 0.08s ease-out; 
             will-change: transform;
-            backface-visibility: hidden;
         }
 
         .bar.animated { animation: bounce-opt 1s ease-in-out infinite alternate; }
@@ -183,8 +180,8 @@
         .bar.animated:nth-child(5) { animation-duration: 0.9s; animation-delay: 0.3s; }
 
         @keyframes bounce-opt {
-            0% { transform: scaleY(0.2) translateZ(0); }
-            100% { transform: scaleY(1.2) translateZ(0); }
+            0% { transform: scaleY(0.2); }
+            100% { transform: scaleY(1.2); }
         }
 
         .title { 
@@ -326,6 +323,8 @@
     </div>
 
     <script>
+        const USERNAME = 'athusluz'; 
+        const API_KEY = 'fc951f4fa2b53280f062eb4d47e7810b';
         const RSS_FEEDS = {
             'g1': { url: 'https://g1.globo.com/rss/g1/', name: 'G1' },
             'esports': { url: 'https://ge.globo.com/rss/esports/', name: 'e-Sports' },
@@ -337,13 +336,16 @@
         let currentNewsIndex = 0;
         let newsInterval = null;
         let lastNewsFetchTime = 0;
-        let currentStatus = ''; 
+        let currentTrackUrl = ''; let currentStatus = ''; 
         
         let cpuTemp = '--'; let cpuLoad = '--';
         let gpuTemp = '--'; let gpuLoad = '--';
 
         let cpuLoadTimer = null; let gpuLoadTimer = null;
         let cpuLoadVisible = false; let gpuLoadVisible = false;
+        
+        // Novo timer para evitar que a notícia apareça em pausas rápidas
+        let silenceTimer = null; 
 
         const cache = {
             cpuT: null, cpuL: null, gpuT: null, gpuL: null, glassClass: null
@@ -380,14 +382,14 @@
         const fallbackBarsAnimatedHTML = `<div class="bars-container"><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div><div class="bar animated"></div></div>`;
         const fallbackBarsFlatHTML = `<div class="bars-container"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>`;
         let pTracker = { active: false, posSec: 0, durSec: 0 };
-        
+        let wnpConnected = false;
         let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0 };
         
-        // --- WEB NOW PLAYING DE METADADOS ---
+        // --- WEB NOW PLAYING ---
         function connectWNP() {
             let ws = new WebSocket('ws://127.0.0.1:8999');
-            ws.onopen = () => console.log('Canal de Metadados Conectado');
-            ws.onclose = () => { setTimeout(connectWNP, 5000); };
+            ws.onopen = () => wnpConnected = true;
+            ws.onclose = () => { wnpConnected = false; setTimeout(connectWNP, 10000); };
             ws.onmessage = (e) => {
                 const d = e.data;
                 if (d.startsWith('STATE:')) wnpState.state = parseInt(d.substring(6));
@@ -398,13 +400,10 @@
                 else if (d.startsWith('POSITION:')) {
                     let p = d.substring(9).split(':');
                     wnpState.positionSec = p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]);
-                    pTracker.posSec = wnpState.positionSec;
                 }
                 else if (d.startsWith('DURATION:')) {
                     let p = d.substring(9).split(':');
                     wnpState.durationSec = p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]);
-                    pTracker.durSec = wnpState.durationSec;
-                    pTracker.active = wnpState.durationSec > 0;
                 }
             };
         }
@@ -412,24 +411,32 @@
 
         // --- EQUALIZADOR COM GANHO AUTOMÁTICO (Auto-Gain) ---
         let eqConnected = false;
-        let autoGainPeak = [0.001, 0.001, 0.001, 0.001, 0.001]; 
+        let autoGainPeak = [0.001, 0.001, 0.001, 0.001, 0.001]; // Memória de pico de cada banda
 
         function connectEQ() {
             let ws = new WebSocket('ws://127.0.0.1:9000');
-            ws.onopen = () => { eqConnected = true; };
+            ws.onopen = () => { console.log('EQ conectado'); eqConnected = true; };
             ws.onclose = () => { eqConnected = false; setTimeout(connectEQ, 5000); };
             ws.onmessage = (e) => {
                 if (e.data.startsWith('EQ:')) {
                     let vals = e.data.substring(3).split(',').map(parseFloat);
+                    
                     if (vals.length === 5) {
+                        
+                        // Atualiza a memória de picos dinâmicos (Compressão Dinâmica)
                         for(let i=0; i<5; i++) {
+                            // Reduz a memória aos poucos (98%) para se adaptar a trechos/volumes mais baixos
                             autoGainPeak[i] = autoGainPeak[i] * 0.98; 
+                            // Se o volume atual é maior que a memória, ele se torna o novo pico
                             if(vals[i] > autoGainPeak[i]) autoGainPeak[i] = vals[i];
                         }
                         
                         let cover = document.querySelector('.cover-circle');
                         if (cover) {
+                            // NORMALIZAÇÃO: transforma o valor de grave bruto em uma escala de 0 a 1 em relação ao pico recente.
                             let normBass = vals[0] / autoGainPeak[0];
+                            
+                            // Aplica a escala: Base(1) + (valor de 0 a 1 multiplicado pelo aumento máximo de 8%)
                             let scaleAmount = 1 + (normBass * 0.08); 
                             cover.style.transform = `scale(${scaleAmount})`;
                         }
@@ -440,7 +447,10 @@
                                 if (bar.classList.contains('animated')) {
                                     bar.classList.remove('animated');
                                 }
+                                // NORMALIZAÇÃO: O mesmo conceito aplicado a cada barra de forma independente
                                 let normVal = vals[idx] / autoGainPeak[idx];
+                                
+                                // Escala vertical base 0.1, somado à resposta dinâmica até 1.2
                                 let scaleY = 0.1 + (normVal * 1.2);
                                 bar.style.transform = `scaleY(${scaleY})`;
                             });
@@ -464,17 +474,23 @@
 
             const numericValue = Math.min(value, 100);
             const p = numericValue / 100;
+            
             const currentLength = p * totalLength;
             pathElement.style.strokeDashoffset = totalLength - currentLength;
 
-            const cx = 170; const cy = 170;
+            const cx = 170;
+            const cy = 170;
+            
             const alpha = Math.PI / 2 + (isCpu ? -1 : 1) * (p * Math.PI);
+            
             const finalX = cx - targetRadius * Math.sin(alpha);
             const finalY = cy - targetRadius * Math.cos(alpha);
 
             textElement.style.left = `${finalX}px`;
             textElement.style.top = `${finalY}px`;
-            textElement.style.transform = `translate(-50%, -50%) scale(${1 + p * 0.8})`;
+
+            const dynamicScale = 1 + p * 0.8;
+            textElement.style.transform = `translate(-50%, -50%) scale(${dynamicScale})`;
         }
 
         function updateCoverState() {
@@ -489,12 +505,15 @@
             v1: {
                 onMonitoringDataUpdate: (data) => {
                     const { cpus, gpus } = data;
+                    
                     if (cpus?.length > 0) { 
                         cpuTemp = Math.round(cpus[0].temperature);
                         let cLoad = cpus[0].load !== undefined ? cpus[0].load : 0;
                         cpuLoad = Math.round(cLoad <= 1 && cLoad > 0 ? cLoad * 100 : cLoad);
                     }
+                    
                     if (gpus?.length > 0) { 
+                        // ISOLANDO A PLACA DEDICADA 
                         let targetGpu = gpus.find(g => g.name.toLowerCase().includes("4060")) || gpus[gpus.length - 1];
                         gpuTemp = Math.round(targetGpu.temperature);
                         let gLoad = targetGpu.load !== undefined ? targetGpu.load : (targetGpu.usage !== undefined ? targetGpu.usage : 0);
@@ -503,31 +522,55 @@
                     
                     let mx = Math.max(cpuTemp !== '--' ? cpuTemp : 0, gpuTemp !== '--' ? gpuTemp : 0);
                     let newGlassClass = cache.glassClass || '';
-                    if (newGlassClass === 'fire-tint') { if (mx < 60) newGlassClass = ''; }
-                    else if (newGlassClass === 'ice-tint') { if (mx > 40) newGlassClass = ''; }
-                    else {
+                    
+                    if (newGlassClass === 'fire-tint') {
+                        if (mx < 60) newGlassClass = '';
+                    } else if (newGlassClass === 'ice-tint') {
+                        if (mx > 40) newGlassClass = '';
+                    } else {
                         if (mx >= 68) newGlassClass = 'fire-tint';
                         else if (mx <= 35 && mx > 0) newGlassClass = 'ice-tint';
                     }
-                    if (cache.glassClass !== newGlassClass) { DOM.glass.className = newGlassClass; cache.glassClass = newGlassClass; }
+                    
+                    if (cache.glassClass !== newGlassClass) {
+                        DOM.glass.className = newGlassClass;
+                        cache.glassClass = newGlassClass;
+                    }
 
                     if (cache.cpuT !== cpuTemp) {
                         if (cpuTemp !== '--') { 
                             let color = getProgressColor(cpuTemp);
-                            DOM.cpuBarFill.style.stroke = color; DOM.cpuTNum.style.color = color; DOM.cpuTNum.style.display = 'flex';
-                            DOM.cpuTText.innerText = cpuTemp; DOM.cpuTFire.innerText = cpuTemp > 50 ? '🔥' : '';
+                            DOM.cpuBarFill.style.stroke = color; 
+                            DOM.cpuTNum.style.color = color;
+                            DOM.cpuTNum.style.display = 'flex';
+                            DOM.cpuTText.innerText = cpuTemp;
+                            DOM.cpuTFire.innerText = cpuTemp > 50 ? '🔥' : '';
+                            
                             updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 174, 503, true); 
-                        } else { DOM.cpuTNum.style.display = 'none'; }
+                        } else {
+                            DOM.cpuTNum.style.display = 'none';
+                        }
                         cache.cpuT = cpuTemp;
                     }
 
                     if (cpuLoad !== '--') {
                         if (cpuLoad >= 40) {
                             if (cpuLoadTimer) { clearTimeout(cpuLoadTimer); cpuLoadTimer = null; }
-                            if (!cpuLoadVisible) { cpuLoadVisible = true; DOM.cpuLNum.style.opacity = '1'; DOM.cpuLoadFill.style.opacity = '1'; updateCoverState(); }
+                            if (!cpuLoadVisible) {
+                                cpuLoadVisible = true;
+                                DOM.cpuLNum.style.opacity = '1';
+                                DOM.cpuLoadFill.style.opacity = '1';
+                                updateCoverState(); 
+                            }
                         } else {
                             if (cpuLoadVisible && !cpuLoadTimer) {
-                                cpuLoadTimer = setTimeout(() => { cpuLoadVisible = false; cpuLoadTimer = null; DOM.cpuLNum.style.opacity = '0'; DOM.cpuLoadFill.style.opacity = '0'; updateCoverState(); }, 60000);
+                                cpuLoadTimer = setTimeout(() => {
+                                    cpuLoadVisible = false;
+                                    cpuLoadTimer = null;
+                                    DOM.cpuLNum.style.opacity = '0';
+                                    DOM.cpuLoadFill.style.opacity = '0';
+                                    updateCoverState(); 
+                                }, 60000);
                             }
                         }
                     }
@@ -535,29 +578,53 @@
                     if (cache.cpuL !== cpuLoad) {
                         if (cpuLoad !== '--') {
                             let color = getProgressColor(cpuLoad);
-                            DOM.cpuLoadFill.style.stroke = color; DOM.cpuLNum.style.color = color; DOM.cpuLText.innerText = cpuLoad;
-                            updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 471, true); DOM.cpuLNum.style.display = 'flex'; 
-                        } else { DOM.cpuLNum.style.display = 'none'; DOM.cpuLoadFill.style.stroke = 'transparent'; }
+                            DOM.cpuLoadFill.style.stroke = color; 
+                            DOM.cpuLNum.style.color = color;
+                            DOM.cpuLText.innerText = cpuLoad;
+                            
+                            updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 471, true); 
+                            DOM.cpuLNum.style.display = 'flex'; 
+                        } else {
+                            DOM.cpuLNum.style.display = 'none';
+                            DOM.cpuLoadFill.style.stroke = 'transparent';
+                        }
                         cache.cpuL = cpuLoad;
                     }
 
                     if (cache.gpuT !== gpuTemp) {
                         if (gpuTemp !== '--') { 
                             let color = getProgressColor(gpuTemp);
-                            DOM.gpuBarFill.style.stroke = color; DOM.gpuTNum.style.color = color; DOM.gpuTNum.style.display = 'flex';
-                            DOM.gpuTText.innerText = gpuTemp; DOM.gpuTFire.innerText = gpuTemp > 50 ? '🔥' : '';
+                            DOM.gpuBarFill.style.stroke = color; 
+                            DOM.gpuTNum.style.color = color;
+                            DOM.gpuTNum.style.display = 'flex';
+                            DOM.gpuTText.innerText = gpuTemp;
+                            DOM.gpuTFire.innerText = gpuTemp > 50 ? '🔥' : '';
+                            
                             updateTrackPositionOpt(DOM.gpuBarFill, DOM.gpuTNum, gpuTemp, 174, 503, false); 
-                        } else { DOM.gpuTNum.style.display = 'none'; }
+                        } else {
+                            DOM.gpuTNum.style.display = 'none';
+                        }
                         cache.gpuT = gpuTemp;
                     }
 
                     if (gpuLoad !== '--') {
                         if (gpuLoad >= 40) {
                             if (gpuLoadTimer) { clearTimeout(gpuLoadTimer); gpuLoadTimer = null; }
-                            if (!gpuLoadVisible) { gpuLoadVisible = true; DOM.gpuLNum.style.opacity = '1'; DOM.gpuLoadFill.style.opacity = '1'; updateCoverState(); }
+                            if (!gpuLoadVisible) {
+                                gpuLoadVisible = true;
+                                DOM.gpuLNum.style.opacity = '1';
+                                DOM.gpuLoadFill.style.opacity = '1';
+                                updateCoverState(); 
+                            }
                         } else {
                             if (gpuLoadVisible && !gpuLoadTimer) {
-                                gpuLoadTimer = setTimeout(() => { gpuLoadVisible = false; gpuLoadTimer = null; DOM.gpuLNum.style.opacity = '0'; DOM.gpuLoadFill.style.opacity = '0'; updateCoverState(); }, 60000);
+                                gpuLoadTimer = setTimeout(() => {
+                                    gpuLoadVisible = false;
+                                    gpuLoadTimer = null;
+                                    DOM.gpuLNum.style.opacity = '0';
+                                    DOM.gpuLoadFill.style.opacity = '0';
+                                    updateCoverState(); 
+                                }, 60000);
                             }
                         }
                     }
@@ -565,9 +632,16 @@
                     if (cache.gpuL !== gpuLoad) {
                         if (gpuLoad !== '--') {
                             let color = getProgressColor(gpuLoad);
-                            DOM.gpuLoadFill.style.stroke = color; DOM.gpuLNum.style.color = color; DOM.gpuLText.innerText = gpuLoad;
-                            updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 471, false); DOM.gpuLNum.style.display = 'flex';
-                        } else { DOM.gpuLNum.style.display = 'none'; DOM.gpuLoadFill.style.stroke = 'transparent'; }
+                            DOM.gpuLoadFill.style.stroke = color; 
+                            DOM.gpuLNum.style.color = color;
+                            DOM.gpuLText.innerText = gpuLoad;
+                            
+                            updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 471, false); 
+                            DOM.gpuLNum.style.display = 'flex';
+                        } else {
+                            DOM.gpuLNum.style.display = 'none';
+                            DOM.gpuLoadFill.style.stroke = 'transparent';
+                        }
                         cache.gpuL = gpuLoad;
                     }
                 }
@@ -575,15 +649,27 @@
         };
         
         function preloadImageAndUpdate(imageUrl, updateCallback) {
-            const fadeDuration = 500; const startTime = Date.now();
-            const triggerUpdate = () => { setTimeout(updateCallback, Math.max(0, fadeDuration - (Date.now() - startTime))); };
+            const fadeDuration = 500;
+            const startTime = Date.now();
+            const triggerUpdate = () => {
+                const elapsed = Date.now() - startTime;
+                const remainingDelay = Math.max(0, fadeDuration - elapsed);
+                setTimeout(updateCallback, remainingDelay);
+            };
             if (imageUrl) {
-                const img = new Image(); img.onload = triggerUpdate; img.onerror = triggerUpdate; img.src = imageUrl;
-            } else { triggerUpdate(); }
+                const img = new Image();
+                img.onload = triggerUpdate;
+                img.onerror = triggerUpdate; 
+                img.src = imageUrl;
+            } else {
+                triggerUpdate();
+            }
         }
 
         async function fetchNews() {
-            const now = Date.now(); if (now - lastNewsFetchTime < 120000) return; lastNewsFetchTime = now;
+            const now = Date.now();
+            if (now - lastNewsFetchTime < 120000) return; 
+            lastNewsFetchTime = now;
             try {
                 newsList = [];
                 for (let k of activeSources) {
@@ -605,81 +691,224 @@
             DOM.title.innerText = 'Só silencio...'; DOM.artist.innerText = '';
             DOM.bgLayer.style.backgroundImage = 'none'; 
             DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
-            DOM.centerVisual.innerHTML = fallbackBarsFlatHTML; DOM.hwLayer.style.opacity = 0; 
+            DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
+            DOM.hwLayer.style.opacity = 0; 
         }
 
         function showNextNews() {
             if (currentNewsIndex >= newsList.length) {
                 stopNewsCycle();
-                DOM.centerVisual.style.opacity = 0; DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
-                DOM.title.style.opacity = 0; DOM.artist.style.opacity = 0; DOM.album.style.opacity = 0;
+                DOM.centerVisual.style.opacity = 0;
+                DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                DOM.title.style.opacity = 0;
+                DOM.artist.style.opacity = 0;
+                DOM.album.style.opacity = 0;
+
                 setTimeout(() => {
                     showSilenceState();
-                    DOM.centerVisual.style.opacity = 1; DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
-                    DOM.title.style.opacity = 1; DOM.artist.style.opacity = 1; DOM.album.style.opacity = 1;
+                    DOM.centerVisual.style.opacity = 1;
+                    DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
+                    DOM.title.style.opacity = 1;
+                    DOM.artist.style.opacity = 1;
+                    DOM.album.style.opacity = 1;
                 }, 500);
                 return;
             }
+
             const newsItem = newsList[currentNewsIndex];
+            
             DOM.bgLayer.style.backgroundImage = 'none';
             DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg';
-            DOM.centerVisual.innerHTML = newsItem.image ? `<img class="cover-circle" src="${newsItem.image}">` : fallbackBarsFlatHTML;
-            DOM.title.className = 'title news-mode'; DOM.artist.className = 'artist news-mode'; DOM.album.style.display = 'none';
-            DOM.title.innerText = newsItem.title; DOM.artist.innerText = newsItem.source;
+            
+            if (newsItem.image) {
+                DOM.centerVisual.innerHTML = `<img class="cover-circle" src="${newsItem.image}">`;
+            } else {
+                DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
+            }
+
+            DOM.title.className = 'title news-mode';
+            DOM.artist.className = 'artist news-mode';
+            DOM.album.style.display = 'none';
+
+            DOM.title.innerText = newsItem.title;
+            DOM.artist.innerText = newsItem.source;
+
             currentNewsIndex++;
         }
 
-        function startNewsCycle() { if (newsInterval) return; fetchNews().then(() => { if(newsList.length > 0) { currentNewsIndex = 0; showNextNews(); newsInterval = setInterval(showNextNews, 15000); } else { showSilenceState(); } }); }
-        function stopNewsCycle() { if (newsInterval) { clearInterval(newsInterval); newsInterval = null; } }
+        function startNewsCycle() {
+            if (newsInterval) return;
+            fetchNews().then(() => {
+                if(newsList.length > 0) {
+                    currentNewsIndex = 0;
+                    showNextNews();
+                    newsInterval = setInterval(showNextNews, 10000); 
+                } else {
+                    showSilenceState();
+                }
+            });
+        }
+
+        function stopNewsCycle() {
+            if (newsInterval) { clearInterval(newsInterval);
+            newsInterval = null; }
+        }
 
         setInterval(() => {
             const progContainer = document.getElementById('linear-music-progress');
             const progFill = document.getElementById('linear-music-fill');
+
             if (pTracker.active && pTracker.durSec > 0) {
                 if (progContainer) progContainer.style.display = 'block';
+                
                 pTracker.posSec = Math.min(pTracker.posSec + 1, pTracker.durSec);
-                if (progFill) progFill.style.transform = `scaleX(${pTracker.posSec / pTracker.durSec})`;
-            } else { if (progContainer) progContainer.style.display = 'none'; }
+                let percent = pTracker.posSec / pTracker.durSec;
+                
+                if (progFill) progFill.style.transform = `scaleX(${percent})`;
+            } else { 
+                if (progContainer) progContainer.style.display = 'none';
+            }
         }, 1000);
         
-        // --- LOOP DE ATUALIZAÇÃO DA RENDERIZAÇÃO DA INTERFACE ---
-        function updateUI() {
-            let isP = (wnpState.state === 1);
-            let sn = wnpState.title; let an = wnpState.artist; let al = wnpState.album; let coverUrl = wnpState.coverUrl;
+        function cleanStringForSearch(str) {
+            if (!str) return '';
+            return str.replace(/\(.*?\)/g, ' ').replace(/\[.*?\]/g, ' ').replace(/[-_]/g, ' ')
+                .replace(/(ft\.|feat\.|prod\.|remix|official|video|audio|lyrics).*$/i, ' ')
+                .replace(/[^a-zA-Z0-9À-ÿ\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        async function fetchItunesCover(query) {
+            if (!query) return '';
+            try {
+                let res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=5`);
+                let data = await res.json();
+                if (data.results && data.results.length > 0) {
+                    let maxIdx = Math.min(data.results.length, 3);
+                    let randomIdx = Math.floor(Math.random() * maxIdx);
+                    return data.results[randomIdx].artworkUrl100.replace('100x100bb', '600x600bb');
+                }
+            } catch (e) { }
+            return '';
+        }
+
+        async function getNowPlaying() {
+            let isP = false;
+            let sn = ''; let an = ''; let al = ''; let dc = ''; let hasP = false;
+            let tp = 0; let td = 0;
+            
+            if (wnpConnected && wnpState.state === 1) { 
+                isP = true;
+                sn = wnpState.title; an = wnpState.artist; al = wnpState.album; dc = wnpState.coverUrl; 
+                if (wnpState.durationSec > 0) { hasP = true;
+                tp = wnpState.positionSec; td = wnpState.durationSec; } 
+            }
+            
+            if (!isP) {
+                try {
+                    const mpcRes = await fetch('http://localhost:13579/variables.html');
+                    const text = await mpcRes.text();
+                    const doc = new DOMParser().parseFromString(text, "text/html");
+                    if (doc.getElementById('state')?.innerText === '2') { 
+                        isP = true;
+                        let cleanName = (doc.getElementById('file')?.innerText || '').replace(/\.[^/.]+$/, ""); 
+                        an = "Desconhecido"; sn = cleanName;
+                        if (cleanName.includes(" - ")) {
+                            const parts = cleanName.split(" - ");
+                            an = parts[0].trim(); sn = parts.slice(1).join(" - ").trim();
+                        }
+                        const posStr = doc.getElementById('positionstring')?.innerText;
+                        const durStr = doc.getElementById('durationstring')?.innerText;
+                        if (durStr && durStr !== '00:00:00') { 
+                            hasP = true;
+                            const parseTime = (s) => {
+                                if (!s) return 0;
+                                let p = s.split(':');
+                                return p.length === 2 ? parseInt(p[0])*60 + parseInt(p[1]) : (p.length === 3 ? parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]) : 0);
+                            };
+                            tp = parseTime(posStr); td = parseTime(durStr); 
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            if (!isP) {
+                try {
+                    const lfm = await (await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`)).json();
+                    const tr = lfm.recenttracks.track[0];
+                    if (tr && tr['@attr'] && tr['@attr'].nowplaying) {
+                        isP = true; sn = tr.name; an = tr.artist['#text']; al = tr.album['#text']; dc = tr.image[tr.image.length - 1]['#text'];
+                    }
+                } catch(e){}
+            }
+
             let status = `${sn}-${an}`;
             
             if (!isP) {
-                if (currentStatus !== 'NOT_PLAYING') { currentStatus = 'NOT_PLAYING'; pTracker.active = false; startNewsCycle(); }
+                if (currentStatus !== 'NOT_PLAYING') {
+                    if (!silenceTimer) {
+                        silenceTimer = setTimeout(() => {
+                            currentStatus = 'NOT_PLAYING';
+                            pTracker.active = false;
+                            startNewsCycle();
+                        }, 10000); 
+                    }
+                }
                 return;
             }
 
+            if (silenceTimer) {
+                clearTimeout(silenceTimer);
+                silenceTimer = null;
+            }
+
             stopNewsCycle();
+            
+            if (hasP) { pTracker.active = true; pTracker.posSec = tp; pTracker.durSec = td; } 
+            else { pTracker.active = false; }
+            
             DOM.hwLayer.style.opacity = 1;
 
-            if (currentStatus !== status || (coverUrl && DOM.centerVisual.querySelector('img')?.src !== coverUrl)) {
+            if (currentStatus !== status) {
                 currentStatus = status;
-                DOM.centerVisual.style.opacity = 0; DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
-                DOM.title.style.opacity = 0; DOM.artist.style.opacity = 0; DOM.album.style.opacity = 0;
+                DOM.centerVisual.style.opacity = 0;
+                DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                DOM.title.style.opacity = 0;
+                DOM.artist.style.opacity = 0;
+                DOM.album.style.opacity = 0;
+
+                let coverUrl = dc;
+                if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f') || coverUrl.includes('ytimg.com')) {
+                    let q = cleanStringForSearch(`${sn} ${an}`);
+                    coverUrl = await fetchItunesCover(q);
+                }
 
                 preloadImageAndUpdate(coverUrl, () => {
                     if (coverUrl) {
-                        DOM.bgLayer.style.backgroundImage = `url('${coverUrl}')`; DOM.bgLayer.className = '';
+                        DOM.bgLayer.style.backgroundImage = `url('${coverUrl}')`;
+                        DOM.bgLayer.className = '';
                         DOM.centerVisual.innerHTML = `<img class="cover-circle" src="${coverUrl}">`;
                     } else {
-                        DOM.bgLayer.style.backgroundImage = 'none'; DOM.bgLayer.className = 'dark-bg';
+                        DOM.bgLayer.style.backgroundImage = 'none';
+                        DOM.bgLayer.className = 'dark-bg';
                         DOM.centerVisual.innerHTML = fallbackBarsAnimatedHTML;
                     }
+
                     DOM.title.className = 'title'; DOM.artist.className = 'artist'; DOM.album.style.display = 'block';
-                    DOM.title.innerText = sn || 'Desconhecido'; DOM.artist.innerText = an || 'Desconhecido'; DOM.album.innerText = al || '';
+                    DOM.title.innerText = sn || 'Desconhecido';
+                    DOM.artist.innerText = an || 'Desconhecido';
+                    DOM.album.innerText = al || '';
                     
-                    DOM.centerVisual.style.opacity = 1; DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
-                    DOM.title.style.opacity = 1; DOM.artist.style.opacity = 1; DOM.album.style.opacity = 1;
+                    DOM.centerVisual.style.opacity = 1;
+                    DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
+                    DOM.title.style.opacity = 1;
+                    DOM.artist.style.opacity = 1;
+                    DOM.album.style.opacity = 1;
                 });
             }
         }
 
-        setInterval(updateUI, 1000);
-        updateUI();
+        setInterval(getNowPlaying, 3000);
+        getNowPlaying();
     </script>
 </body>
 </html>

@@ -434,9 +434,16 @@
                         let cover = document.querySelector('.cover-circle');
                         if (cover) {
                             let normBass = vals[0] / autoGainPeak[0];
-                            // Escala ajustada de 8% para 12% para um pulso mais vísivel + Força uso da GPU
-                            let scaleAmount = 1 + (normBass * 0.12); 
-                            cover.style.transform = `scale(${scaleAmount}) translateZ(0)`;
+                            // NOVO: Threshold! Se a força do grave não passar de 65% do pico, zera a animação.
+                            // Isso evita que a capa fique tremendo com vozes graves ou baixos contínuos.
+							if (normBass < 0.65) {
+							    normBass = 0;
+							}
+							
+							// Aumentei um pouquinho de 0.12 para 0.15 para dar mais "punch" visual na tela do Kraken
+							let scaleAmount = 1 + (normBass * 0.15);
+							cover.style.transform = `scale(${scaleAmount}) translateZ(0)`;
+
                         }
 
                         let bars = document.querySelectorAll('.bars-container .bar');

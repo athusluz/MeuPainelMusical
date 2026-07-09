@@ -434,8 +434,8 @@
                         let cover = document.querySelector('.cover-circle');
                         if (cover) {
                             let normBass = vals[0] / autoGainPeak[0];
-                            // Escala ajustada de 8% para 12% para um pulso mais vísivel + Força uso da GPU
-                            let scaleAmount = 1 + (normBass * 0.12); 
+                            // Escala ajustada de 8% para 10% para um pulso mais vísivel + Força uso da GPU
+                            let scaleAmount = 1 + (normBass * 0.10); 
                             cover.style.transform = `scale(${scaleAmount}) translateZ(0)`;
                         }
 

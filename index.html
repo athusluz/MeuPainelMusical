@@ -79,8 +79,8 @@
             align-items: center;
             z-index: 5; 
             position: relative;
-            width: 400px;
-            height: 400px;
+            width: 340px;
+            height: 340px;
             justify-content: center;
         }
 
@@ -293,16 +293,16 @@
                         <span id="cpu-l">--</span><span class="unit">%</span>
                     </div>
 
-                    <svg width="400" height="400" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
-                        <g transform="rotate(90, 200, 200)">
-                            <path id="cpu-load-fill" d="M 200,380 A 180 180 0 0 1 200 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="565" stroke-dashoffset="565" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
-                            <path id="gpu-load-fill" d="M 200,380 A 180 180 0 0 0 200 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="565" stroke-dashoffset="565" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
+                    <svg width="340" height="340" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;">
+                        <g transform="rotate(90, 170, 170)">
+                            <path id="cpu-load-fill" d="M 170,320 A 150 150 0 0 1 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
+                            <path id="gpu-load-fill" d="M 170,320 A 150 150 0 0 0 170 20" fill="none" stroke="transparent" stroke-width="4" stroke-dasharray="471" stroke-dashoffset="471" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease, opacity 0.5s ease; opacity: 0;"/>
                             
-                            <path d="M 200,390 A 190 190 0 0 1 200 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M 200,390 A 190 190 0 0 0 200 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M 170,330 A 160 160 0 0 1 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M 170,330 A 160 160 0 0 0 170 10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-linecap="round"/>
 
-                            <path id="cpu-bar-fill" d="M 200,390 A 190 190 0 0 1 200 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="597" stroke-dashoffset="597" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
-                            <path id="gpu-bar-fill" d="M 200,390 A 190 190 0 0 0 200 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="597" stroke-dashoffset="597" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="cpu-bar-fill" d="M 170,330 A 160 160 0 0 1 170 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="503" stroke-dashoffset="503" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
+                            <path id="gpu-bar-fill" d="M 170,330 A 160 160 0 0 0 170 10" fill="none" stroke="transparent" stroke-width="8" stroke-dasharray="503" stroke-dashoffset="503" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease;"/>
                         </g>
                     </svg>
 
@@ -434,14 +434,8 @@
                         let cover = document.querySelector('.cover-circle');
                         if (cover) {
                             let normBass = vals[0] / autoGainPeak[0];
-                            
-                            // Treshold: ignora graves fracos abaixo de 65% do pico para a capa pulsar apenas nas pancadas
-                            if (normBass < 0.65) {
-                                normBass = 0;
-                            }
-                            
-                            // Escala base ajustada para um pulso forte de até 15%
-                            let scaleAmount = 1 + (normBass * 0.15); 
+                            // Escala ajustada de 8% para 12% para um pulso mais vísivel + Força uso da GPU
+                            let scaleAmount = 1 + (normBass * 0.12); 
                             cover.style.transform = `scale(${scaleAmount}) translateZ(0)`;
                         }
 
@@ -479,8 +473,8 @@
             const currentLength = p * totalLength;
             pathElement.style.strokeDashoffset = totalLength - currentLength;
 
-            const cx = 200;
-            const cy = 200;
+            const cx = 170;
+            const cy = 170;
             
             const alpha = Math.PI / 2 + (isCpu ? -1 : 1) * (p * Math.PI);
             
@@ -546,7 +540,7 @@
                             DOM.cpuTText.innerText = cpuTemp;
                             DOM.cpuTFire.innerText = cpuTemp > 50 ? '🔥' : '';
                             
-                            updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 205, 597, true); 
+                            updateTrackPositionOpt(DOM.cpuBarFill, DOM.cpuTNum, cpuTemp, 174, 503, true); 
                         } else {
                             DOM.cpuTNum.style.display = 'none';
                         }
@@ -582,7 +576,7 @@
                             DOM.cpuLNum.style.color = color;
                             DOM.cpuLText.innerText = cpuLoad;
                             
-                            updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 165, 565, true); 
+                            updateTrackPositionOpt(DOM.cpuLoadFill, DOM.cpuLNum, cpuLoad, 196, 471, true); 
                             DOM.cpuLNum.style.display = 'flex'; 
                         } else {
                             DOM.cpuLNum.style.display = 'none';
@@ -600,7 +594,7 @@
                             DOM.gpuTText.innerText = gpuTemp;
                             DOM.gpuTFire.innerText = gpuTemp > 50 ? '🔥' : '';
                             
-                            updateTrackPositionOpt(DOM.gpuBarFill, DOM.gpuTNum, gpuTemp, 205, 597, false); 
+                            updateTrackPositionOpt(DOM.gpuBarFill, DOM.gpuTNum, gpuTemp, 174, 503, false); 
                         } else {
                             DOM.gpuTNum.style.display = 'none';
                         }
@@ -636,7 +630,7 @@
                             DOM.gpuLNum.style.color = color;
                             DOM.gpuLText.innerText = gpuLoad;
                             
-                            updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 165, 565, false); 
+                            updateTrackPositionOpt(DOM.gpuLoadFill, DOM.gpuLNum, gpuLoad, 196, 471, false); 
                             DOM.gpuLNum.style.display = 'flex';
                         } else {
                             DOM.gpuLNum.style.display = 'none';

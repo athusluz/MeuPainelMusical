@@ -125,30 +125,91 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) scale(1);
-            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-            will-change: transform, opacity;
+            width: 280px;
+            height: 280px;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.5s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
+            will-change: width, height, opacity;
         }
 
-        /* ANIMAÇÃO DE TAMANHO DA CAPA E BRILHO (Sincronizada com o clock do WebSocket) */
+        #center-visual-container.expanded {
+            width: 310px;
+            height: 310px;
+        }
+
+        /* CAPA FIXA (Sem expansão e sem brilho) */
         .cover-circle { 
-            width: 280px;
-            height: 280px; 
+            width: 100%;
+            height: 100%; 
             border-radius: 50%; 
-            border: 3px solid rgba(255, 255, 255, 0.8); 
+            border: 2px solid rgba(255, 255, 255, 0.5); 
             object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
-            /* Transição ultra reativa para escala e brilho (box-shadow) */
-            transition: transform 0.04s linear, box-shadow 0.04s linear, width 0.6s ease-in-out, height 0.6s ease-in-out;
-            will-change: transform, width, height, box-shadow;
+            position: relative;
+            z-index: 5;
+            transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
+            will-change: width, height;
             transform: translateZ(0);
             backface-visibility: hidden;
         }
 
+        /* EFEITO LÍQUIDO NA BORDA DA CAPA (3 Camadas Orgânicas) */
+        .liquid-ring-wrapper {
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            z-index: 4;
+            transition: transform 0.04s linear;
+            will-change: transform;
+        }
+
+        .liquid-border {
+            width: 100%;
+            height: 100%;
+            border-style: solid;
+            pointer-events: none;
+            transition: border-color 0.8s ease, border-width 0.04s linear;
+            will-change: transform, border-width, border-color;
+        }
+
+        .liquid-border-1 {
+            border-width: 3px;
+            border-color: #ff9a9e;
+            border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
+            animation: liquid-spin-1 8s linear infinite;
+            opacity: 0.9;
+        }
+
+        .liquid-border-2 {
+            border-width: 2px;
+            border-color: #ff9a9e;
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            animation: liquid-spin-2 12s linear infinite reverse;
+            opacity: 0.65;
+        }
+
+        .liquid-border-3 {
+            border-width: 2px;
+            border-color: #ff9a9e;
+            border-radius: 50% 50% 40% 60% / 45% 55% 45% 55%;
+            animation: liquid-spin-3 16s linear infinite;
+            opacity: 0.4;
+        }
+
+        @keyframes liquid-spin-1 { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes liquid-spin-2 { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes liquid-spin-3 { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .bars-container {
-            width: 280px;
-            height: 280px;
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -156,13 +217,8 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.3);
-            transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
-        }
-
-        #center-visual-container.expanded .cover-circle,
-        #center-visual-container.expanded .bars-container {
-            width: 310px;
-            height: 310px;
+            position: relative;
+            z-index: 5;
         }
 
         .bar {
@@ -255,7 +311,7 @@
         .linear-progress-fill {
             width: 100%;
             height: 100%;
-            background: #ff9a9e; /* Cor padrão, será sobrescrita pela cor da capa */
+            background: #ff9a9e; 
             border-radius: 2px;
             transform-origin: left center; 
             transform: scaleX(0); 
@@ -389,10 +445,8 @@
         let wnpConnected = false;
         let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0 };
         
-        // Armazena a cor extraída da capa para usar na barra e no brilho
         window.currentCoverColor = { rgb: '#ff9a9e', rgba: 'rgba(255, 154, 158, ' };
 
-        // --- FUNÇÃO PARA EXTRAIR A COR DOMINANTE DA CAPA ---
         function extractDominantColor(imgEl) {
             try {
                 let canvas = document.createElement('canvas');
@@ -404,7 +458,6 @@
                 let r = 0, g = 0, b = 0, count = 0;
                 
                 for (let i = 0; i < data.length; i += 4) {
-                    // Ignora pixels muito pretos/escurões ou transparentes para pegar a cor real
                     if (data[i+3] > 128 && (data[i] > 25 || data[i+1] > 25 || data[i+2] > 25)) {
                         r += data[i];
                         g += data[i+1];
@@ -424,7 +477,6 @@
             }
         }
 
-        // --- WEB NOW PLAYING ---
         function connectWNP() {
             let ws = new WebSocket('ws://127.0.0.1:8999');
             ws.onopen = () => wnpConnected = true;
@@ -448,7 +500,6 @@
         }
         connectWNP();
 
-        // --- EQUALIZADOR COM GANHO AUTOMÁTICO E CURVA EXPONENCIAL ---
         let eqConnected = false;
         let autoGainPeak = [0.001, 0.001, 0.001, 0.001, 0.001];
 
@@ -466,25 +517,33 @@
                             if(vals[i] > autoGainPeak[i]) autoGainPeak[i] = vals[i];
                         }
                         
-                        let cover = document.querySelector('.cover-circle');
-                        if (cover) {
-                            let normBass = vals[0] / autoGainPeak[0];
-                            let punchyBass = Math.pow(normBass, 2.0); 
-                            
-                            // 1. ESCALA BEM SUTIL: Limitado a no máximo +3% (nunca encostará na barra de temp)
-                            let scaleAmount = 1 + Math.min(punchyBass * 0.025, 0.03); 
-                            
-                            // 2. LUZ/BRILHO EMANANDO: Explode em intensidade e tamanho conforme o beat
-                            let glowSpread = Math.min(punchyBass * 35, 45).toFixed(0); 
-                            let glowOpacity = Math.min(0.2 + punchyBass * 0.7, 0.95).toFixed(2);
-                            let glowColor = window.currentCoverColor.rgba;
-                            
-                            cover.style.transform = `scale(${scaleAmount}) translateZ(0)`;
-                            cover.style.boxShadow = `0 0 ${glowSpread}px ${glowColor}${glowOpacity})`;
+                        let normBass = vals[0] / autoGainPeak[0];
+                        let punchyBass = Math.pow(normBass, 2.0); 
+                        
+                        // REAÇÃO AO BEAT APENAS NA BORDA LÍQUIDA (A capa não se move nem ganha brilho)
+                        let ring1 = document.getElementById('ring-1');
+                        let ring2 = document.getElementById('ring-2');
+                        let ring3 = document.getElementById('ring-3');
+
+                        if (ring1 && ring2 && ring3) {
+                            let scale1 = 1 + Math.min(punchyBass * 0.04, 0.05);
+                            let scale2 = 1 + Math.min(punchyBass * 0.025, 0.035);
+                            let scale3 = 1 + Math.min(punchyBass * 0.055, 0.065);
+
+                            ring1.style.transform = `scale(${scale1}) translateZ(0)`;
+                            ring2.style.transform = `scale(${scale2}) translateZ(0)`;
+                            ring3.style.transform = `scale(${scale3}) translateZ(0)`;
+
+                            let b1 = ring1.querySelector('.liquid-border');
+                            let b2 = ring2.querySelector('.liquid-border');
+                            let b3 = ring3.querySelector('.liquid-border');
+                            if (b1) b1.style.borderWidth = `${3 + Math.min(punchyBass * 3, 4)}px`;
+                            if (b2) b2.style.borderWidth = `${2 + Math.min(punchyBass * 2, 3)}px`;
+                            if (b3) b3.style.borderWidth = `${2 + Math.min(punchyBass * 4, 5)}px`;
                         }
 
                         let bars = document.querySelectorAll('.bars-container .bar');
-                        if (bars.length === 5 && !cover) {
+                        if (bars.length === 5 && !ring1) {
                             bars.forEach((bar, idx) => {
                                 if (bar.classList.contains('animated')) {
                                     bar.classList.remove('animated');
@@ -696,7 +755,7 @@
             };
             if (imageUrl) {
                 const img = new Image();
-                img.crossOrigin = "Anonymous"; // Necessário para extrair cor no canvas
+                img.crossOrigin = "Anonymous";
                 img.onload = () => triggerUpdate(img);
                 img.onerror = () => triggerUpdate(null); 
                 img.src = imageUrl;
@@ -727,7 +786,6 @@
 
         function showSilenceState() {
             DOM.title.className = 'title'; DOM.artist.className = 'artist'; DOM.album.style.display = 'none';
-            // SUBSTITUÍDO: "NZXT" no lugar de "Só Silencio..."
             DOM.title.innerText = 'NZXT'; DOM.artist.innerText = '';
             DOM.bgLayer.style.backgroundImage = 'none'; 
             DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
@@ -928,14 +986,12 @@
                 }
 
                 preloadImageAndUpdate(coverUrl, (loadedImg) => {
-                    // 1. Extração de cor da capa para a barra e para a luz
                     if (loadedImg) {
                         window.currentCoverColor = extractDominantColor(loadedImg);
                     } else {
                         window.currentCoverColor = { rgb: '#ff9a9e', rgba: 'rgba(255, 154, 158, ' };
                     }
 
-                    // 2. Aplica a cor extraída na barra de progresso da música
                     const progFill = document.getElementById('linear-music-fill');
                     if (progFill) {
                         progFill.style.backgroundColor = window.currentCoverColor.rgb;
@@ -945,7 +1001,13 @@
                     if (coverUrl) {
                         DOM.bgLayer.style.backgroundImage = `url('${coverUrl}')`;
                         DOM.bgLayer.className = '';
-                        DOM.centerVisual.innerHTML = `<img class="cover-circle" src="${coverUrl}" crossorigin="anonymous">`;
+                        // ESTRUTURA DAS CAMADAS LÍQUIDAS AO REDOR DA CAPA
+                        DOM.centerVisual.innerHTML = `
+                            <div class="liquid-ring-wrapper" id="ring-1"><div class="liquid-border liquid-border-1" style="border-color: ${window.currentCoverColor.rgb}"></div></div>
+                            <div class="liquid-ring-wrapper" id="ring-2"><div class="liquid-border liquid-border-2" style="border-color: ${window.currentCoverColor.rgb}"></div></div>
+                            <div class="liquid-ring-wrapper" id="ring-3"><div class="liquid-border liquid-border-3" style="border-color: ${window.currentCoverColor.rgb}"></div></div>
+                            <img class="cover-circle" src="${coverUrl}" crossorigin="anonymous">
+                        `;
                     } else {
                         DOM.bgLayer.style.backgroundImage = 'none';
                         DOM.bgLayer.className = 'dark-bg';

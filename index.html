@@ -130,38 +130,20 @@
             will-change: transform, opacity;
         }
 
-        /* EFEITO LÍQUIDO REATIVO AO SUB-BASS (Fica atrás da capa) */
-        .liquid-wave {
-            position: absolute;
-            width: 280px;
-            height: 280px;
-            /* Gradiente vibrante estilo Aurora/Cyber (pode alterar as cores aqui se desejar) */
-            background: linear-gradient(45deg, #00d2ff, #ff416c, #a8e063);
-            border-radius: 50%;
-            z-index: -1; 
-            filter: blur(8px); 
-            opacity: 0.85;
-            transition: transform 0.03s linear;
-            will-change: transform, border-radius;
-            transform: translateZ(0);
-        }
-
-        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Sincronizada em 30ms) */
+        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Sincronizada em 30ms com o clock do WebSocket) */
         .cover-circle { 
             width: 280px;
             height: 280px; 
             border-radius: 50%; 
-            border: 4px solid rgba(255, 255, 255, 0.85); 
+            border: 4px solid rgba(255, 255, 255, 0.8); 
             object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
-            position: relative;
-            z-index: 2;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            /* Transição reduzida de 0.08s para 0.03s linear para uma reatividade instantânea ao pulso */
             transition: transform 0.03s linear, width 0.6s ease-in-out, height 0.6s ease-in-out;
             will-change: transform, width, height;
-            transform: translateZ(0); 
-            backface-visibility: hidden; 
+            transform: translateZ(0); /* Otimização GPU */
+            backface-visibility: hidden; /* Otimização GPU */
         }
 
         .bars-container {
@@ -178,8 +160,7 @@
         }
 
         #center-visual-container.expanded .cover-circle,
-        #center-visual-container.expanded .bars-container,
-        #center-visual-container.expanded .liquid-wave {
+        #center-visual-container.expanded .bars-container {
             width: 310px;
             height: 310px;
         }
@@ -190,7 +171,7 @@
             background-color: rgba(255, 255, 255, 0.7);
             border-radius: 6px;
             transform-origin: center;
-            transform: scaleY(0.1) translateZ(0); 
+            transform: scaleY(0.1) translateZ(0); /* Otimização GPU */
             transition: transform 0.03s linear; 
             will-change: transform;
             backface-visibility: hidden;
@@ -432,7 +413,7 @@
         }
         connectWNP();
 
-        // --- EQUALIZADOR COM AUTO-GAIN E DEFORMAÇÃO DE LÍQUIDO HIDRÁULICO ---
+        // --- EQUALIZADOR COM GANHO AUTOMÁTICO E CURVA EXPONENCIAL ---
         let eqConnected = false;
         let autoGainPeak = [0.001, 0.001, 0.001, 0.001, 0.001];
 
@@ -451,35 +432,17 @@
                         }
                         
                         let cover = document.querySelector('.cover-circle');
-                        let liquid = document.querySelector('.liquid-wave');
-                        
                         if (cover) {
                             let normBass = vals[0] / autoGainPeak[0];
                             
-                            // Curva Exponencial para impacto seco de Kick/Bumbo
+                            // Curva Exponencial: Filtra ruído contínuo do baixo e explode o valor apenas 
+                            // nos impactos rápidos de bumbo (Kick), criando um pulso perfeitamente sincronizado.
                             let punchyBass = Math.pow(normBass, 2.2); 
                             
-                            // 1. Pulso da Capa (Discreto e firme)
-                            let coverScale = 1 + (punchyBass * 0.08); 
-                            cover.style.transform = `scale(${coverScale}) translateZ(0)`;
-                            
-                            // 2. Pulso e Deformação Orgânica do Líquido
-                            if (liquid) {
-                                let liquidScale = 1 + (punchyBass * 0.1); 
-                                liquid.style.transform = `scale(${liquidScale}) translateZ(0)`;
-                                
-                                // Funções trigonométricas alteram a tensão superficial da onda em tempo real
-                                let time = Date.now() * 0.006;
-                                let wave1 = 50 + Math.sin(time) * 16 * punchyBass;
-                                let wave2 = 50 + Math.cos(time + 1) * 14 * punchyBass;
-                                let wave3 = 50 + Math.sin(time + 2) * 15 * punchyBass;
-                                let wave4 = 50 + Math.cos(time + 3) * 13 * punchyBass;
-                                
-                                liquid.style.borderRadius = `${wave1}% ${100 - wave1}% ${wave2}% ${100 - wave2}% / ${wave3}% ${wave4}% ${100 - wave3}% ${100 - wave4}%`;
-                            }
+                            let scaleAmount = 1 + (punchyBass * 0.15); 
+                            cover.style.transform = `scale(${scaleAmount}) translateZ(0)`;
                         }
 
-                        // Mantém reatividade das barras verticais no modo de silêncio/notícias
                         let bars = document.querySelectorAll('.bars-container .bar');
                         if (bars.length === 5 && !cover) {
                             bars.forEach((bar, idx) => {
@@ -918,6 +881,7 @@
                 if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f') || (isYouTube && Math.random() > 0.5)) {
                     let q = cleanStringForSearch(`${sn} ${an}`);
                     let fetchedCover = await fetchItunesCover(q);
+                    // Só substitui se o iTunes realmente encontrar algo
                     if (fetchedCover) {
                         coverUrl = fetchedCover;
                     }
@@ -927,11 +891,7 @@
                     if (coverUrl) {
                         DOM.bgLayer.style.backgroundImage = `url('${coverUrl}')`;
                         DOM.bgLayer.className = '';
-                        // INJEÇÃO DA CAMADA DE LÍQUIDO E DA CAPA DA MÚSICA
-                        DOM.centerVisual.innerHTML = `
-                            <div class="liquid-wave"></div>
-                            <img class="cover-circle" src="${coverUrl}">
-                        `;
+                        DOM.centerVisual.innerHTML = `<img class="cover-circle" src="${coverUrl}">`;
                     } else {
                         DOM.bgLayer.style.backgroundImage = 'none';
                         DOM.bgLayer.className = 'dark-bg';

@@ -125,91 +125,48 @@
             position: absolute;
             top: 50%;
             left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            will-change: transform, opacity;
+        }
+
+        /* EFEITO LÍQUIDO REATIVO AO SUB-BASS (Fica atrás da capa) */
+        .liquid-wave {
+            position: absolute;
             width: 280px;
             height: 280px;
-            transform: translate(-50%, -50%);
-            transition: opacity 0.5s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
-            will-change: width, height, opacity;
+            /* Gradiente vibrante estilo Aurora/Cyber (pode alterar as cores aqui se desejar) */
+            background: linear-gradient(45deg, #00d2ff, #ff416c, #a8e063);
+            border-radius: 50%;
+            z-index: -1; 
+            filter: blur(8px); 
+            opacity: 0.85;
+            transition: transform 0.03s linear;
+            will-change: transform, border-radius;
+            transform: translateZ(0);
         }
 
-        #center-visual-container.expanded {
-            width: 310px;
-            height: 310px;
-        }
-
-        /* CAPA FIXA (Sem expansão e sem brilho) */
+        /* ANIMAÇÃO DE TAMANHO DA CAPA E BARRAS (Sincronizada em 30ms) */
         .cover-circle { 
-            width: 100%;
-            height: 100%; 
+            width: 280px;
+            height: 280px; 
             border-radius: 50%; 
-            border: 2px solid rgba(255, 255, 255, 0.5); 
+            border: 4px solid rgba(255, 255, 255, 0.85); 
             object-fit: cover;
             aspect-ratio: 1 / 1; 
             display: block;
             position: relative;
-            z-index: 5;
-            transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
-            will-change: width, height;
-            transform: translateZ(0);
-            backface-visibility: hidden;
+            z-index: 2;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            transition: transform 0.03s linear, width 0.6s ease-in-out, height 0.6s ease-in-out;
+            will-change: transform, width, height;
+            transform: translateZ(0); 
+            backface-visibility: hidden; 
         }
-
-        /* EFEITO LÍQUIDO NA BORDA DA CAPA (3 Camadas Orgânicas) */
-        .liquid-ring-wrapper {
-            position: absolute;
-            top: -4px;
-            left: -4px;
-            right: -4px;
-            bottom: -4px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-            z-index: 4;
-            transition: transform 0.04s linear;
-            will-change: transform;
-        }
-
-        .liquid-border {
-            width: 100%;
-            height: 100%;
-            border-style: solid;
-            pointer-events: none;
-            transition: border-color 0.8s ease, border-width 0.04s linear;
-            will-change: transform, border-width, border-color;
-        }
-
-        .liquid-border-1 {
-            border-width: 3px;
-            border-color: #ff9a9e;
-            border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
-            animation: liquid-spin-1 8s linear infinite;
-            opacity: 0.9;
-        }
-
-        .liquid-border-2 {
-            border-width: 2px;
-            border-color: #ff9a9e;
-            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-            animation: liquid-spin-2 12s linear infinite reverse;
-            opacity: 0.65;
-        }
-
-        .liquid-border-3 {
-            border-width: 2px;
-            border-color: #ff9a9e;
-            border-radius: 50% 50% 40% 60% / 45% 55% 45% 55%;
-            animation: liquid-spin-3 16s linear infinite;
-            opacity: 0.4;
-        }
-
-        @keyframes liquid-spin-1 { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes liquid-spin-2 { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes liquid-spin-3 { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .bars-container {
-            width: 100%;
-            height: 100%;
+            width: 280px;
+            height: 280px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -217,8 +174,14 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.3);
-            position: relative;
-            z-index: 5;
+            transition: width 0.6s ease-in-out, height 0.6s ease-in-out;
+        }
+
+        #center-visual-container.expanded .cover-circle,
+        #center-visual-container.expanded .bars-container,
+        #center-visual-container.expanded .liquid-wave {
+            width: 310px;
+            height: 310px;
         }
 
         .bar {
@@ -300,7 +263,7 @@
 
         .linear-progress-container {
             width: 40%;
-            height: 4px; 
+            height: 3px; 
             background: rgba(255, 255, 255, 0.2);
             border-radius: 2px;
             margin: 15px auto 0 auto;
@@ -311,12 +274,12 @@
         .linear-progress-fill {
             width: 100%;
             height: 100%;
-            background: #ff9a9e; 
+            background: #ff9a9e;
             border-radius: 2px;
             transform-origin: left center; 
             transform: scaleX(0); 
-            transition: transform 1s linear, background-color 0.8s ease, box-shadow 0.8s ease;
-            will-change: transform, background-color;
+            transition: transform 1s linear;
+            will-change: transform;
         }
 
         svg path {
@@ -445,38 +408,7 @@
         let wnpConnected = false;
         let wnpState = { state: 0, title: '', artist: '', album: '', coverUrl: '', positionSec: 0, durationSec: 0 };
         
-        window.currentCoverColor = { rgb: '#ff9a9e', rgba: 'rgba(255, 154, 158, ' };
-
-        function extractDominantColor(imgEl) {
-            try {
-                let canvas = document.createElement('canvas');
-                let ctx = canvas.getContext('2d');
-                canvas.width = 10;
-                canvas.height = 10;
-                ctx.drawImage(imgEl, 0, 0, 10, 10);
-                let data = ctx.getImageData(0, 0, 10, 10).data;
-                let r = 0, g = 0, b = 0, count = 0;
-                
-                for (let i = 0; i < data.length; i += 4) {
-                    if (data[i+3] > 128 && (data[i] > 25 || data[i+1] > 25 || data[i+2] > 25)) {
-                        r += data[i];
-                        g += data[i+1];
-                        b += data[i+2];
-                        count++;
-                    }
-                }
-                if (count === 0) return { rgb: '#ff9a9e', rgba: 'rgba(255, 154, 158, ' };
-                
-                r = Math.round(r / count);
-                g = Math.round(g / count);
-                b = Math.round(b / count);
-                
-                return { rgb: `rgb(${r}, ${g}, ${b})`, rgba: `rgba(${r}, ${g}, ${b}, ` };
-            } catch(e) {
-                return { rgb: '#ff9a9e', rgba: 'rgba(255, 154, 158, ' };
-            }
-        }
-
+        // --- WEB NOW PLAYING ---
         function connectWNP() {
             let ws = new WebSocket('ws://127.0.0.1:8999');
             ws.onopen = () => wnpConnected = true;
@@ -500,6 +432,7 @@
         }
         connectWNP();
 
+        // --- EQUALIZADOR COM AUTO-GAIN E DEFORMAÇÃO DE LÍQUIDO HIDRÁULICO ---
         let eqConnected = false;
         let autoGainPeak = [0.001, 0.001, 0.001, 0.001, 0.001];
 
@@ -517,33 +450,38 @@
                             if(vals[i] > autoGainPeak[i]) autoGainPeak[i] = vals[i];
                         }
                         
-                        let normBass = vals[0] / autoGainPeak[0];
-                        let punchyBass = Math.pow(normBass, 2.0); 
+                        let cover = document.querySelector('.cover-circle');
+                        let liquid = document.querySelector('.liquid-wave');
                         
-                        // REAÇÃO AO BEAT APENAS NA BORDA LÍQUIDA (A capa não se move nem ganha brilho)
-                        let ring1 = document.getElementById('ring-1');
-                        let ring2 = document.getElementById('ring-2');
-                        let ring3 = document.getElementById('ring-3');
-
-                        if (ring1 && ring2 && ring3) {
-                            let scale1 = 1 + Math.min(punchyBass * 0.04, 0.05);
-                            let scale2 = 1 + Math.min(punchyBass * 0.025, 0.035);
-                            let scale3 = 1 + Math.min(punchyBass * 0.055, 0.065);
-
-                            ring1.style.transform = `scale(${scale1}) translateZ(0)`;
-                            ring2.style.transform = `scale(${scale2}) translateZ(0)`;
-                            ring3.style.transform = `scale(${scale3}) translateZ(0)`;
-
-                            let b1 = ring1.querySelector('.liquid-border');
-                            let b2 = ring2.querySelector('.liquid-border');
-                            let b3 = ring3.querySelector('.liquid-border');
-                            if (b1) b1.style.borderWidth = `${3 + Math.min(punchyBass * 3, 4)}px`;
-                            if (b2) b2.style.borderWidth = `${2 + Math.min(punchyBass * 2, 3)}px`;
-                            if (b3) b3.style.borderWidth = `${2 + Math.min(punchyBass * 4, 5)}px`;
+                        if (cover) {
+                            let normBass = vals[0] / autoGainPeak[0];
+                            
+                            // Curva Exponencial para impacto seco de Kick/Bumbo
+                            let punchyBass = Math.pow(normBass, 2.2); 
+                            
+                            // 1. Pulso da Capa (Discreto e firme)
+                            let coverScale = 1 + (punchyBass * 0.08); 
+                            cover.style.transform = `scale(${coverScale}) translateZ(0)`;
+                            
+                            // 2. Pulso e Deformação Orgânica do Líquido
+                            if (liquid) {
+                                let liquidScale = 1 + (punchyBass * 0.1); 
+                                liquid.style.transform = `scale(${liquidScale}) translateZ(0)`;
+                                
+                                // Funções trigonométricas alteram a tensão superficial da onda em tempo real
+                                let time = Date.now() * 0.006;
+                                let wave1 = 50 + Math.sin(time) * 16 * punchyBass;
+                                let wave2 = 50 + Math.cos(time + 1) * 14 * punchyBass;
+                                let wave3 = 50 + Math.sin(time + 2) * 15 * punchyBass;
+                                let wave4 = 50 + Math.cos(time + 3) * 13 * punchyBass;
+                                
+                                liquid.style.borderRadius = `${wave1}% ${100 - wave1}% ${wave2}% ${100 - wave2}% / ${wave3}% ${wave4}% ${100 - wave3}% ${100 - wave4}%`;
+                            }
                         }
 
+                        // Mantém reatividade das barras verticais no modo de silêncio/notícias
                         let bars = document.querySelectorAll('.bars-container .bar');
-                        if (bars.length === 5 && !ring1) {
+                        if (bars.length === 5 && !cover) {
                             bars.forEach((bar, idx) => {
                                 if (bar.classList.contains('animated')) {
                                     bar.classList.remove('animated');
@@ -748,19 +686,18 @@
         function preloadImageAndUpdate(imageUrl, updateCallback) {
             const fadeDuration = 500;
             const startTime = Date.now();
-            const triggerUpdate = (loadedImg) => {
+            const triggerUpdate = () => {
                 const elapsed = Date.now() - startTime;
                 const remainingDelay = Math.max(0, fadeDuration - elapsed);
-                setTimeout(() => updateCallback(loadedImg), remainingDelay);
+                setTimeout(updateCallback, remainingDelay);
             };
             if (imageUrl) {
                 const img = new Image();
-                img.crossOrigin = "Anonymous";
-                img.onload = () => triggerUpdate(img);
-                img.onerror = () => triggerUpdate(null); 
+                img.onload = triggerUpdate;
+                img.onerror = triggerUpdate; 
                 img.src = imageUrl;
             } else {
-                triggerUpdate(null);
+                triggerUpdate();
             }
         }
 
@@ -786,7 +723,7 @@
 
         function showSilenceState() {
             DOM.title.className = 'title'; DOM.artist.className = 'artist'; DOM.album.style.display = 'none';
-            DOM.title.innerText = 'NZXT'; DOM.artist.innerText = '';
+            DOM.title.innerText = 'Só silencio...'; DOM.artist.innerText = '';
             DOM.bgLayer.style.backgroundImage = 'none'; 
             DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg'; 
             DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
@@ -977,6 +914,7 @@
                 let coverUrl = dc;
                 let isYouTube = coverUrl && coverUrl.includes('ytimg.com');
                 
+                // LÓGICA DO SORTEIO (50% de chance de manter YT se for do YouTube)
                 if (!coverUrl || coverUrl.includes('2a96cbd8b46e442fc41c2b86b821562f') || (isYouTube && Math.random() > 0.5)) {
                     let q = cleanStringForSearch(`${sn} ${an}`);
                     let fetchedCover = await fetchItunesCover(q);
@@ -985,28 +923,14 @@
                     }
                 }
 
-                preloadImageAndUpdate(coverUrl, (loadedImg) => {
-                    if (loadedImg) {
-                        window.currentCoverColor = extractDominantColor(loadedImg);
-                    } else {
-                        window.currentCoverColor = { rgb: '#ff9a9e', rgba: 'rgba(255, 154, 158, ' };
-                    }
-
-                    const progFill = document.getElementById('linear-music-fill');
-                    if (progFill) {
-                        progFill.style.backgroundColor = window.currentCoverColor.rgb;
-                        progFill.style.boxShadow = `0 0 10px ${window.currentCoverColor.rgba}0.8)`;
-                    }
-
+                preloadImageAndUpdate(coverUrl, () => {
                     if (coverUrl) {
                         DOM.bgLayer.style.backgroundImage = `url('${coverUrl}')`;
                         DOM.bgLayer.className = '';
-                        // ESTRUTURA DAS CAMADAS LÍQUIDAS AO REDOR DA CAPA
+                        // INJEÇÃO DA CAMADA DE LÍQUIDO E DA CAPA DA MÚSICA
                         DOM.centerVisual.innerHTML = `
-                            <div class="liquid-ring-wrapper" id="ring-1"><div class="liquid-border liquid-border-1" style="border-color: ${window.currentCoverColor.rgb}"></div></div>
-                            <div class="liquid-ring-wrapper" id="ring-2"><div class="liquid-border liquid-border-2" style="border-color: ${window.currentCoverColor.rgb}"></div></div>
-                            <div class="liquid-ring-wrapper" id="ring-3"><div class="liquid-border liquid-border-3" style="border-color: ${window.currentCoverColor.rgb}"></div></div>
-                            <img class="cover-circle" src="${coverUrl}" crossorigin="anonymous">
+                            <div class="liquid-wave"></div>
+                            <img class="cover-circle" src="${coverUrl}">
                         `;
                     } else {
                         DOM.bgLayer.style.backgroundImage = 'none';

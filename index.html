@@ -74,7 +74,6 @@
         #status-dot.wnp { background: #3ddc84; }
         #status-dot.mpc { background: #f6d365; }
         #status-dot.lastfm { background: #ff6b6b; }
-        #status-dot.news { background: #6ea8ff; }
         #status-dot.off { background: #555; }
 
         /* Relógio ambiente */
@@ -243,15 +242,6 @@
             transition: opacity 0.5s ease-in-out;
         }
 
-        .title.news-mode {
-            white-space: normal;
-            font-size: 26px;
-            line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-        }
-
         .artist {
             color: #ffffff;
             font-size: 26px;
@@ -262,11 +252,6 @@
             width: 100%;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             transition: opacity 0.5s ease-in-out;
-        }
-
-        .artist.news-mode {
-            font-size: 18px;
-            color: #ccc;
         }
 
         /* Marquee: só ativa via JS quando o texto não cabe */
@@ -403,17 +388,6 @@
         const USERNAME = urlParams.get('lfmUser') || 'athusluz';
         const API_KEY = urlParams.get('lfmKey') || 'fc951f4fa2b53280f062eb4d47e7810b';
 
-        const RSS_FEEDS = {
-            'g1': { url: 'https://g1.globo.com/rss/g1/', name: 'G1' },
-            'esports': { url: 'https://ge.globo.com/rss/esports/', name: 'e-Sports' },
-            'tecnologia': { url: 'https://g1.globo.com/rss/g1/tecnologia/', name: 'Tecnologia' },
-            'pop': { url: 'https://g1.globo.com/rss/g1/pop-arte/', name: 'Pop & Arte' }
-        };
-        let activeSources = Object.keys(RSS_FEEDS);
-        let newsList = [];
-        let currentNewsIndex = 0;
-        let newsInterval = null;
-        let lastNewsFetchTime = 0;
         let currentTrackUrl = ''; let currentStatus = '';
 
         let cpuTemp = '--'; let cpuLoad = '--';
@@ -764,27 +738,6 @@
             }
         }
 
-        async function fetchNews() {
-            const now = Date.now();
-            if (now - lastNewsFetchTime < 120000) return;
-            lastNewsFetchTime = now;
-            try {
-                newsList = [];
-                for (let k of activeSources) {
-                    let response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${RSS_FEEDS[k].url}`);
-                    if (!response.ok) continue;
-                    let data = await response.json();
-                    if (data.items) {
-                        data.items.forEach(item => {
-                            let imgUrl = item.enclosure?.link || item.thumbnail || (item.description.match(/<img[^>]+src="([^">]+)"/) || [])[1] || '';
-                            if (imgUrl) newsList.push({ title: item.title, source: RSS_FEEDS[k].name, image: imgUrl });
-                        });
-                    }
-                }
-                newsList.sort(() => Math.random() - 0.5);
-            } catch (error) { }
-        }
-
         function showSilenceState() {
             DOM.title.className = 'title'; DOM.artist.className = 'artist'; DOM.album.style.display = 'none';
             DOM.title.innerText = 'Só silencio...'; DOM.artist.innerText = '';
@@ -794,67 +747,6 @@
             DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg';
             DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
             DOM.hwLayer.style.opacity = 0;
-        }
-
-        function showNextNews() {
-            if (currentNewsIndex >= newsList.length) {
-                stopNewsCycle();
-                DOM.centerVisual.style.opacity = 0;
-                DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(0.95)';
-                DOM.title.style.opacity = 0;
-                DOM.artist.style.opacity = 0;
-                DOM.album.style.opacity = 0;
-
-                setTimeout(() => {
-                    showSilenceState();
-                    DOM.centerVisual.style.opacity = 1;
-                    DOM.centerVisual.style.transform = 'translate(-50%, -50%) scale(1)';
-                    DOM.title.style.opacity = 1;
-                    DOM.artist.style.opacity = 1;
-                    DOM.album.style.opacity = 1;
-                }, 500);
-                return;
-            }
-
-            const newsItem = newsList[currentNewsIndex];
-
-            DOM.bgLayer.style.backgroundImage = 'none';
-            DOM.bgLayer.className = (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'dark-bg' : 'aurora-bg';
-            setStatusDot('news');
-            DOM.pausedBadge.classList.remove('show');
-
-            if (newsItem.image) {
-                DOM.centerVisual.innerHTML = `<img class="cover-circle" src="${newsItem.image}">`;
-            } else {
-                DOM.centerVisual.innerHTML = fallbackBarsFlatHTML;
-            }
-
-            DOM.title.className = 'title news-mode';
-            DOM.artist.className = 'artist news-mode';
-            DOM.album.style.display = 'none';
-
-            DOM.title.innerText = newsItem.title;
-            DOM.artist.innerText = newsItem.source;
-
-            currentNewsIndex++;
-        }
-
-        function startNewsCycle() {
-            if (newsInterval) return;
-            fetchNews().then(() => {
-                if(newsList.length > 0) {
-                    currentNewsIndex = 0;
-                    showNextNews();
-                    newsInterval = setInterval(showNextNews, 10000);
-                } else {
-                    showSilenceState();
-                }
-            });
-        }
-
-        function stopNewsCycle() {
-            if (newsInterval) { clearInterval(newsInterval);
-            newsInterval = null; }
         }
 
         setInterval(() => {
@@ -968,7 +860,7 @@
                         silenceTimer = setTimeout(() => {
                             currentStatus = 'NOT_PLAYING';
                             pTracker.active = false;
-                            startNewsCycle();
+                            showSilenceState();
                         }, 10000);
                     }
                 }
@@ -980,7 +872,6 @@
                 silenceTimer = null;
             }
 
-            stopNewsCycle();
             isPausedNow = isPaused;
             setStatusDot(source);
             DOM.pausedBadge.classList.toggle('show', isPaused);
